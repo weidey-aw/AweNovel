@@ -1,0 +1,92 @@
+# 日志配置
+logging:
+  level:
+    com.weidey: debug
+    org.springframework: warn
+    org.jasypt: TRACE
+# 用户配置
+user:
+  password:
+    # 密码最大错误次数
+    maxRetryCount: 5
+    # 密码锁定时间（默认10分钟）
+    lockTime: 10
+
+# Spring配置
+spring:
+  # 资源信息
+  messages:
+    # 国际化资源文件路径
+    basename: i18n/messages
+  profiles:
+    active: '@env@'
+  # 文件上传
+  servlet:
+    multipart:
+      # 单个文件大小
+      max-file-size: 10MB
+      # 设置总上传的文件大小
+      max-request-size: 20MB
+  # 服务模块
+  devtools:
+    restart:
+      # 热部署开关
+      enabled: true
+  #邮箱（生产环境务必通过环境变量注入真实邮箱与授权码）
+  mail:
+    protocol: smtp
+    host: ${MAIL_HOST:smtp.qq.com}
+    username: ${MAIL_USERNAME:your-mail@example.com}
+    password: ${MAIL_PASSWORD:your-smtp-auth-code}
+    port: 465
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+            fallback: false
+        debug: true
+# token配置
+token:
+  # 令牌自定义标识
+  header: Authorization
+  # 令牌密钥（至少32字节，生产环境务必通过环境变量覆盖）
+  secret: ${TOKEN_SECRET:AweNovel-please-change-this-jwt-secret-key-in-prod-2024}
+  # 令牌有效期（默认30分钟）
+  expireTime: 30
+
+# AI 看板娘配置（DeepSeek，OpenAI 兼容；生产环境务必通过 DEEPSEEK_API_KEY 注入真实密钥）
+ai:
+  deepseek:
+    api-key: ${DEEPSEEK_API_KEY:sk-please-replace-your-deepseek-api-key}
+    base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+    model: ${DEEPSEEK_MODEL:deepseek-chat}
+    persona: ${DEEPSEEK_PERSONA:你是伊卡洛斯（Ikaros），来自《天降之物》的娱乐用万能天使。你性格温柔、天然呆、略带呆萌，称呼用户为「主人」。请用简短、可爱、轻松的语气回复，像一位贴心的小女仆一样陪伴用户聊天。}
+
+# MyBatis-Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    banner: false
+
+# Swagger配置
+swagger:
+  # 是否开启swagger
+  enabled: false
+  # 请求前缀
+  pathMapping: /dev-api
+
+# 防止XSS攻击
+xss:
+  # 过滤开关
+  enabled: true
+  # 排除链接（多个用逗号分隔）
+  excludes: /system/notice
+  # 匹配链接
+  urlPatterns: /system/*,/monitor/*,/tool/*

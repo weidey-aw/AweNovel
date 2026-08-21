@@ -1,0 +1,15 @@
+{
+  "name": "awe-novel-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.7.0",
+  "description": "AweNovel 前端 monorepo（用户端 web + 管理端 admin + 共享包 shared）",
+  "scripts": {
+    "dev:web": "pnpm --filter @gal/web dev",
+    "dev:admin": "pnpm --filter @gal/admin dev",
+    "build": "pnpm -r build",
+    "build:web": "pnpm --filter @gal/web build",
+    "build:admin": "pnpm --filter @gal/admin build",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

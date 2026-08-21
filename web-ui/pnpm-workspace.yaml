@@ -1,0 +1,8 @@
+packages:
+  - shared
+  - web
+  - admin
+
+allowBuilds:
+  esbuild: true
+  vue-demi: true

@@ -1,0 +1,19 @@
+{
+  "name": "@gal/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "description": "AweNovel 共享包：业务类型 + axios 封装 + 全部后端接口函数",
+  "scripts": {
+    "build": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "axios": "^1.7.9"
+  },
+  "devDependencies": {
+    "typescript": "~5.7.2"
+  }
+}
