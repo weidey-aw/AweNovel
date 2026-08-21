@@ -1,0 +1,38 @@
+# ============================================================================
+# AweNovel 本机私有配置模板（application-local.example.yml）
+# ----------------------------------------------------------------------------
+# 使用方法：
+#   1. 复制本文件为 application-local.yml（同一目录）：
+#        cp application-local.example.yml application-local.yml
+#   2. 填入本机真实凭据；
+#   3. application-local.yml 已被 .gitignore 排除，不会提交到仓库。
+#
+# 生效方式：application.yml 中 spring.profiles.active 已追加 local，
+#           文件存在即自动加载，优先级高于 dev/pro 配置文件。
+#
+# 注意：本文件会被打进本地构建的 jar，请勿分发本地构建产物；
+#       生产环境请改用环境变量（DB_PASSWORD / DEEPSEEK_API_KEY / MAIL_* 等）。
+# ============================================================================
+
+# 数据库（本机 MySQL，库名 awe_novel）
+spring:
+  datasource:
+    druid:
+      master:
+        url: jdbc:mysql://127.0.0.1:3306/awe_novel?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+        username: root
+        password: your-db-password
+
+# 邮箱（本机 SMTP 授权码）
+  mail:
+    username: your-mail@example.com
+    password: your-smtp-auth-code
+
+# 看板娘 AI（DeepSeek）
+ai:
+  deepseek:
+    api-key: sk-your-deepseek-api-key
+
+# JWT 密钥（可选，如不设置则使用 application.yml 中的默认占位密钥）
+# token:
+#   secret: 你的本机 JWT 密钥（至少 32 字节）

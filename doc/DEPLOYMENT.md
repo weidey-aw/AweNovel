@@ -318,6 +318,21 @@ sudo certbot --nginx -d awe-novel.example.com -d admin.awe-novel.example.com
 | `REDIS_PASSWORD` | 否 | 空 | Redis 密码（如有） |
 | `SSL_KEY_STORE_PASSWORD` | 启用 HTTPS 时 | 空 | JKS 证书密码 |
 
+### 8.1 本地开发配置（application-local.yml，不提交）
+
+本地开发不想每次设置环境变量时，可把真实凭据写入**不提交 git** 的本地配置文件：
+
+```bash
+# 复制模板（仓库已提交 application-local.example.yml）
+cp weidey-admin/src/main/resources/application-local.example.yml \
+   weidey-admin/src/main/resources/application-local.yml
+# 编辑填入本机真实凭据（数据库密码、SMTP 授权码、DeepSeek Key 等）
+```
+
+- `application.yml` 中 `spring.profiles.active` 已追加 `local`，该文件存在即自动加载，且**优先级高于** `application-dev.yml` / `application-pro.yml`；
+- `application-local.yml` 已被 `.gitignore` 排除，不会提交到仓库（示例模板 `application-local.example.yml` 会随仓库分发）；
+- ⚠️ 注意：该文件会随本地构建打进 jar，**请勿分发本地构建产物**；生产服务器上不要放置该文件，一律使用环境变量。
+
 ---
 
 ## 9. 常见问题（FAQ）

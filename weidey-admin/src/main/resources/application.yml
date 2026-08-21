@@ -19,7 +19,8 @@ spring:
     # 国际化资源文件路径
     basename: i18n/messages
   profiles:
-    active: '@env@'
+    # '@env@' 由 Maven 按 profile 替换为 dev/pro；local 为本机私有配置（application-local.yml，不提交 git）
+    active: '@env@,local'
   # 文件上传
   servlet:
     multipart:

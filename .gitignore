@@ -34,13 +34,14 @@ logs/
 *.log
 nohup.out
 
-# ===== 敏感信息：证书/密钥/环境变量 =====
+# ===== 敏感信息：证书/密钥/环境变量/本地配置 =====
 *.jks
 *.p12
 *.pfx
 *.key
 *.pem
 weidey-admin/src/main/resources/ssl/
+application-local.yml
 .env
 .env.*
 !.env.example
