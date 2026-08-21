@@ -28,8 +28,6 @@ AweNovel/
 > 说明：`weidey-*` 模块名与 `com.weidey` 包名保留开发者标识 `weidey`，项目对外统一命名为 **AweNovel**。
 
 ## 后端模块说明
-
-- **weidey-system**：若依精简后的 RBAC（用户/角色/菜单/字典/配置/公告/日志）。已删除部门、岗位、数据权限、定时任务（quartz）、代码生成器等无关功能。
 - **weidey-AweNovel**（社区业务）：
   - `com.weidey.community`：游戏条目、制作会社、标签、资源、文章、评论、评分、积分、签到、关注/收藏/点赞、消息、内容审核。
   - `com.weidey.ai`：看板娘 AI 聊天（DeepSeek）。
@@ -54,13 +52,19 @@ AweNovel/
 
 ### 数据库
 
-1. 创建数据库并导入初始化脚本（含建表与初始数据）：
+1. 全新安装：创建数据库并导入初始化脚本（含建表与初始数据）：
 
 ```bash
 mysql -uroot -p < sql/awe_novel.sql
 ```
 
-2. Flowable 的 `ACT_*` 表会在应用首次启动时自动创建。
+2. 已有旧库（如 `sp_awblog`）需要保留历史数据时，改用迁移脚本全量复制到 `awe_novel`：
+
+```bash
+mysql -uroot -p --default-character-set=utf8mb4 < sql/migrate_to_awe_novel.sql
+```
+
+3. Flowable 的 `ACT_*` 表会在应用首次启动时自动创建。
 
 ### 后端
 

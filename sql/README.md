@@ -2,12 +2,17 @@
 
 | 文件 | 说明 |
 |---|---|
-| `awe_novel.sql` | 完整初始化脚本：建库 `awe_novel` + 全部建表 + 初始数据（管理员、角色、菜单、字典、参数、等级配置等） |
+| `awe_novel.sql` | 全新安装初始化脚本：建库 `awe_novel` + 全部建表 + 初始数据（管理员、角色、菜单、字典、参数、等级配置等） |
+| `migrate_to_awe_novel.sql` | 旧库迁移脚本：将已有旧库（默认 `sp_awblog`）全量复制到 `awe_novel`（结构+数据+索引+自增，含 Flowable 表） |
 
 ## 使用方式
 
 ```bash
+# 全新安装：建库 + 建表 + 初始数据
 mysql -uroot -p < sql/awe_novel.sql
+
+# 已有旧库（如 sp_awblog）需保留数据时：全量迁移到 awe_novel
+mysql -uroot -p --default-character-set=utf8mb4 < sql/migrate_to_awe_novel.sql
 ```
 
 ## 脚本内容

@@ -97,6 +97,20 @@ mysql -uroot -p < sql/awe_novel.sql
 > 注意：Flowable 的 `ACT_*` 表无需手动创建，应用首次启动会自动建表。
 > 生产环境请立即修改 `admin` 密码与默认配置。
 
+### 4.1 从旧库迁移（已有历史数据时）
+
+如果应用连接地址已改为 `awe_novel`，但历史数据仍在旧库（如 `sp_awblog`），
+MySQL 不支持 `RENAME DATABASE`，请使用迁移脚本逐表复制（结构 + 数据 + 索引 + 自增值，
+含 Flowable 的 `ACT_*`/`FLW_*` 表）：
+
+```bash
+mysql -uroot -p --default-character-set=utf8mb4 < sql/migrate_to_awe_novel.sql
+```
+
+- 脚本默认从 `sp_awblog` 迁移到 `awe_novel`，如需其他源库名，修改脚本顶部 `@FROM_DB` 变量；
+- 只读源库、只写目标库，目标表已存在时先删除再重建，**可重复执行**；
+- 执行完成后脚本会输出两库表数与关键表行数对比，用于核对。
+
 ---
 
 ## 5. 后端构建与部署
