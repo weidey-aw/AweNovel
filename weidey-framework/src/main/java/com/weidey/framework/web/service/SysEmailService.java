@@ -43,7 +43,7 @@ public class SysEmailService {
                 if (isCacheExpired(emailBody.getEmailType(), emailBody.getEmail())) {
                     return AjaxResult.error("验证码已发送，请勿频繁操作");
                 }
-                setEmailContent(emailBody, "欢迎注册阿伟博客", "您的验证码为：%s，请在10分钟内填写，如非本人操作，请忽略本邮件。");
+                setEmailContent(emailBody, "欢迎注册 AweNovel", "您的验证码为：%s，请在10分钟内填写，如非本人操作，请忽略本邮件。");
                 break;
             }
             case KEY_FORGET_PASS: {
@@ -54,7 +54,7 @@ public class SysEmailService {
                 if (isCacheExpired(emailBody.getEmailType(), emailBody.getEmail())) {
                     return AjaxResult.error("验证码已发送，请勿频繁操作");
                 }
-                setEmailContent(emailBody, "阿伟博客密码重置", "您的验证码为：%s，请在10分钟内填写，如非本人操作，请忽略本邮件。");
+                setEmailContent(emailBody, "AweNovel 密码重置", "您的验证码为：%s，请在10分钟内填写，如非本人操作，请忽略本邮件。");
                 break;
             }
             default: {

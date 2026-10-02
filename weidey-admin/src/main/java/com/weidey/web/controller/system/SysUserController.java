@@ -194,7 +194,7 @@ public class  SysUserController extends BaseController
 
         EmailBody emailBody = new EmailBody();
         //设置发送内容
-        emailBody.setTitle("阿伟博客提示,您的密码已重置");
+        emailBody.setTitle("AweNovel 提示,您的密码已重置");
         emailBody.setContent("您的账号："+ user.getUserName()+",您的密码已重置为:"+newPwd+",请勿泄露该邮箱");
         emailBody.setNow(new Date());
         //发送邮箱

@@ -106,7 +106,20 @@ pnpm dev:admin    # 管理端 http://localhost:5174
 |---|---|---|
 | `admin` | `admin123` | 超级管理员 |
 
-## 主要接口
+## 接口文档
+
+完整后端接口文档（**138 个接口**，按模块分册，含前端对接状态与优先级建议）：
+
+- 总览与前端对接状态：[`doc/api/README.md`](doc/api/README.md)
+- 认证与账号：[`doc/api/01-auth.md`](doc/api/01-auth.md)
+- 系统管理：[`doc/api/02-system.md`](doc/api/02-system.md)
+- 系统监控：[`doc/api/03-monitor.md`](doc/api/03-monitor.md)
+- 游戏库：[`doc/api/04-community-game.md`](doc/api/04-community-game.md)
+- 内容（文章/资源/评论/评分）：[`doc/api/05-community-content.md`](doc/api/05-community-content.md)
+- 用户中心：[`doc/api/06-community-user.md`](doc/api/06-community-user.md)
+- 审核 / AI / 通用：[`doc/api/07-review-ai-common.md`](doc/api/07-review-ai-common.md)
+
+## 主要接口速览
 
 - 认证：`POST /login`、`POST /register`、`GET /captchaImage`
 - 社区公开：`GET /community/game/list`、`GET /community/game/{id}`、`GET /community/article/*`、`GET /community/comment/list`、`GET /community/resource/list`
@@ -118,6 +131,7 @@ pnpm dev:admin    # 管理端 http://localhost:5174
 
 - 部署教程：[`doc/DEPLOYMENT.md`](doc/DEPLOYMENT.md)
 - 数据库初始化：[`sql/awe_novel.sql`](sql/awe_novel.sql)
+- 旧库迁移：[`sql/migrate_to_awe_novel.sql`](sql/migrate_to_awe_novel.sql)
 
 ## 开源协议与致谢
 
