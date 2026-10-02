@@ -15,7 +15,6 @@ public class AweNovelApplication
 {
     public static void main(String[] args)
     {
-        // System.setProperty("spring.devtools.restart.enabled", "false");
         SpringApplication.run(AweNovelApplication.class, args);
         System.out.println("(♥◠‿◠)ﾉﾞ  后台启动成功   ლ(´ڡ`ლ)ﾞ  \n"
                 + " .-------.    ____          ___             __\n"
