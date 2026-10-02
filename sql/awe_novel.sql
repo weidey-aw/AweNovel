@@ -568,16 +568,29 @@ INSERT INTO `sys_role` VALUES
 INSERT INTO `sys_menu` VALUES
 -- 系统管理（目录）
 (1,   '系统管理', 0,    1, 'system',          NULL,            '', 1, 0, 'M', '0', '0', '',                'system',          'admin', '2024-01-01 00:00:00', '', NULL, '系统管理目录'),
+(2,   '系统监控', 0,    2, 'monitor',         NULL,            '', 1, 0, 'M', '0', '0', '',                'monitor',         'admin', '2024-01-01 00:00:00', '', NULL, '系统监控目录'),
+(3,   '网站运营', 0,    3, 'operation',       NULL,            '', 1, 0, 'M', '0', '0', '',                'operation',       'admin', '2024-01-01 00:00:00', '', NULL, '网站运营目录'),
 (100, '用户管理', 1,    1, 'user',            'system/user/index', '', 1, 0, 'C', '0', '0', 'system:user:list',    'user',            'admin', '2024-01-01 00:00:00', '', NULL, '用户管理菜单'),
-(101, '角色管理', 1,    2, 'role',            'system/role/index', '', 1, 0, 'C', '0', '0', 'system:role:list',    'peoples',         'admin', '2024-01-01 00:00:00', '', NULL, '角色管理菜单'),
-(102, '菜单管理', 1,    3, 'menu',            'system/menu/index', '', 1, 0, 'C', '0', '0', 'system:menu:list',    'tree-table',      'admin', '2024-01-01 00:00:00', '', NULL, '菜单管理菜单'),
-(103, '字典管理', 1,    4, 'dict',            'system/dict/index', '', 1, 0, 'C', '0', '0', 'system:dict:list',    'dict',            'admin', '2024-01-01 00:00:00', '', NULL, '字典管理菜单'),
+(101, '角色管理', 1,    2, 'role',            'system/role/index', '', 1, 0, 'C', '0', '0', 'system:role:list',    'user-filled',     'admin', '2024-01-01 00:00:00', '', NULL, '角色管理菜单'),
+(102, '菜单管理', 1,    3, 'menu',            'system/menu/index', '', 1, 0, 'C', '0', '0', 'system:menu:list',    'menu',            'admin', '2024-01-01 00:00:00', '', NULL, '菜单管理菜单'),
+(103, '字典管理', 1,    4, 'dict',            'system/dict/index', '', 1, 0, 'C', '0', '0', 'system:dict:list',    'notebook',        'admin', '2024-01-01 00:00:00', '', NULL, '字典管理菜单'),
 (104, '参数设置', 1,    5, 'config',          'system/config/index', '', 1, 0, 'C', '0', '0', 'system:config:list',  'edit',            'admin', '2024-01-01 00:00:00', '', NULL, '参数设置菜单'),
-(105, '通知公告', 1,    6, 'notice',          'system/notice/index', '', 1, 0, 'C', '0', '0', 'system:notice:list',  'message',         'admin', '2024-01-01 00:00:00', '', NULL, '通知公告菜单'),
-(106, '日志管理', 1,    7, 'log',             NULL,            '', 1, 0, 'M', '0', '0', '',                    'log',             'admin', '2024-01-01 00:00:00', '', NULL, '日志管理目录'),
-(107, '操作日志', 106,  1, 'operlog',         'monitor/operlog/index', '', 1, 0, 'C', '0', '0', 'monitor:operlog:list', 'form',            'admin', '2024-01-01 00:00:00', '', NULL, '操作日志菜单'),
-(108, '登录日志', 106,  2, 'logininfor',      'monitor/logininfor/index', '', 1, 0, 'C', '0', '0', 'monitor:logininfor:list', 'logininfor',     'admin', '2024-01-01 00:00:00', '', NULL, '登录日志菜单'),
-(109, '在线用户', 106,  3, 'online',          'monitor/online/index', '', 1, 0, 'C', '0', '0', 'monitor:online:list',    'online',         'admin', '2024-01-01 00:00:00', '', NULL, '在线用户菜单'),
+(105, '通知管理', 1,    6, 'notice',          'system/notice/index', '', 1, 0, 'C', '0', '0', 'system:notice:list',  'message',         'admin', '2024-01-01 00:00:00', '', NULL, '通知公告菜单'),
+(106, '日志管理', 1,    7, 'log',             'system/log/index', '', 1, 0, 'C', '0', '0', 'monitor:operlog:list', 'tickets',        'admin', '2024-01-01 00:00:00', '', NULL, '操作日志与登录日志'),
+-- 系统监控
+(110, '在线用户', 2,    1, 'online',          'monitor/online/index', '', 1, 0, 'C', '0', '0', 'monitor:online:list', 'connection',   'admin', '2024-01-01 00:00:00', '', NULL, '在线用户菜单'),
+(111, '定时任务', 2,    2, 'job',             'monitor/job/index', '', 1, 0, 'C', '0', '0', 'monitor:job:list',       'timer',        'admin', '2024-01-01 00:00:00', '', NULL, '定时任务菜单'),
+(112, '数据监控', 2,    3, 'druid',           'monitor/druid/index', '', 1, 0, 'C', '0', '0', 'monitor:druid:list',   'trend-charts',   'admin', '2024-01-01 00:00:00', '', NULL, 'Druid 数据监控'),
+(113, '服务监控', 2,    4, 'server',          'monitor/server/index', '', 1, 0, 'C', '0', '0', 'monitor:server:list', 'cpu',            'admin', '2024-01-01 00:00:00', '', NULL, '服务监控菜单'),
+(114, '缓存监控', 2,    5, 'cache',           'monitor/cache/index', '', 1, 0, 'C', '0', '0', 'monitor:cache:list',  'coin',           'admin', '2024-01-01 00:00:00', '', NULL, '缓存监控菜单'),
+-- 网站运营
+(200, '游戏管理', 3,    1, 'game',            'operation/game/index', '', 1, 0, 'C', '0', '0', 'community:game:list',     'video-play',     'admin', '2024-01-01 00:00:00', '', NULL, '游戏条目管理'),
+(201, '会社管理', 3,    2, 'brand',           'operation/brand/index', '', 1, 0, 'C', '0', '0', 'community:brand:list',    'office-building','admin', '2024-01-01 00:00:00', '', NULL, '制作会社管理'),
+(202, '标签管理', 3,    3, 'tag',             'operation/tag/index', '', 1, 0, 'C', '0', '0', 'community:tag:list',      'price-tag',      'admin', '2024-01-01 00:00:00', '', NULL, '标签管理'),
+(203, '资源管理', 3,    4, 'resource',        'operation/resource/index', '', 1, 0, 'C', '0', '0', 'community:resource:list', 'folder-opened', 'admin', '2024-01-01 00:00:00', '', NULL, '下载资源与审核'),
+(204, '文章管理', 3,    5, 'article',         'operation/article/index', '', 1, 0, 'C', '0', '0', 'community:article:list',  'document',       'admin', '2024-01-01 00:00:00', '', NULL, '文章与审核'),
+(205, '评论管理', 3,    6, 'comment',         'operation/comment/index', '', 1, 0, 'C', '0', '0', 'community:comment:list',  'chat-dot-round', 'admin', '2024-01-01 00:00:00', '', NULL, '评论管理'),
+(206, '内容审核', 3,    7, 'review',          'operation/review/index', '', 1, 0, 'C', '0', '0', 'community:review:list',   'finished',       'admin', '2024-01-01 00:00:00', '', NULL, 'Flowable 内容审核'),
 -- 系统管理-用户管理按钮
 (1000, '用户查询', 100, 1, '', NULL, '', 1, 0, 'F', '0', '0', 'system:user:query',  '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
 (1001, '用户新增', 100, 2, '', NULL, '', 1, 0, 'F', '0', '0', 'system:user:add',    '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
@@ -609,27 +622,38 @@ INSERT INTO `sys_menu` VALUES
 (1051, '公告新增', 105, 2, '', NULL, '', 1, 0, 'F', '0', '0', 'system:notice:add',    '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
 (1052, '公告修改', 105, 3, '', NULL, '', 1, 0, 'F', '0', '0', 'system:notice:edit',   '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
 (1053, '公告删除', 105, 4, '', NULL, '', 1, 0, 'F', '0', '0', 'system:notice:remove', '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
--- 社区管理（目录 + 内容审核）
-(2000, '社区管理', 0,   2, 'community',      NULL,            '', 1, 0, 'M', '0', '0', '',                    'star',            'admin', '2024-01-01 00:00:00', '', NULL, '社区管理目录'),
-(2001, '内容审核', 2000, 1, 'review',        'community/review/index', '', 1, 0, 'C', '0', '0', 'community:review:list', 'finished',      'admin', '2024-01-01 00:00:00', '', NULL, '内容审核菜单'),
-(2002, '审核通过', 2001, 1, '', NULL, '', 1, 0, 'F', '0', '0', 'community:review:edit', '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
-(2003, '审核拒绝', 2001, 2, '', NULL, '', 1, 0, 'F', '0', '0', 'community:review:edit', '#', 'admin', '2024-01-01 00:00:00', '', NULL, '');
+-- 系统管理-用户管理按钮（补充导出/导入）
+(1005, '用户导出', 100, 6, '', NULL, '', 1, 0, 'F', '0', '0', 'system:user:export',   '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+(1006, '用户导入', 100, 7, '', NULL, '', 1, 0, 'F', '0', '0', 'system:user:import',   '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+-- 系统管理-角色导出按钮
+(1014, '角色导出', 101, 5, '', NULL, '', 1, 0, 'F', '0', '0', 'system:role:export',   '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+-- 系统管理-字典导出按钮
+(1034, '字典导出', 103, 5, '', NULL, '', 1, 0, 'F', '0', '0', 'system:dict:export',   '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+-- 系统管理-参数导出按钮
+(1044, '参数导出', 104, 5, '', NULL, '', 1, 0, 'F', '0', '0', 'system:config:export', '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+-- 系统管理-日志管理按钮（操作日志 / 登录日志）
+(1060, '操作日志删除', 106, 1, '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:operlog:remove',    '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+(1061, '操作日志导出', 106, 2, '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:operlog:export',    '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+(1062, '登录日志删除', 106, 3, '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:logininfor:remove', '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+(1063, '登录日志导出', 106, 4, '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:logininfor:export', '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+(1064, '账户解锁',     106, 5, '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:logininfor:unlock', '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+-- 系统监控-在线用户按钮
+(1080, '强退用户', 110, 1, '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:online:forceLogout', '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+-- 网站运营-内容审核按钮
+(3000, '审核通过', 206, 1, '', NULL, '', 1, 0, 'F', '0', '0', 'community:review:edit',      '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+(3001, '审核拒绝', 206, 2, '', NULL, '', 1, 0, 'F', '0', '0', 'community:review:edit',      '#', 'admin', '2024-01-01 00:00:00', '', NULL, '');
 
 -- ----------------------------------------------------------------------------
 -- 4.4 用户-角色 / 角色-菜单 关联
 -- ----------------------------------------------------------------------------
 INSERT INTO `sys_user_role` VALUES (1, 1);
 
-INSERT INTO `sys_role_menu` VALUES
-(1, 1), (1, 100), (1, 101), (1, 102), (1, 103), (1, 104), (1, 105), (1, 106), (1, 107), (1, 108), (1, 109),
-(1, 1000), (1, 1001), (1, 1002), (1, 1003), (1, 1004),
-(1, 1010), (1, 1011), (1, 1012), (1, 1013),
-(1, 1020), (1, 1021), (1, 1022), (1, 1023),
-(1, 1030), (1, 1031), (1, 1032), (1, 1033),
-(1, 1040), (1, 1041), (1, 1042), (1, 1043),
-(1, 1050), (1, 1051), (1, 1052), (1, 1053),
-(1, 2000), (1, 2001), (1, 2002), (1, 2003),
-(2, 2000), (2, 2001);
+-- 角色1（超级管理员）：拥有全部菜单与按钮
+INSERT INTO `sys_role_menu` (role_id, menu_id) SELECT 1, menu_id FROM `sys_menu`;
+
+-- 角色2（普通角色）：仅网站运营模块（只读菜单，无按钮）
+INSERT INTO `sys_role_menu` (role_id, menu_id) VALUES
+(2, 3), (2, 200), (2, 201), (2, 202), (2, 203), (2, 204), (2, 205), (2, 206);
 
 -- ----------------------------------------------------------------------------
 -- 4.5 字典类型

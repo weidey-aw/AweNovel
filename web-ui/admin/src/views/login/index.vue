@@ -47,8 +47,8 @@ async function submit() {
     const token = (res as { token?: string }).token
     if (!token) throw new Error('登录响应缺少 token')
     auth.saveToken(token)
-    await auth.fetchUserInfo()
     ElMessage.success('登录成功')
+    // 动态路由与用户信息由路由守卫统一拉取（/getInfo + /getRouters）
     const redirect = (route.query.redirect as string) || '/dashboard'
     router.push(redirect)
   } catch (err: unknown) {

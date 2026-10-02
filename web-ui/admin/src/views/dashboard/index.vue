@@ -13,10 +13,10 @@ import {
 const router = useRouter()
 
 const stats = ref([
-  { label: '收录游戏', value: '—', icon: VideoPlay, color: '#8b5cf6', path: '/games' },
-  { label: '社区文章', value: '—', icon: Collection, color: '#0ea5e9', path: '/articles' },
-  { label: '注册用户', value: '—', icon: User, color: '#10b981', path: '/users' },
-  { label: '待审核任务', value: '—', icon: Finished, color: '#f59e0b', path: '/review' },
+  { label: '收录游戏', value: '—', icon: VideoPlay, color: '#8b5cf6', path: '/operation/game' },
+  { label: '社区文章', value: '—', icon: Collection, color: '#0ea5e9', path: '/operation/article' },
+  { label: '注册用户', value: '—', icon: User, color: '#10b981', path: '/system/user' },
+  { label: '待审核任务', value: '—', icon: Finished, color: '#f59e0b', path: '/operation/review' },
 ])
 
 const loading = ref(true)
@@ -61,10 +61,10 @@ onMounted(async () => {
       <h3 class="block-title">快捷入口</h3>
       <div class="quick-links">
         <div v-for="l in [
-          { t: '游戏管理', d: '新增 / 编辑 / 删除游戏条目', p: '/games' },
-          { t: '内容审核', d: '处理待审核的游戏、资源与文章', p: '/review' },
-          { t: '资源管理', d: '查看资源列表与下载状态', p: '/resources' },
-          { t: '评论管理', d: '删除违规评论', p: '/comments' },
+          { t: '游戏管理', d: '新增 / 编辑 / 删除游戏条目', p: '/operation/game' },
+          { t: '内容审核', d: '处理待审核的文章与资源', p: '/operation/review' },
+          { t: '资源管理', d: '查看资源列表与下载状态', p: '/operation/resource' },
+          { t: '评论管理', d: '删除违规评论', p: '/operation/comment' },
         ]" :key="l.t" class="quick" @click="router.push(l.p)">
           <b>{{ l.t }}</b>
           <span>{{ l.d }}</span>

@@ -2,50 +2,28 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import {
-  ChatDotRound,
-  DataLine,
-  Document,
-  Finished,
-  FolderOpened,
-  OfficeBuilding,
-  PriceTag,
-  SwitchButton,
-  User,
-  VideoPlay,
-} from '@element-plus/icons-vue'
+import { SwitchButton } from '@element-plus/icons-vue'
 import { logout } from '@gal/shared'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissionStore } from '@/stores/permission'
+import { removeDynamicRoutes } from '@/router'
+import MenuItem from './components/MenuItem.vue'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const permission = usePermissionStore()
 
-const iconMap = {
-  DataLine,
-  VideoPlay,
-  OfficeBuilding,
-  PriceTag,
-  FolderOpened,
-  Document,
-  ChatDotRound,
-  Finished,
-  User,
-}
-
-const menus = [
-  { path: '/dashboard', title: '仪表盘', icon: 'DataLine' },
-  { path: '/games', title: '游戏管理', icon: 'VideoPlay' },
-  { path: '/brands', title: '会社管理', icon: 'OfficeBuilding' },
-  { path: '/tags', title: '标签管理', icon: 'PriceTag' },
-  { path: '/resources', title: '资源管理', icon: 'FolderOpened' },
-  { path: '/articles', title: '文章管理', icon: 'Document' },
-  { path: '/comments', title: '评论管理', icon: 'ChatDotRound' },
-  { path: '/review', title: '内容审核', icon: 'Finished' },
-  { path: '/users', title: '用户管理', icon: 'User' },
-]
+/** 侧边栏菜单：仪表盘 + 后端下发的模块菜单 */
+const menus = computed(() => permission.sidebarMenus)
 
 const activeMenu = computed(() => route.path)
+
+/** 当前展开的一级菜单（按路径首段推断） */
+const defaultOpeneds = computed(() => {
+  const segment = route.path.split('/').filter(Boolean)[0]
+  return segment ? [`/${segment}`] : ['/dashboard']
+})
 
 const currentTitle = computed(() => {
   const matched = route.matched[route.matched.length - 1]
@@ -56,9 +34,11 @@ async function handleLogout() {
   try {
     await logout()
   } catch {
-    /* 忽略 */
+    /* 忽略登出接口异常，本地状态照常清理 */
   }
   auth.clearAuth()
+  permission.reset()
+  removeDynamicRoutes()
   ElMessage.success('已退出登录')
   router.push('/login')
 }
@@ -75,19 +55,20 @@ async function handleLogout() {
           <em>管理后台</em>
         </div>
       </div>
-      <el-menu
-        :default-active="activeMenu"
-        router
-        background-color="transparent"
-        text-color="#a9a9c4"
-        active-text-color="#ffffff"
-        class="side-menu"
-      >
-        <el-menu-item v-for="m in menus" :key="m.path" :index="m.path">
-          <el-icon><component :is="iconMap[m.icon as keyof typeof iconMap]" /></el-icon>
-          <span>{{ m.title }}</span>
-        </el-menu-item>
-      </el-menu>
+      <el-scrollbar class="menu-scroll">
+        <el-menu
+          :default-active="activeMenu"
+          :default-openeds="defaultOpeneds"
+          router
+          unique-opened
+          background-color="transparent"
+          text-color="#a9a9c4"
+          active-text-color="#ffffff"
+          class="side-menu"
+        >
+          <menu-item v-for="item in menus" :key="item.path" :item="item" />
+        </el-menu>
+      </el-scrollbar>
     </el-aside>
 
     <el-container>
@@ -104,7 +85,10 @@ async function handleLogout() {
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item :icon="SwitchButton" @click="handleLogout">退出登录</el-dropdown-item>
+                <el-dropdown-item disabled>
+                  {{ auth.roles.length ? auth.roles.join(' / ') : '无角色' }}
+                </el-dropdown-item>
+                <el-dropdown-item divided :icon="SwitchButton" @click="handleLogout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -113,7 +97,9 @@ async function handleLogout() {
 
       <!-- 主内容 -->
       <el-main class="main">
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <component :is="Component" />
+        </router-view>
       </el-main>
     </el-container>
   </el-container>
@@ -128,7 +114,7 @@ async function handleLogout() {
   background: linear-gradient(180deg, #1e1e30, #161624);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .logo {
@@ -137,6 +123,7 @@ async function handleLogout() {
   gap: 10px;
   padding: 20px 18px;
   color: #fff;
+  flex-shrink: 0;
 }
 
 .logo-icon {
@@ -161,12 +148,18 @@ async function handleLogout() {
   color: #8a8aa8;
 }
 
-.side-menu {
-  border-right: none;
+.menu-scroll {
   flex: 1;
+  overflow-y: auto;
 }
 
-.side-menu :deep(.el-menu-item) {
+.side-menu {
+  border-right: none;
+  padding-bottom: 18px;
+}
+
+.side-menu :deep(.el-menu-item),
+.side-menu :deep(.el-sub-menu__title) {
   height: 46px;
   margin: 2px 10px;
   border-radius: 8px;
@@ -178,9 +171,15 @@ async function handleLogout() {
   box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
 }
 
-.side-menu :deep(.el-menu-item:hover) {
+.side-menu :deep(.el-menu-item:hover),
+.side-menu :deep(.el-sub-menu__title:hover) {
   background: rgba(139, 92, 246, 0.18);
   color: #fff;
+}
+
+.side-menu :deep(.el-sub-menu .el-menu-item) {
+  margin-left: 16px;
+  min-width: auto;
 }
 
 .header {

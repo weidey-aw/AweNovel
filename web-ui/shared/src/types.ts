@@ -262,3 +262,207 @@ export interface CommentQuery extends PageParams {
   targetType?: string
   targetId?: number
 }
+
+/* ---------------- 系统管理（后端返回结构对齐） ---------------- */
+
+/** 角色 sys_role */
+export interface SysRole {
+  roleId: number
+  roleName: string
+  roleKey: string
+  roleSort: number
+  menuCheckStrictly?: boolean
+  status?: string
+  delFlag?: string
+  createTime?: string
+  remark?: string
+  /** 是否已拥有该角色（授权场景） */
+  flag?: boolean
+  /** 菜单权限（提交用） */
+  menuIds?: number[]
+}
+
+/** 菜单 sys_menu */
+export interface SysMenu {
+  menuId: number
+  menuName: string
+  parentId: number
+  orderNum: number
+  path?: string
+  component?: string
+  query?: string
+  isFrame?: string
+  isCache?: string
+  menuType?: string
+  visible?: string
+  status?: string
+  perms?: string
+  icon?: string
+  createTime?: string
+  children?: SysMenu[]
+}
+
+/** 字典类型 sys_dict_type */
+export interface SysDictType {
+  dictId: number
+  dictName: string
+  dictType: string
+  status?: string
+  createTime?: string
+  remark?: string
+}
+
+/** 字典数据 sys_dict_data */
+export interface SysDictData {
+  dictCode: number
+  dictSort: number
+  dictLabel: string
+  dictValue: string
+  dictType: string
+  cssClass?: string
+  listClass?: string
+  isDefault?: string
+  status?: string
+  createTime?: string
+  remark?: string
+}
+
+/** 参数配置 sys_config */
+export interface SysConfig {
+  configId: number
+  configName: string
+  configKey: string
+  configValue: string
+  configType?: string
+  createTime?: string
+  remark?: string
+}
+
+/** 通知公告 sys_notice */
+export interface SysNotice {
+  noticeId: number
+  noticeTitle: string
+  noticeType: string
+  noticeContent: string
+  status?: string
+  createBy?: string
+  createTime?: string
+  remark?: string
+}
+
+/** 操作日志 sys_oper_log */
+export interface SysOperLog {
+  operId: number
+  title?: string
+  businessType?: number
+  method?: string
+  requestMethod?: string
+  operatorType?: number
+  operName?: string
+  operUrl?: string
+  operIp?: string
+  operLocation?: string
+  operParam?: string
+  jsonResult?: string
+  status?: number
+  errorMsg?: string
+  operTime?: string
+  costTime?: number
+}
+
+/** 登录日志 sys_logininfor */
+export interface SysLogininfor {
+  infoId: number
+  userName?: string
+  ipaddr?: string
+  loginLocation?: string
+  browser?: string
+  os?: string
+  status?: string
+  msg?: string
+  loginTime?: string
+}
+
+/** 在线用户 sys_user_online */
+export interface SysOnlineUser {
+  sessionId: string
+  loginName?: string
+  ipaddr?: string
+  loginLocation?: string
+  browser?: string
+  os?: string
+  status?: string
+  startTimestamp?: string
+  lastAccessTime?: string
+  expireTime?: number
+}
+
+/** 缓存名称项 */
+export interface CacheName {
+  cacheName: string
+  remark: string
+}
+
+/** 缓存内容项 */
+export interface CacheValue {
+  cacheName: string
+  cacheKey: string
+  cacheValue: string
+  remark?: string
+}
+
+/** 缓存概览 */
+export interface CacheInfo {
+  info: Record<string, string>
+  dbSize: number
+  commandStats: Array<{ name: string; value: string }>
+}
+
+/** 服务器监控信息 */
+export interface ServerInfo {
+  cpu: { cpuNum: number; total: number; sys: number; used: number; wait: number; free: number }
+  mem: { total: number; used: number; free: number; usage: number }
+  jvm: {
+    total: number
+    max: number
+    free: number
+    version: string
+    home: string
+    name: string
+    startTime: string
+    runTime: string
+    usage: number
+    used: number
+  }
+  sys: { computerName: string; computerIp: string; userDir: string; osName: string; osArch: string }
+  sysFiles: Array<{
+    dirName: string
+    sysTypeName: string
+    typeName: string
+    total: string
+    free: string
+    used: string
+    usage: number
+  }>
+}
+
+/* ---------------- 动态路由（/getRouters 返回结构） ---------------- */
+
+export interface RouterMeta {
+  title?: string
+  icon?: string
+  noCache?: boolean
+  link?: string
+}
+
+export interface RouterVo {
+  name?: string
+  path: string
+  hidden?: boolean
+  redirect?: string
+  component?: string
+  query?: string
+  alwaysShow?: boolean
+  meta?: RouterMeta
+  children?: RouterVo[]
+}

@@ -16,6 +16,8 @@ const PROXY_PATHS = [
   '/ai',
   '/system',
   '/monitor',
+  '/common',
+  '/druid',
   '/profile',
 ]
 

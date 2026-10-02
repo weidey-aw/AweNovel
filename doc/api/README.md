@@ -133,7 +133,7 @@ Authorization: Bearer <token>
 
 | 方法 | 路径 | 权限 | 前端状态 |
 |---|---|---|---|
-| GET | `/system/role/list` | `system:role:list` | ❌ |
+| GET | `/system/role/list` | `system:role:list` | ✅ 查询页 |
 | POST | `/system/role/export` | `system:role:export` | ❌ |
 | GET | `/system/role/{roleId}` | `system:role:query` | ❌ |
 | POST | `/system/role` | `system:role:add` | ❌ |
@@ -151,7 +151,7 @@ Authorization: Bearer <token>
 
 | 方法 | 路径 | 权限 | 前端状态 |
 |---|---|---|---|
-| GET | `/system/menu/list` | `system:menu:list` | ❌ |
+| GET | `/system/menu/list` | `system:menu:list` | ✅ 查询页 |
 | GET | `/system/menu/{menuId}` | `system:menu:query` | ❌ |
 | GET | `/system/menu/treeselect` | 登录 | ❌ |
 | GET | `/system/menu/roleMenuTreeselect/{roleId}` | 登录 | ❌ |
@@ -163,7 +163,7 @@ Authorization: Bearer <token>
 
 | 方法 | 路径 | 权限 | 前端状态 |
 |---|---|---|---|
-| GET | `/system/dict/type/list` | `system:dict:list` | ❌ |
+| GET | `/system/dict/type/list` | `system:dict:list` | ✅ 查询页 |
 | POST | `/system/dict/type/export` | `system:dict:export` | ❌ |
 | GET | `/system/dict/type/{dictId}` | `system:dict:query` | ❌ |
 | POST | `/system/dict/type` | `system:dict:add` | ❌ |
@@ -176,7 +176,7 @@ Authorization: Bearer <token>
 
 | 方法 | 路径 | 权限 | 前端状态 |
 |---|---|---|---|
-| GET | `/system/dict/data/list` | `system:dict:list` | ❌ |
+| GET | `/system/dict/data/list` | `system:dict:list` | ✅ 查询页 |
 | POST | `/system/dict/data/export` | `system:dict:export` | ❌ |
 | GET | `/system/dict/data/{dictCode}` | `system:dict:query` | ❌ |
 | GET | `/system/dict/data/type/{dictType}` | 登录 | ❌ |
@@ -188,7 +188,7 @@ Authorization: Bearer <token>
 
 | 方法 | 路径 | 权限 | 前端状态 |
 |---|---|---|---|
-| GET | `/system/config/list` | `system:config:list` | ❌ |
+| GET | `/system/config/list` | `system:config:list` | ✅ 查询页 |
 | POST | `/system/config/export` | `system:config:export` | ❌ |
 | GET | `/system/config/{configId}` | `system:config:query` | ❌ |
 | GET | `/system/config/configKey/{configKey}` | 登录 | ❌ |
@@ -201,8 +201,8 @@ Authorization: Bearer <token>
 
 | 方法 | 路径 | 权限 | 前端状态 |
 |---|---|---|---|
-| GET | `/system/notice/list` | `system:notice:list` | ❌ |
-| GET | `/system/notice/{noticeId}` | `system:notice:query` | ❌ |
+| GET | `/system/notice/list` | `system:notice:list` | ✅ 查询页 |
+| GET | `/system/notice/{noticeId}` | `system:notice:query` | ✅ 详情弹窗 |
 | POST | `/system/notice` | `system:notice:add` | ❌ |
 | PUT | `/system/notice` | `system:notice:edit` | ❌ |
 | DELETE | `/system/notice/{noticeIds}` | `system:notice:remove` | ❌ |
@@ -211,25 +211,25 @@ Authorization: Bearer <token>
 
 | 方法 | 路径 | 权限 | 前端状态 |
 |---|---|---|---|
-| GET | `/monitor/logininfor/list` | `monitor:logininfor:list` | ❌ |
+| GET | `/monitor/logininfor/list` | `monitor:logininfor:list` | ✅ 查询页 |
 | POST | `/monitor/logininfor/export` | `monitor:logininfor:export` | ❌ |
 | DELETE | `/monitor/logininfor/{infoIds}` | `monitor:logininfor:remove` | ❌ |
 | DELETE | `/monitor/logininfor/clean` | `monitor:logininfor:remove` | ❌ |
 | GET | `/monitor/logininfor/unlock/{userName}` | `monitor:logininfor:unlock` | ❌ |
-| GET | `/monitor/operlog/list` | `monitor:operlog:list` | ❌ |
+| GET | `/monitor/operlog/list` | `monitor:operlog:list` | ✅ 查询页 |
 | POST | `/monitor/operlog/export` | `monitor:operlog:export` | ❌ |
 | DELETE | `/monitor/operlog/{operIds}` | `monitor:operlog:remove` | ❌ |
 | DELETE | `/monitor/operlog/clean` | `monitor:operlog:remove` | ❌ |
-| GET | `/monitor/online/list` | `monitor:online:list` | ❌ |
-| DELETE | `/monitor/online/{tokenId}` | `monitor:online:forceLogout` | ❌ |
-| GET | `/monitor/cache` | `monitor:cache:list` | ❌ |
-| GET | `/monitor/cache/getNames` | `monitor:cache:list` | ❌ |
+| GET | `/monitor/online/list` | `monitor:online:list` | ✅ 查询页 |
+| DELETE | `/monitor/online/{tokenId}` | `monitor:online:forceLogout` | ✅ 强退按钮 |
+| GET | `/monitor/cache` | `monitor:cache:list` | ✅ 概览 |
+| GET | `/monitor/cache/getNames` | `monitor:cache:list` | ✅ 分类列表 |
 | GET | `/monitor/cache/getKeys/{cacheName}` | `monitor:cache:list` | ❌ |
 | GET | `/monitor/cache/getValue/{cacheName}/{cacheKey}` | `monitor:cache:list` | ❌ |
 | DELETE | `/monitor/cache/clearCacheName/{cacheName}` | `monitor:cache:list` | ❌ |
 | DELETE | `/monitor/cache/clearCacheKey/{cacheKey}` | `monitor:cache:list` | ❌ |
 | DELETE | `/monitor/cache/clearCacheAll` | `monitor:cache:list` | ❌ |
-| GET | `/monitor/server` | `monitor:server:list` | ❌ |
+| GET | `/monitor/server` | `monitor:server:list` | ✅ 监控页 |
 
 ### 2.4 游戏库（14）
 
@@ -304,10 +304,13 @@ Authorization: Bearer <token>
 
 | 状态 | 数量 | 占比 |
 |---|---|---|
-| ✅ 已对接（有页面调用） | 47 | 34% |
+| ✅ 已对接（有页面调用） | 61 | 44% |
 | 🔸 仅封装未接页面 | 4 | 3% |
-| ❌ 未封装 | 87 | 63% |
+| ❌ 未封装 | 73 | 53% |
 | **合计** | **138** | 100% |
+
+> 最近一轮管理端改造（动态路由 + 模块化导航）新增对接了 14 个查询类接口：
+> 角色/菜单/字典（类型+数据）/参数/公告列表与公告详情、登录日志/操作日志列表、在线用户列表与强退、缓存概览与分类、服务监控。
 
 按「业务视角」看，你提到的「约 60%」更接近**用户端前台**的完成度：
 
@@ -315,8 +318,8 @@ Authorization: Bearer <token>
 |---|---|---|
 | **用户端（web）核心流程** | ≈ 70% | 登录注册/改密、游戏库+详情、文章列表+详情、评论、评分、资源下载、签到、积分流水、消息、AI 看板娘 均已打通 |
 | **用户端（web）缺失能力** | — | ①发布文章 UI ②发布资源 UI ③关注/粉丝 UI ④收藏与点赞（**后端也没有 REST 接口**，见 §5）⑤`/community/sign` 签到状态 |
-| **管理端（admin）** | ≈ 35% | 已有：游戏/会社/标签 CRUD、文章与资源审核、评论删除、用户列表 |
-| **管理端（admin）缺失能力** | — | 系统管理全套（用户增删改/重置密码/授权、角色、菜单、字典、参数、公告）、系统监控全套（操作日志、登录日志、在线用户、缓存、服务器） |
+| **管理端（admin）** | ≈ 55% | 已有：**动态路由导航（3 大模块 19 个页面）**、游戏/会社/标签 CRUD、文章与资源审核、评论删除、用户/角色/菜单/字典/参数/公告**查询**、日志查询、在线用户（含强退）、缓存/服务监控、Druid 数据监控 |
+| **管理端（admin）缺失能力** | — | 系统管理的**增删改**（用户增删改/重置密码/授权、角色与菜单维护、字典与参数与公告的写操作）、日志的删除/导出/账户解锁、缓存清理、定时任务（后端无接口）、文件上传封装 |
 
 **结论**：前端缺的主要是「**内容生产**（发文章/发资源）」与「**后台系统管理/监控**」两大类，合计约 87 个接口未封装。
 
@@ -343,6 +346,9 @@ Authorization: Bearer <token>
 | 字典 / 参数 / 公告 | `/system/dict/**`、`/system/config/**`、`/system/notice/**`（28 个） | 站点可配置化 |
 | 操作日志 / 登录日志 | `/monitor/operlog/**`、`/monitor/logininfor/**`（9 个） | 审计与排查 |
 | 在线用户 | `/monitor/online/**`（2 个） | 强退与在线监控 |
+
+> **进度更新**：上表各模块的**查询页面已全部完成**（列表 + 分页 + 条件筛选，菜单与页面见 [sql/README.md](../../sql/README.md#菜单与动态路由约定)）；
+> 剩余工作集中在**写操作**：新增/修改/删除、重置密码、角色授权、菜单树维护、缓存清理、日志导出与账户解锁、文件上传封装。
 
 ### P2 — 运维与体验增强
 

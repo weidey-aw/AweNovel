@@ -4,6 +4,8 @@ import type {
   Article,
   ArticleQuery,
   Brand,
+  CacheInfo,
+  CacheName,
   CaptchaResponse,
   Comment,
   CommentQuery,
@@ -19,7 +21,18 @@ import type {
   RegisterParams,
   Resource,
   ReviewTask,
+  RouterVo,
+  ServerInfo,
   SignResult,
+  SysConfig,
+  SysDictData,
+  SysDictType,
+  SysLogininfor,
+  SysMenu,
+  SysNotice,
+  SysOnlineUser,
+  SysOperLog,
+  SysRole,
   SystemUser,
   TableDataInfo,
   Tag,
@@ -57,8 +70,8 @@ export const logout = () => http.post<AjaxResult>('/logout')
 /** GET /getInfo → { code, user, roles, permissions } */
 export const getInfo = () => http.get<AjaxResult<{ user: UserInfo; roles: string[]; permissions: string[] }>>('/getInfo')
 
-/** GET /getRouters（管理端菜单，当前简化未使用） */
-export const getRouters = () => http.get<unknown>('/getRouters')
+/** GET /getRouters（管理端动态路由菜单树） */
+export const getRouters = () => http.get<AjaxResult<RouterVo[]>>('/getRouters')
 
 /** PUT /system/user/profile — 修改个人资料（昵称/邮箱/手机/性别） */
 export const updateProfile = (data: Partial<UserInfo>) =>
@@ -282,4 +295,104 @@ export async function streamChat(options: StreamChatOptions): Promise<string> {
   }
   if (buffer.trim()) flush(buffer)
   return full
+}
+
+/* ================= 系统管理：角色 /system/role ================= */
+
+export const getRoleList = (params: PageParams & { roleName?: string; roleKey?: string; status?: string }) =>
+  http.get<TableDataInfo<SysRole>>('/system/role/list', { params })
+
+export const getRoleDetail = (roleId: number) => http.get<AjaxResult<SysRole>>(`/system/role/${roleId}`)
+
+export const getRoleOptions = () => http.get<AjaxResult<SysRole[]>>('/system/role/optionselect')
+
+export const createRole = (data: Partial<SysRole>) => http.post<AjaxResult>('/system/role', data)
+
+export const updateRole = (data: Partial<SysRole>) => http.put<AjaxResult>('/system/role', data)
+
+export const deleteRoles = (roleIds: string) => http.delete<AjaxResult>(`/system/role/${roleIds}`)
+
+export const changeRoleStatus = (roleId: number, status: string) =>
+  http.put<AjaxResult>('/system/role/changeStatus', { roleId, status })
+
+/* ================= 系统管理：菜单 /system/menu ================= */
+
+export const getMenuList = (params?: { menuName?: string; status?: string }) =>
+  http.get<AjaxResult<SysMenu[]>>('/system/menu/list', { params })
+
+export const getMenuDetail = (menuId: number) => http.get<AjaxResult<SysMenu>>(`/system/menu/${menuId}`)
+
+export const getMenuTreeselect = () =>
+  http.get<AjaxResult<Array<{ id: number; label: string; children?: unknown[] }>>>('/system/menu/treeselect')
+
+export const getRoleMenuTreeselect = (roleId: number) =>
+  http.get<AjaxResult<{ checkedKeys: number[]; menus: unknown[] }>>(`/system/menu/roleMenuTreeselect/${roleId}`)
+
+/* ================= 系统管理：字典 /system/dict ================= */
+
+export const getDictTypeList = (params: PageParams & { dictName?: string; dictType?: string; status?: string }) =>
+  http.get<TableDataInfo<SysDictType>>('/system/dict/type/list', { params })
+
+export const getDictTypeOptions = () => http.get<AjaxResult<SysDictType[]>>('/system/dict/type/optionselect')
+
+export const getDictDataList = (params: PageParams & { dictType?: string; dictLabel?: string; status?: string }) =>
+  http.get<TableDataInfo<SysDictData>>('/system/dict/data/list', { params })
+
+/** 按字典类型取字典项（下拉选项用） */
+export const getDictDataByType = (dictType: string) =>
+  http.get<AjaxResult<SysDictData[]>>(`/system/dict/data/type/${dictType}`)
+
+/* ================= 系统管理：参数 /system/config ================= */
+
+export const getConfigList = (params: PageParams & { configName?: string; configKey?: string; configType?: string }) =>
+  http.get<TableDataInfo<SysConfig>>('/system/config/list', { params })
+
+export const refreshConfigCache = () => http.delete<AjaxResult>('/system/config/refreshCache')
+
+/* ================= 系统管理：公告 /system/notice ================= */
+
+export const getNoticeList = (
+  params: PageParams & { noticeTitle?: string; noticeType?: string; createBy?: string; status?: string },
+) => http.get<TableDataInfo<SysNotice>>('/system/notice/list', { params })
+
+export const getNoticeDetail = (noticeId: number) => http.get<AjaxResult<SysNotice>>(`/system/notice/${noticeId}`)
+
+/* ================= 系统监控 /monitor ================= */
+
+export const getOperlogList = (
+  params: PageParams & { title?: string; operName?: string; status?: number; businessType?: number },
+) => http.get<TableDataInfo<SysOperLog>>('/monitor/operlog/list', { params })
+
+export const getLogininforList = (params: PageParams & { userName?: string; ipaddr?: string; status?: string }) =>
+  http.get<TableDataInfo<SysLogininfor>>('/monitor/logininfor/list', { params })
+
+export const unlockUser = (userName: string) =>
+  http.get<AjaxResult>(`/monitor/logininfor/unlock/${encodeURIComponent(userName)}`)
+
+export const getOnlineUsers = (params: PageParams & { ipaddr?: string; userName?: string }) =>
+  http.get<TableDataInfo<SysOnlineUser>>('/monitor/online/list', { params })
+
+/** 强退在线用户（tokenId 即列表中的 sessionId） */
+export const forceLogout = (tokenId: string) => http.delete<AjaxResult>(`/monitor/online/${tokenId}`)
+
+export const getCacheInfo = () => http.get<AjaxResult<CacheInfo>>('/monitor/cache')
+
+export const getCacheNames = () => http.get<AjaxResult<CacheName[]>>('/monitor/cache/getNames')
+
+export const getServerInfo = () => http.get<AjaxResult<ServerInfo>>('/monitor/server')
+
+/* ================= 通用：文件上传 ================= */
+
+/** 单文件上传，返回 { url 完整地址, fileName 相对路径 } */
+export const uploadFile = (file: File, url = '/common/upload', field = 'file') => {
+  const formData = new FormData()
+  formData.append(field, file)
+  return http.post<{
+    code: number
+    msg: string
+    url: string
+    fileName: string
+    newFileName: string
+    originalFilename: string
+  }>(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
 }
