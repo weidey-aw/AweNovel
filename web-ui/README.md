@@ -39,9 +39,10 @@ pnpm typecheck          # 全量类型检查
 ## 后端联调
 
 - 后端：Spring Boot @ `http://localhost:9090`，context-path 为 `/`。
-- 两个应用的 `vite.config.ts` 均已将 `/login /register /captchaImage /getInfo /getRouters /logout /community /ai /system /monitor /profile` 代理到 9090；`axios` 的 `baseURL` 为 `''`。
+- **接口统一走 `/api` 前缀**：`axios` 的 `baseURL` 为 `'/api'`，两个应用的 `vite.config.ts` 把 `/api` 代理到 9090 并**剥离前缀**（`/api/login` → `http://localhost:9090/login`）；`/profile`（上传文件）与 `/druid`（管理端数据监控）单独代理。
+  > 不要再按 `/login`、`/system` 等 SPA 路由前缀代理，否则刷新页面会被后端 401 拦截。
 - 登录 token 存 `localStorage['token']`，请求拦截器自动附加 `Authorization: Bearer <token>`。
-- AI 看板娘走 `GET /ai/chat?message=...`（SSE），用 `fetch + ReadableStream` 手动解析 `data:` 行（EventSource 无法带 Authorization 头），每次对话消耗 1 积分。
+- AI 看板娘走 `GET /api/ai/chat?message=...`（SSE），用 `fetch + ReadableStream` 手动解析 `data:` 行（EventSource 无法带 Authorization 头），每次对话消耗 1 积分。
 
 ## 验收
 

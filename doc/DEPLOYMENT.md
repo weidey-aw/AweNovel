@@ -233,9 +233,11 @@ server {
     root /var/www/awenovel/web;
     index index.html;
 
-    # 后端接口反向代理
-    location ~ ^/(login|register|register/code|forget/code|forgetPwd|captchaImage|getInfo|getRouters|logout|community|ai|system|monitor|profile|common|code) {
-        proxy_pass http://127.0.0.1:9090;
+    # 后端接口：前端统一走 /api 前缀，这里剥离前缀后转发
+    #   /api/login → http://127.0.0.1:9090/login
+    # 注意 proxy_pass 末尾的 “/” 会把 /api/ 前缀替换掉，不能省略
+    location /api/ {
+        proxy_pass http://127.0.0.1:9090/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -245,7 +247,13 @@ server {
         proxy_read_timeout 300s;
     }
 
-    # 前端路由（history 模式）
+    # 上传文件（后端静态资源映射）
+    location /profile/ {
+        proxy_pass http://127.0.0.1:9090;
+        proxy_set_header Host $host;
+    }
+
+    # 前端路由（history 模式）：放在最后，兜底返回 index.html
     location / {
         try_files $uri $uri/ /index.html;
     }
@@ -262,19 +270,38 @@ server {
     root /var/www/awenovel/admin;
     index index.html;
 
-    location ~ ^/(login|register|register/code|forget/code|forgetPwd|captchaImage|getInfo|getRouters|logout|community|ai|system|monitor|profile|common|code) {
-        proxy_pass http://127.0.0.1:9090;
+    # 后端接口（同上，剥离 /api 前缀）
+    location /api/ {
+        proxy_pass http://127.0.0.1:9090/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    # 上传文件
+    location /profile/ {
+        proxy_pass http://127.0.0.1:9090;
+        proxy_set_header Host $host;
+    }
+
+    # Druid 数据监控台（管理端「数据监控」页 iniframe 内嵌）
+    location /druid/ {
+        proxy_pass http://127.0.0.1:9090;
+        proxy_set_header Host $host;
+    }
+
+    # 前端路由（history 模式）
     location / {
         try_files $uri $uri/ /index.html;
     }
 }
 ```
+
+> ⚠️ **不要**再按 `/login`、`/system`、`/monitor`、`/community` 等前缀代理接口：
+> 这些前缀同时也是前端 SPA 路由（如 `/system/user`），按前缀代理会导致
+> **刷新页面时文档请求被转给后端，返回 401 JSON**（即「刷新页面提示认证失败」的 BUG）。
+> 现在所有接口都在 `/api/` 下，SPA 路由与接口天然隔离。
 
 ```bash
 sudo ln -s /etc/nginx/sites-available/awenovel-web.conf /etc/nginx/sites-enabled/

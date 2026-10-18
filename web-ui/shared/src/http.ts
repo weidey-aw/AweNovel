@@ -27,8 +27,11 @@ export function resolveAssetUrl(url?: string | null): string {
 }
 
 const instance: AxiosInstance = axios.create({
-  // 后端 context-path 为 `/`，真实接口路径即 /login、/community/...，开发环境由 Vite 代理转发
-  baseURL: '',
+  // 所有后端接口统一走 /api 前缀：
+  //   - 前端 SPA 路由（如 /system/user、/login）与后端接口（如 /system/user/list）路径前缀相同，
+  //     若接口不加前缀，浏览器刷新页面时文档请求会被反向代理转给后端而返回 401 JSON；
+  //   - 开发环境由 Vite 代理剥离 /api 前缀转发到 9090，生产环境由 Nginx 剥离（proxy_pass 末尾带 /）。
+  baseURL: '/api',
   timeout: 30000,
 })
 

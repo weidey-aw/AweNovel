@@ -23,9 +23,16 @@
 
 | 环境 | 地址 | 说明 |
 |---|---|---|
-| 开发 | `http://localhost:9090` | context-path 为 `/`，接口路径即下文所列路径 |
-| 前端开发代理 | `http://localhost:5173` / `5174` | Vite 已代理 `/login /register /captchaImage /getInfo /getRouters /logout /community /ai /system /monitor /profile` 到 9090 |
-| 生产 | `https://<域名>` | Nginx 反向代理，静态资源与接口同源 |
+| 后端直连 | `http://localhost:9090` | context-path 为 `/`，接口路径即下文所列路径 |
+| 前端访问（推荐） | `http://localhost:5173`（用户端）/ `5174`（管理端） | 前端所有接口统一带 **`/api`** 前缀，由 Vite 代理剥离后转发到 9090 |
+| 生产 | `https://<域名>` | Nginx 将 `/api/` 剥离前缀转发后端；`/profile/` 转发上传文件 |
+
+> ⚠️ **`/api` 前缀的作用**：前端 SPA 路由（如 `/system/user`、`/login`、`/games`）与后端接口路径前缀重叠，
+> 若接口不带前缀，浏览器**刷新页面**时的文档请求会被反向代理转给后端，返回 401 JSON（表现为「刷新页面提示认证失败」）。
+> 因此：
+> - 前端通过 `axios` 的 `baseURL = '/api'` 调用，例如 `GET /api/system/user/list`（后端实际路径为 `/system/user/list`）；
+> - 开发环境 Vite 代理、生产环境 Nginx 都必须**剥离 `/api` 前缀**后转发；
+> - 下文各接口表格列出的均为**后端实际路径**，实际请求时前端会自动加 `/api` 前缀。
 
 ### 1.2 鉴权
 

@@ -259,7 +259,7 @@ function parsePayload(payload: string): string {
 export async function streamChat(options: StreamChatOptions): Promise<string> {
   const { message, onChunk, signal } = options
   const token = getToken()
-  const url = `/ai/chat?message=${encodeURIComponent(message)}`
+  const url = `/api/ai/chat?message=${encodeURIComponent(message)}`
   const resp = await fetch(url, {
     method: 'GET',
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
