@@ -396,3 +396,83 @@ export const uploadFile = (file: File, url = '/common/upload', field = 'file') =
     originalFilename: string
   }>(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
 }
+
+/* ================= 用户管理 /system/user（管理端完整能力） ================= */
+
+/** 用户分页列表（支持 params[beginTime] / params[endTime] 时间区间） */
+export const getUserList = (params: Record<string, unknown>) =>
+  http.get<TableDataInfo<SystemUser>>('/system/user/list', { params })
+
+/** 用户详情 + 可选角色 + 已分配角色ID */
+export const getUserDetail = (userId: number) =>
+  http.get<{ code: number; msg: string; data?: SystemUser; roles?: SysRole[]; roleIds?: number[] }>(
+    `/system/user/${userId}`,
+  )
+
+/** 新增用户（roleIds 用于同时分配角色） */
+export const createUser = (data: Partial<SystemUser> & { password?: string }) =>
+  http.post<AjaxResult>('/system/user', data)
+
+/** 修改用户 */
+export const updateUser = (data: Partial<SystemUser>) => http.put<AjaxResult>('/system/user', data)
+
+/** 删除用户（多个 ID 逗号分隔） */
+export const deleteUsers = (userIds: string) => http.delete<AjaxResult>(`/system/user/${userIds}`)
+
+/**
+ * 系统自动重置密码：后端生成 8 位数字+字母随机密码，并通过邮件通知用户。
+ * 权限：system:user:resetPwd
+ */
+export const resetUserPwdAuto = (userId: number) =>
+  http.put<AjaxResult>('/system/user/resetPwd', { userId })
+
+/**
+ * 管理员手动重置密码：指定新密码，并邮件通知用户。
+ * 权限：system:user:resetPwdManual（独立权限）
+ */
+export const resetUserPwdManual = (userId: number, password: string) =>
+  http.put<AjaxResult>('/system/user/resetPwdManual', { userId, password })
+
+/** 修改用户状态（0 正常 / 1 停用） */
+export const changeUserStatus = (userId: number, status: string) =>
+  http.put<AjaxResult>('/system/user/changeStatus', { userId, status })
+
+/** 查询用户已授权角色（roles[].flag = true 表示已拥有） */
+export const getUserAuthRole = (userId: number) =>
+  http.get<{ code: number; msg: string; user?: SystemUser; roles?: SysRole[] }>(
+    `/system/user/authRole/${userId}`,
+  )
+
+/** 保存用户授权角色（全量覆盖） */
+export const setUserAuthRole = (userId: number, roleIds: number[]) =>
+  http.put<AjaxResult>('/system/user/authRole', null, {
+    params: { userId, roleIds: roleIds.join(',') },
+  })
+
+/** 修改指定用户头像（管理端），field 固定 avatarfile */
+export const uploadUserAvatar = (userId: number, file: File) => {
+  const formData = new FormData()
+  formData.append('avatarfile', file)
+  return http.post<{ code: number; msg: string; imgUrl?: string }>(`/system/user/avatar?userId=${userId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+/** 导出用户（Excel 二进制），params 与列表查询条件一致 */
+export const exportUsers = (params: Record<string, unknown>) =>
+  http.post<Blob>('/system/user/export', null, { params, responseType: 'blob', timeout: 60000 })
+
+/** 导入用户（Excel） */
+export const importUsers = (file: File, updateSupport: boolean) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('updateSupport', String(updateSupport))
+  return http.post<AjaxResult>('/system/user/importData', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000,
+  })
+}
+
+/** 下载用户导入模板（Excel 二进制） */
+export const downloadUserTemplate = () =>
+  http.post<Blob>('/system/user/importTemplate', null, { responseType: 'blob', timeout: 60000 })

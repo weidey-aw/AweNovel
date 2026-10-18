@@ -72,6 +72,7 @@ INSERT INTO `sys_menu` VALUES
 (1004, '重置密码', 100, 5, '', NULL, '', 1, 0, 'F', '0', '0', 'system:user:resetPwd', '#', 'admin', NOW(), '', NULL, ''),
 (1005, '用户导出', 100, 6, '', NULL, '', 1, 0, 'F', '0', '0', 'system:user:export',   '#', 'admin', NOW(), '', NULL, ''),
 (1006, '用户导入', 100, 7, '', NULL, '', 1, 0, 'F', '0', '0', 'system:user:import',   '#', 'admin', NOW(), '', NULL, ''),
+(1007, '手动重置密码', 100, 8, '', NULL, '', 1, 0, 'F', '0', '0', 'system:user:resetPwdManual', '#', 'admin', NOW(), '', NULL, '管理员指定新密码进行重置'),
 (1010, '角色查询', 101, 1, '', NULL, '', 1, 0, 'F', '0', '0', 'system:role:query',    '#', 'admin', NOW(), '', NULL, ''),
 (1011, '角色新增', 101, 2, '', NULL, '', 1, 0, 'F', '0', '0', 'system:role:add',      '#', 'admin', NOW(), '', NULL, ''),
 (1012, '角色修改', 101, 3, '', NULL, '', 1, 0, 'F', '0', '0', 'system:role:edit',     '#', 'admin', NOW(), '', NULL, ''),

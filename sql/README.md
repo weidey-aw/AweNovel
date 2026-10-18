@@ -5,6 +5,7 @@
 | `awe_novel.sql` | 全新安装初始化脚本：建库 `awe_novel` + 全部建表 + 初始数据（管理员、角色、菜单、字典、参数、等级配置等） |
 | `migrate_to_awe_novel.sql` | 旧库迁移脚本：将已有旧库（默认 `sp_awblog`）全量复制到 `awe_novel`（结构+数据+索引+自增，含 Flowable 表） |
 | `upgrade_menu_v2.sql` | **菜单结构升级脚本**：把 `sys_menu` / `sys_role_menu` 重建为「系统管理 / 系统监控 / 网站运营」三大模块，供管理端动态路由（`/getRouters`）使用；可重复执行 |
+| `upgrade_user_perm.sql` | **权限增量升级**：新增「手动重置密码」按钮权限 `system:user:resetPwdManual`（重置密码拆分为系统自动 / 管理员手动两种模式）；可重复执行 |
 
 ## 使用方式
 
@@ -17,6 +18,9 @@ mysql -uroot -p --default-character-set=utf8mb4 < sql/migrate_to_awe_novel.sql
 
 # 已有 awe_novel 库、仅需升级菜单结构（管理端动态导航）
 mysql -uroot -p --default-character-set=utf8mb4 < sql/upgrade_menu_v2.sql
+
+# 已有 awe_novel 库、需新增「手动重置密码」权限
+mysql -uroot -p --default-character-set=utf8mb4 < sql/upgrade_user_perm.sql
 ```
 
 ## 菜单与动态路由约定

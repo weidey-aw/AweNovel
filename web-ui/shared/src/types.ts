@@ -241,8 +241,32 @@ export interface SystemUser {
   phonenumber?: string
   sex?: string
   status?: string
+  delFlag?: string
+  loginIp?: string
+  loginDate?: string
   createTime?: string
+  updateTime?: string
   remark?: string
+  /** 角色ID数组（新增/修改时提交） */
+  roleIds?: number[]
+  /** 角色列表（详情返回，非表字段） */
+  roles?: SysRole[]
+}
+
+/** 用户授权角色数据（GET /system/user/authRole/{userId}） */
+export interface UserAuthRoleData {
+  user: SystemUser
+  roles: SysRole[]
+}
+
+/** 用户列表查询参数（分页参数之外的条件） */
+export interface UserQuery extends PageParams {
+  userName?: string
+  phonenumber?: string
+  status?: string
+  /** 创建时间起止，由前端转换为 params[beginTime] / params[endTime] */
+  beginTime?: string
+  endTime?: string
 }
 
 /* ---------------- 查询参数 ---------------- */

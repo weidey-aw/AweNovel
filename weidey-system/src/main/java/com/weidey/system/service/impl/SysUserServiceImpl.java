@@ -500,6 +500,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 if (StringUtils.isNull(u))
                 {
                     BeanValidators.validateWithException(validator, user);
+                    // 导入文件中可能带有原用户ID（用户序号列），插入时必须清空，
+                    // 否则会与已存在/已逻辑删除的记录主键冲突
+                    user.setUserId(null);
+                    user.setDelFlag(null);
                     user.setPassword(SecurityUtils.encryptPassword(password));
                     user.setCreateBy(operName);
                     save(user);

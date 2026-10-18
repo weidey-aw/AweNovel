@@ -1,6 +1,5 @@
 package com.weidey.web.controller.system;
 
-
 import com.weidey.common.core.domain.AjaxResult;
 import com.weidey.common.core.domain.model.EmailBody;
 import com.weidey.common.core.domain.param.EmailCodeParam;

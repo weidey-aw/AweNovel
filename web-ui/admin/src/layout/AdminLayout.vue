@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { SwitchButton } from '@element-plus/icons-vue'
 import { logout } from '@gal/shared'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissionStore } from '@/stores/permission'
+import { useTagsViewStore } from '@/stores/tagsView'
 import { removeDynamicRoutes } from '@/router'
 import MenuItem from './components/MenuItem.vue'
+import TagsView from './components/TagsView.vue'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const permission = usePermissionStore()
+const tagsView = useTagsViewStore()
 
 /** 侧边栏菜单：仪表盘 + 后端下发的模块菜单 */
 const menus = computed(() => permission.sidebarMenus)
@@ -30,6 +33,14 @@ const currentTitle = computed(() => {
   return (matched?.meta?.title as string) || '管理后台'
 })
 
+/** 视图刷新：改变 key 强制重建当前页面 */
+const refreshSeq = ref(0)
+const viewKey = computed(() => `${route.fullPath}#${refreshSeq.value}`)
+
+function refreshView() {
+  refreshSeq.value += 1
+}
+
 async function handleLogout() {
   try {
     await logout()
@@ -38,6 +49,7 @@ async function handleLogout() {
   }
   auth.clearAuth()
   permission.reset()
+  tagsView.reset()
   removeDynamicRoutes()
   ElMessage.success('已退出登录')
   router.push('/login')
@@ -95,10 +107,13 @@ async function handleLogout() {
         </div>
       </el-header>
 
+      <!-- 路由标签卡 -->
+      <tags-view @refresh="refreshView" />
+
       <!-- 主内容 -->
       <el-main class="main">
         <router-view v-slot="{ Component }">
-          <component :is="Component" />
+          <component :is="Component" :key="viewKey" />
         </router-view>
       </el-main>
     </el-container>

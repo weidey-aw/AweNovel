@@ -71,7 +71,6 @@ onMounted(loadCaptcha)
         <h2>AweNovel · 管理后台</h2>
         <p>请使用管理员账号登录</p>
       </div>
-
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" size="large" @keyup.enter="submit">
         <el-form-item label="用户名" prop="username">
           <el-input v-model="form.username" placeholder="请输入用户名" autocomplete="username" />

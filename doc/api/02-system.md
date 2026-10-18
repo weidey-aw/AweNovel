@@ -122,17 +122,55 @@
 
 **响应**：`{"code":200,"msg":"操作成功"}`；不允许删除当前登录用户（`{"code":500,"msg":"当前用户不能删除"}`）
 
-### 1.6 重置密码
+### 1.6 重置密码（系统自动）
 
 `PUT /system/user/resetPwd` · 权限 `system:user:resetPwd`
 
+**请求体**：仅需用户ID（**不需要**传密码，密码由后端生成）
+
 ```json
-{ "userId": 2, "password": "newPwd123" }
+{ "userId": 2 }
 ```
 
-**响应**：`{ "code": 200, "msg": "密码重置成功" }`
+**响应**
 
-**备注**：重置成功后后端会**向该用户邮箱发送通知邮件**（标题「AweNovel 提示,您的密码已重置」，正文含新密码）。需配置邮箱，否则发送失败但不影响重置结果。
+```json
+{ "code": 200, "msg": "密码重置成功，新密码已通过邮件发送给用户" }
+```
+
+**规则**
+
+- 后端生成 **8 位随机密码**，字符集为数字 + 大小写字母（至少含 1 位数字与 1 位字母），并排除了易混淆字符（`0`/`O`/`1`/`l`/`I`），生成后打乱顺序。
+- 密码以 BCrypt 加密入库；**接口不返回明文密码**。
+- 重置成功后异步向该用户 `email` 发送通知邮件（含新密码）；用户未绑定邮箱时跳过发送并记录警告日志，**不影响重置结果**。
+- 超管账号（`userId=1`）不允许被重置（后端 `checkUserAllowed` 会拒绝）。
+
+### 1.6.1 重置密码（管理员手动指定）
+
+`PUT /system/user/resetPwdManual` · 权限 **`system:user:resetPwdManual`**（独立权限，与自动重置区分）
+
+**请求体**
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `userId` | long | 是 | 目标用户ID |
+| `password` | string | 是 | 新密码明文，长度 **8 ~ 20** |
+
+```json
+{ "userId": 2, "password": "Manual123456" }
+```
+
+**响应**
+
+```json
+{ "code": 200, "msg": "密码重置成功，新密码已通过邮件发送给用户" }
+{ "code": 500, "msg": "密码长度需在 8 到 20 个字符之间" }
+```
+
+**备注**
+
+- 权限 `system:user:resetPwdManual` 需在「角色管理 → 分配菜单」中单独授予；管理员角色（`role_key=admin`）拥有全部权限。
+- 同样会异步发送含新密码的通知邮件。
 
 ### 1.7 修改用户状态
 
@@ -170,20 +208,48 @@
 
 `POST /system/user/export` · 权限 `system:user:export` · 返回 Excel 流（文件名「用户数据.xlsx」）
 
+> 查询条件与列表一致（`userName` / `phonenumber` / `status` / `params[beginTime]` / `params[endTime]`），不传则导出全部。
+> 前端需以 `responseType: 'blob'` 接收。
+
 ### 1.11 导入用户
 
 `POST /system/user/importData` · 权限 `system:user:import` · `multipart/form-data`
 
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
-| `file` | file | 是 | Excel 文件 |
+| `file` | file | 是 | Excel 文件（.xlsx / .xls） |
 | `updateSupport` | boolean | 否 | 是否允许更新已存在用户 |
 
 **响应**：`{"code":200,"msg":"恭喜您，数据已全部导入成功！共 X 条..."}`
+失败时返回 500 并附带逐条失败原因。
+
+**备注**
+
+- 模板中的「用户序号」列（即 `userId`）**在导入时会被忽略**，新用户由数据库自增分配 ID；
+  该处理避免了「导出→删除→重新导入」时与逻辑删除记录的主键冲突。
+- 新用户初始密码取 `sys_config.sys.user.initPassword`（默认 `123456`）。
 
 ### 1.12 下载导入模板
 
 `POST /system/user/importTemplate` · 登录 · 返回 Excel 模板流
+
+### 1.13 修改用户头像（管理端）
+
+`POST /system/user/avatar` · 权限 `system:user:edit` · `multipart/form-data`
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `userId` | long | 是 | 目标用户ID（form 字段） |
+| `avatarfile` | file | 是 | 图片（bmp / gif / jpg / jpeg / png） |
+
+**响应**
+
+```json
+{ "code": 200, "msg": "操作成功", "imgUrl": "/profile/avatar/2024/01/01/xxx_20240101120000A001.png" }
+```
+
+**备注**：`imgUrl` 为相对路径，前端拼域名访问（`/profile/**` 为静态资源映射）。当前登录用户改自己的头像仍用
+`POST /system/user/profile/avatar`（见 [01-auth.md](01-auth.md)）。
 
 ---
 
