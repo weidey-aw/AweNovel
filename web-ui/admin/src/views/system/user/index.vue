@@ -1,7 +1,20 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Download, Key, Plus, Refresh, Search, Upload } from '@element-plus/icons-vue'
+import {
+  ArrowDown,
+  Delete,
+  Download,
+  Edit,
+  Key,
+  MoreFilled,
+  Picture,
+  Plus,
+  Refresh,
+  Search,
+  Upload,
+  UserFilled,
+} from '@element-plus/icons-vue'
 import {
   changeUserStatus,
   createUser,
@@ -22,6 +35,7 @@ import {
 import type { SysRole, SystemUser } from '@gal/shared'
 import { useAuthStore } from '@/stores/auth'
 import { saveBlob } from '@/utils/download'
+import ImageCropper from '@/components/ImageCropper.vue'
 
 const auth = useAuthStore()
 const can = (perm: string) => auth.hasPermi(perm)
@@ -351,54 +365,99 @@ async function submitAuthRole() {
   }
 }
 
-/* ==================== 修改头像 ==================== */
+/* ==================== 更多操作 ==================== */
+
+/** 「更多」下拉菜单命令 */
+function onMoreCommand(command: string, row: SystemUser) {
+  if (command === 'role') openAuthRole(row)
+  else if (command === 'pwd') openResetPwd(row)
+}
+
+/* ==================== 修改头像（点击头像触发，带裁剪） ==================== */
 const avatarDialog = reactive({
   visible: false,
   userId: 0,
   userName: '',
   avatar: '',
+  /** 待裁剪图片的 blob 地址 */
+  cropSrc: '',
   uploading: false,
 })
 const avatarInputRef = ref<HTMLInputElement>()
+const cropperRef = ref<{ toBlob: () => Promise<Blob | null> } | null>(null)
 
 function openAvatar(row: SystemUser) {
+  revokeCropSrc()
   Object.assign(avatarDialog, {
     visible: true,
     userId: row.userId,
     userName: row.userName ?? '',
     avatar: row.avatar ?? '',
+    cropSrc: '',
     uploading: false,
   })
+}
+
+/** 释放 blob 地址，避免内存泄漏 */
+function revokeCropSrc() {
+  if (avatarDialog.cropSrc) {
+    URL.revokeObjectURL(avatarDialog.cropSrc)
+    avatarDialog.cropSrc = ''
+  }
 }
 
 function pickAvatarFile() {
   avatarInputRef.value?.click()
 }
 
-async function onAvatarFileChange(event: Event) {
+function onAvatarFileChange(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   input.value = ''
   if (!file) return
-  if (!/^image\/(jpeg|png|gif|bmp)$/.test(file.type)) {
-    ElMessage.warning('仅支持 jpg / png / gif / bmp 图片')
+  if (!/^image\/(jpeg|png|gif|bmp|webp)$/.test(file.type)) {
+    ElMessage.warning('仅支持 jpg / png / gif / bmp / webp 图片')
     return
   }
   if (file.size > 5 * 1024 * 1024) {
     ElMessage.warning('图片大小不能超过 5MB')
     return
   }
+  revokeCropSrc()
+  avatarDialog.cropSrc = URL.createObjectURL(file)
+}
+
+/** 裁剪并上传 */
+async function submitAvatar() {
+  const cropper = cropperRef.value
+  if (!cropper) {
+    ElMessage.warning('请先选择图片')
+    return
+  }
   avatarDialog.uploading = true
   try {
+    const blob = await cropper.toBlob()
+    if (!blob) {
+      ElMessage.error('图片裁剪失败，请重新选择图片')
+      return
+    }
+    const file = new File([blob], `avatar_${Date.now()}.jpg`, { type: 'image/jpeg' })
     const res = await uploadUserAvatar(avatarDialog.userId, file)
-    avatarDialog.avatar = res.imgUrl ?? ''
+    if (res.imgUrl) avatarDialog.avatar = res.imgUrl
     ElMessage.success('头像修改成功')
+    avatarDialog.visible = false
     load()
   } catch (err: unknown) {
     ElMessage.error(err instanceof Error ? err.message : '头像上传失败')
   } finally {
     avatarDialog.uploading = false
   }
+}
+
+/** 弹窗关闭后清理裁剪资源 */
+function onAvatarDialogClosed() {
+  revokeCropSrc()
+  avatarDialog.uploading = false
 }
 
 /* ==================== 导入 / 导出 / 模板 ==================== */
@@ -529,11 +588,22 @@ onMounted(load)
       <el-table v-loading="loading" :data="list" border stripe @selection-change="onSelectionChange">
         <el-table-column type="selection" width="46" :selectable="(row: SystemUser) => !isSuperAdmin(row)" />
         <el-table-column prop="userId" label="ID" width="70" />
-        <el-table-column label="头像" width="70">
+        <el-table-column label="头像" width="80">
           <template #default="{ row }">
-            <el-avatar :size="32" :src="row.avatar || undefined" class="u-avatar">
-              {{ (row.nickName || row.userName || 'U').slice(0, 1) }}
-            </el-avatar>
+            <el-tooltip
+              :content="can('system:user:edit') ? '点击修改头像' : '无修改头像权限'"
+              placement="top"
+            >
+              <el-avatar
+                :size="34"
+                :src="row.avatar || undefined"
+                class="u-avatar"
+                :class="{ 'u-avatar-clickable': can('system:user:edit') }"
+                @click="can('system:user:edit') && openAvatar(row)"
+              >
+                {{ (row.nickName || row.userName || 'U').slice(0, 1) }}
+              </el-avatar>
+            </el-tooltip>
           </template>
         </el-table-column>
         <el-table-column prop="userName" label="用户账号" min-width="130" />
@@ -558,30 +628,54 @@ onMounted(load)
         <el-table-column prop="createTime" label="创建时间" width="165">
           <template #default="{ row }">{{ row.createTime || '—' }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="290" fixed="right">
+        <el-table-column label="操作" width="215" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="can('system:user:edit')" link type="primary" @click="openEdit(row)">修改</el-button>
             <el-button
-              v-if="can('system:user:resetPwd')"
+              v-if="can('system:user:edit')"
               link
-              type="warning"
-              :icon="Key"
-              :disabled="isSuperAdmin(row)"
-              @click="openResetPwd(row)"
+              type="primary"
+              :icon="Edit"
+              @click="openEdit(row)"
             >
-              重置密码
+              修改
             </el-button>
-            <el-button v-if="can('system:user:edit')" link type="primary" @click="openAuthRole(row)">分配角色</el-button>
-            <el-button v-if="can('system:user:edit')" link type="primary" @click="openAvatar(row)">修改头像</el-button>
             <el-button
               v-if="can('system:user:remove')"
               link
               type="danger"
+              :icon="Delete"
               :disabled="isSuperAdmin(row)"
               @click="handleDelete(row)"
             >
               删除
             </el-button>
+            <el-dropdown
+              v-if="can('system:user:edit') || can('system:user:resetPwd')"
+              trigger="click"
+              class="more-dropdown"
+              @command="(cmd: string) => onMoreCommand(cmd, row)"
+            >
+              <el-button link type="info" :icon="MoreFilled">
+                更多
+                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-if="can('system:user:edit')" command="role">
+                    <el-icon class="act-role"><UserFilled /></el-icon>
+                    <span>分配角色</span>
+                  </el-dropdown-item>
+                  <el-dropdown-item
+                    v-if="can('system:user:resetPwd')"
+                    command="pwd"
+                    :disabled="isSuperAdmin(row)"
+                  >
+                    <el-icon class="act-pwd"><Key /></el-icon>
+                    <span>重置密码</span>
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
@@ -725,17 +819,40 @@ onMounted(load)
       </template>
     </el-dialog>
 
-    <!-- 修改头像弹窗 -->
-    <el-dialog v-model="avatarDialog.visible" title="修改头像" width="420px">
-      <div v-loading="avatarDialog.uploading" class="avatar-box">
-        <el-avatar :size="110" :src="avatarDialog.avatar || undefined" class="u-avatar big">
-          {{ (avatarDialog.userName || 'U').slice(0, 1) }}
-        </el-avatar>
-        <p class="hint">用户：{{ avatarDialog.userName }}</p>
-        <input ref="avatarInputRef" type="file" accept="image/*" hidden @change="onAvatarFileChange" />
-        <el-button type="primary" @click="pickAvatarFile">选择图片并上传</el-button>
-        <p class="hint">支持 jpg / png / gif / bmp，大小不超过 5MB</p>
+    <!-- 修改头像弹窗（点击头像列触发，支持裁剪） -->
+    <el-dialog
+      v-model="avatarDialog.visible"
+      title="修改头像"
+      width="420px"
+      append-to-body
+      @closed="onAvatarDialogClosed"
+    >
+      <div class="avatar-box" v-loading="avatarDialog.uploading">
+        <template v-if="!avatarDialog.cropSrc">
+          <el-avatar :size="110" :src="avatarDialog.avatar || undefined" class="u-avatar big">
+            {{ (avatarDialog.userName || 'U').slice(0, 1) }}
+          </el-avatar>
+          <p class="hint">用户：{{ avatarDialog.userName }}</p>
+          <el-button type="primary" :icon="Picture" @click="pickAvatarFile">选择图片</el-button>
+          <p class="hint">支持 jpg / png / gif / bmp / webp，大小不超过 5MB</p>
+        </template>
+        <template v-else>
+          <ImageCropper ref="cropperRef" :src="avatarDialog.cropSrc" :size="300" />
+        </template>
       </div>
+      <input ref="avatarInputRef" type="file" accept="image/*" hidden @change="onAvatarFileChange" />
+      <template #footer>
+        <el-button @click="avatarDialog.visible = false">取消</el-button>
+        <el-button v-if="avatarDialog.cropSrc" @click="pickAvatarFile">重新选择</el-button>
+        <el-button
+          v-if="avatarDialog.cropSrc"
+          type="primary"
+          :loading="avatarDialog.uploading"
+          @click="submitAvatar"
+        >
+          保存头像
+        </el-button>
+      </template>
     </el-dialog>
 
     <!-- 导入弹窗 -->
@@ -768,6 +885,37 @@ onMounted(load)
 
 .u-avatar.big {
   font-size: 34px;
+}
+
+/* 头像可点击修改 */
+.u-avatar-clickable {
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+  outline: 2px dashed transparent;
+}
+
+.u-avatar-clickable:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 2px #cdc4f7;
+  outline-color: #cdc4f7;
+}
+
+/* 「更多」下拉：图标颜色区分 */
+.more-dropdown {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.act-role {
+  color: #409eff;
+  margin-right: 6px;
+}
+
+.act-pwd {
+  color: #e6a23c;
+  margin-right: 6px;
 }
 
 .hint {
