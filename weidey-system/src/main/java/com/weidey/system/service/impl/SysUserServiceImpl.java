@@ -128,7 +128,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     public Page<SysUser> selectAllocatedPage(Page<SysUser> page, SysUser user)
     {
-        baseMapper.selectAllocatedList(page, user.getRoleId(), user.getUserName(), user.getPhonenumber());
+        // 自定义 Mapper 方法返回 List，MyBatis-Plus 仅回填 total，需手动把结果集放入 page.records
+        page.setRecords(baseMapper.selectAllocatedList(page, user.getRoleId(), user.getUserName(), user.getPhonenumber()));
         return page;
     }
 
@@ -142,7 +143,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     public Page<SysUser> selectUnallocatedPage(Page<SysUser> page, SysUser user)
     {
-        baseMapper.selectUnallocatedList(page, user.getRoleId(), user.getUserName(), user.getPhonenumber());
+        // 同上：手动回填 records
+        page.setRecords(baseMapper.selectUnallocatedList(page, user.getRoleId(), user.getUserName(), user.getPhonenumber()));
         return page;
     }
 
