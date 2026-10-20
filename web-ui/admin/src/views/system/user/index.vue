@@ -2,7 +2,6 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import {
-  ArrowDown,
   Delete,
   Download,
   Edit,
@@ -657,7 +656,6 @@ onMounted(load)
             >
               <el-button link type="info" :icon="MoreFilled">
                 更多
-<!--                <el-icon class="el-icon&#45;&#45;right"><ArrowDown /></el-icon>-->
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>

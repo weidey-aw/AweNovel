@@ -90,8 +90,12 @@ public interface SysUserMapper extends BaseMapper<SysUser>
      * @param roleId 角色ID
      * @return 用户信息集合信息
      */
-    @Select("select distinct u.user_id,u.user_name,u.nick_name,u.email,u.phonenumber,u.status,u.create_time from sys_user u left join sys_user_role ur on u.user_id=ur.user_id where u.del_flag='0' and ur.role_id=#{roleId}")
-    List<SysUser> selectAllocatedList(IPage<SysUser> page, @Param("roleId") Long roleId);
+    @Select("<script>select distinct u.user_id,u.user_name,u.nick_name,u.email,u.phonenumber,u.status,u.create_time from sys_user u left join sys_user_role ur on u.user_id=ur.user_id where u.del_flag='0' and ur.role_id=#{roleId}" +
+            "<if test=\"userName != null and userName != ''\"> and u.user_name like concat('%',#{userName},'%')</if>" +
+            "<if test=\"phonenumber != null and phonenumber != ''\"> and u.phonenumber like concat('%',#{phonenumber},'%')</if>" +
+            " order by u.user_id</script>")
+    List<SysUser> selectAllocatedList(IPage<SysUser> page, @Param("roleId") Long roleId,
+                                      @Param("userName") String userName, @Param("phonenumber") String phonenumber);
 
     /**
      * 根据条件分页查询未分配用户角色列表
@@ -100,6 +104,10 @@ public interface SysUserMapper extends BaseMapper<SysUser>
      * @param roleId 角色ID
      * @return 用户信息集合信息
      */
-    @Select("select distinct u.user_id,u.user_name,u.nick_name,u.email,u.phonenumber,u.status,u.create_time from sys_user u where u.del_flag='0' and u.user_id not in (select user_id from sys_user_role where role_id=#{roleId})")
-    List<SysUser> selectUnallocatedList(IPage<SysUser> page, @Param("roleId") Long roleId);
+    @Select("<script>select distinct u.user_id,u.user_name,u.nick_name,u.email,u.phonenumber,u.status,u.create_time from sys_user u where u.del_flag='0' and u.user_id not in (select user_id from sys_user_role where role_id=#{roleId})" +
+            "<if test=\"userName != null and userName != ''\"> and u.user_name like concat('%',#{userName},'%')</if>" +
+            "<if test=\"phonenumber != null and phonenumber != ''\"> and u.phonenumber like concat('%',#{phonenumber},'%')</if>" +
+            " order by u.user_id</script>")
+    List<SysUser> selectUnallocatedList(IPage<SysUser> page, @Param("roleId") Long roleId,
+                                        @Param("userName") String userName, @Param("phonenumber") String phonenumber);
 }

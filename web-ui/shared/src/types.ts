@@ -306,6 +306,21 @@ export interface SysRole {
   menuIds?: number[]
 }
 
+/** 菜单树节点（角色分配菜单用，由 /system/menu/treeselect 返回） */
+export interface MenuTreeNode {
+  id: number
+  label: string
+  children?: MenuTreeNode[]
+}
+
+/** 角色菜单树数据（/system/menu/roleMenuTreeselect/{roleId}） */
+export interface RoleMenuTreeData {
+  /** 已勾选的菜单ID */
+  checkedKeys: number[]
+  /** 完整菜单树 */
+  menus: MenuTreeNode[]
+}
+
 /** 菜单 sys_menu */
 export interface SysMenu {
   menuId: number

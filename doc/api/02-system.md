@@ -262,7 +262,7 @@
 | 2.1 | `GET /system/role/list` | `system:role:list` | 分页查询。查询参数：`roleName`(模糊)、`roleKey`(模糊)、`status`、`params[beginTime]`、`params[endTime]` |
 | 2.2 | `POST /system/role/export` | `system:role:export` | 导出 Excel |
 | 2.3 | `GET /system/role/{roleId}` | `system:role:query` | 角色详情，返回 `{code,msg,data:SysRole}` |
-| 2.4 | `POST /system/role` | `system:role:add` | 新增，body 含 `roleName`/`roleKey`/`roleSort`/`status`/`remark`/`menuIds`(菜单权限数组)。校验角色名与权限字符唯一 |
+| 2.4 | `POST /system/role` | `system:role:add` | 新增，body 含 `roleName`/`roleKey`/`roleSort`/`status`/`remark`/`menuCheckStrictly`/`menuIds`(菜单权限数组，**必传，无权限传 `[]`，传 null 会 NPE**)。校验角色名与权限字符唯一 |
 | 2.5 | `PUT /system/role` | `system:role:edit` | 修改（同上，含 `roleId`）。修改后会刷新当前登录用户权限缓存 |
 | 2.6 | `PUT /system/role/changeStatus` | `system:role:edit` | body `{roleId, status}` |
 | 2.7 | `DELETE /system/role/{roleIds}` | `system:role:remove` | 支持逗号分隔批量删除 |
@@ -281,6 +281,18 @@
   "rows": [ { "roleId": 1, "roleName": "超级管理员", "roleKey": "admin", "roleSort": 1, "status": "0", "createTime": "2024-01-01 00:00:00" } ]
 }
 ```
+
+**角色管理关键规则**
+
+- 角色与菜单关联为**全量覆盖**（修改时先删后插）。
+- 超级管理员角色（`roleId=1`）不允许修改/删除/停用（后端 `checkRoleAllowed` 拒绝）。
+- **已分配用户的角色不能删除**：`{"code":500,"msg":"xxx已分配,不能删除"}`，需先取消授权。
+- 分配菜单树 `GET /system/menu/roleMenuTreeselect/{roleId}` 的 `checkedKeys` / `menus` 是**顶层字段**（不在 `data` 内）：
+  ```json
+  { "code": 200, "msg": "操作成功", "checkedKeys": [100], "menus": [ { "id": 1, "label": "系统管理", "children": [] } ] }
+  ```
+  > `menuCheckStrictly=true` 时 `checkedKeys` 只返回子节点（父节点由前端树自动勾选）；提交时需把「勾选 + 半选」节点合并为 `menuIds`。
+- `allocatedList` / `unallocatedList` 支持 `userName`、`phonenumber` 模糊筛选（本轮后端补充）。
 
 ---
 

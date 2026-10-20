@@ -14,6 +14,7 @@ import type {
   Game,
   GameQuery,
   LoginParams,
+  MenuTreeNode,
   Message,
   PageParams,
   PointLog,
@@ -21,6 +22,7 @@ import type {
   RegisterParams,
   Resource,
   ReviewTask,
+  RoleMenuTreeData,
   RouterVo,
   ServerInfo,
   SignResult,
@@ -299,7 +301,7 @@ export async function streamChat(options: StreamChatOptions): Promise<string> {
 
 /* ================= 系统管理：角色 /system/role ================= */
 
-export const getRoleList = (params: PageParams & { roleName?: string; roleKey?: string; status?: string }) =>
+export const getRoleList = (params: Record<string, unknown>) =>
   http.get<TableDataInfo<SysRole>>('/system/role/list', { params })
 
 export const getRoleDetail = (roleId: number) => http.get<AjaxResult<SysRole>>(`/system/role/${roleId}`)
@@ -315,6 +317,35 @@ export const deleteRoles = (roleIds: string) => http.delete<AjaxResult>(`/system
 export const changeRoleStatus = (roleId: number, status: string) =>
   http.put<AjaxResult>('/system/role/changeStatus', { roleId, status })
 
+/** 导出角色（Excel 二进制） */
+export const exportRoles = (params: Record<string, unknown>) =>
+  http.post<Blob>('/system/role/export', null, { params, responseType: 'blob', timeout: 60000 })
+
+/** 角色已分配用户列表 */
+export const getRoleAllocatedUsers = (params: PageParams & { roleId: number; userName?: string; phonenumber?: string }) =>
+  http.get<TableDataInfo<SystemUser>>('/system/role/authUser/allocatedList', { params })
+
+/** 角色未分配用户列表 */
+export const getRoleUnallocatedUsers = (
+  params: PageParams & { roleId: number; userName?: string; phonenumber?: string },
+) => http.get<TableDataInfo<SystemUser>>('/system/role/authUser/unallocatedList', { params })
+
+/** 取消单个用户的角色授权 */
+export const cancelRoleAuthUser = (roleId: number, userId: number) =>
+  http.put<AjaxResult>('/system/role/authUser/cancel', { roleId, userId })
+
+/** 批量取消用户角色授权 */
+export const cancelRoleAuthUsers = (roleId: number, userIds: number[]) =>
+  http.put<AjaxResult>('/system/role/authUser/cancelAll', null, {
+    params: { roleId, userIds: userIds.join(',') },
+  })
+
+/** 批量选择用户授权角色 */
+export const selectRoleAuthUsers = (roleId: number, userIds: number[]) =>
+  http.put<AjaxResult>('/system/role/authUser/selectAll', null, {
+    params: { roleId, userIds: userIds.join(',') },
+  })
+
 /* ================= 系统管理：菜单 /system/menu ================= */
 
 export const getMenuList = (params?: { menuName?: string; status?: string }) =>
@@ -322,11 +353,13 @@ export const getMenuList = (params?: { menuName?: string; status?: string }) =>
 
 export const getMenuDetail = (menuId: number) => http.get<AjaxResult<SysMenu>>(`/system/menu/${menuId}`)
 
-export const getMenuTreeselect = () =>
-  http.get<AjaxResult<Array<{ id: number; label: string; children?: unknown[] }>>>('/system/menu/treeselect')
+export const getMenuTreeselect = () => http.get<AjaxResult<MenuTreeNode[]>>('/system/menu/treeselect')
 
+/** 角色菜单树：checkedKeys / menus 为顶层字段（非 data 包裹） */
 export const getRoleMenuTreeselect = (roleId: number) =>
-  http.get<AjaxResult<{ checkedKeys: number[]; menus: unknown[] }>>(`/system/menu/roleMenuTreeselect/${roleId}`)
+  http.get<{ code: number; msg: string; checkedKeys: number[]; menus: MenuTreeNode[] }>(
+    `/system/menu/roleMenuTreeselect/${roleId}`,
+  )
 
 /* ================= 系统管理：字典 /system/dict ================= */
 

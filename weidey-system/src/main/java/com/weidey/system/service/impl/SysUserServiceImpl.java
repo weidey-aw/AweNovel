@@ -128,7 +128,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     public Page<SysUser> selectAllocatedPage(Page<SysUser> page, SysUser user)
     {
-        baseMapper.selectAllocatedList(page, user.getRoleId());
+        baseMapper.selectAllocatedList(page, user.getRoleId(), user.getUserName(), user.getPhonenumber());
         return page;
     }
 
@@ -142,7 +142,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     public Page<SysUser> selectUnallocatedPage(Page<SysUser> page, SysUser user)
     {
-        baseMapper.selectUnallocatedList(page, user.getRoleId());
+        baseMapper.selectUnallocatedList(page, user.getRoleId(), user.getUserName(), user.getPhonenumber());
         return page;
     }
 

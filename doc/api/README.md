@@ -142,19 +142,19 @@ Authorization: Bearer <token>
 
 | 方法 | 路径 | 权限 | 前端状态 |
 |---|---|---|---|
-| GET | `/system/role/list` | `system:role:list` | ✅ 查询页 |
-| POST | `/system/role/export` | `system:role:export` | ❌ |
-| GET | `/system/role/{roleId}` | `system:role:query` | ❌ |
-| POST | `/system/role` | `system:role:add` | ❌ |
-| PUT | `/system/role` | `system:role:edit` | ❌ |
-| PUT | `/system/role/changeStatus` | `system:role:edit` | ❌ |
-| DELETE | `/system/role/{roleIds}` | `system:role:remove` | ❌ |
-| GET | `/system/role/optionselect` | `system:role:query` | ❌ |
-| GET | `/system/role/authUser/allocatedList` | `system:role:list` | ❌ |
-| GET | `/system/role/authUser/unallocatedList` | `system:role:list` | ❌ |
-| PUT | `/system/role/authUser/cancel` | `system:role:edit` | ❌ |
-| PUT | `/system/role/authUser/cancelAll` | `system:role:edit` | ❌ |
-| PUT | `/system/role/authUser/selectAll` | `system:role:edit` | ❌ |
+| GET | `/system/role/list` | `system:role:list` | ✅ 列表+分页+时间区间 |
+| POST | `/system/role/export` | `system:role:export` | ✅ 导出 Excel |
+| GET | `/system/role/{roleId}` | `system:role:query` | ✅ 修改回显 |
+| POST | `/system/role` | `system:role:add` | ✅ 新增（含菜单权限） |
+| PUT | `/system/role` | `system:role:edit` | ✅ 修改（菜单全量覆盖） |
+| PUT | `/system/role/changeStatus` | `system:role:edit` | ✅ 行内开关 |
+| DELETE | `/system/role/{roleIds}` | `system:role:remove` | ✅ 批量删除（已分配用户时拒绝） |
+| GET | `/system/role/optionselect` | `system:role:query` | ✅ 用户表单角色下拉 |
+| GET | `/system/role/authUser/allocatedList` | `system:role:list` | ✅ 分配用户-已分配 |
+| GET | `/system/role/authUser/unallocatedList` | `system:role:list` | ✅ 分配用户-未分配 |
+| PUT | `/system/role/authUser/cancel` | `system:role:edit` | ✅ 取消单个授权 |
+| PUT | `/system/role/authUser/cancelAll` | `system:role:edit` | ✅ 批量取消授权 |
+| PUT | `/system/role/authUser/selectAll` | `system:role:edit` | ✅ 批量授权 |
 
 **菜单管理（7）**
 
@@ -313,17 +313,18 @@ Authorization: Bearer <token>
 
 | 状态 | 数量 | 占比 |
 |---|---|---|
-| ✅ 已对接（有页面调用） | 74 | 53% |
+| ✅ 已对接（有页面调用） | 86 | 61% |
 | 🔸 仅封装未接页面 | 4 | 3% |
-| ❌ 未封装 | 62 | 44% |
+| ❌ 未封装 | 50 | 36% |
 | **合计** | **140** | 100% |
 
-> **本轮（用户管理 + 路由标签卡）新增对接 13 个接口**：用户列表/详情/新增/修改/删除、导出/导入/下载模板、
+> **本轮（角色管理）新增对接 12 个接口**：角色新增/修改（含菜单权限树）、详情回显、状态切换、批量删除、
+> 导出 Excel、已分配/未分配用户列表（支持账号/手机号筛选）、取消单个授权、批量取消授权、批量授权；
+> 后端同步给 `allocatedList` / `unallocatedList` 补上了 `userName` / `phonenumber` 过滤。
+>
+> 上一轮（用户管理 + 路由标签卡）新增对接 13 个接口：用户列表/详情/新增/修改/删除、导出/导入/下载模板、
 > 分配角色（查询+保存）、修改状态、系统自动重置密码、手动重置密码、管理员修改用户头像；
 > 并新增 2 个后端接口（`resetPwdManual`、`avatar`），接口总数 138 → 140。
->
-> 上一轮（动态路由 + 模块化导航）新增对接 14 个查询类接口：角色/菜单/字典（类型+数据）/参数/公告列表与公告详情、
-> 登录日志/操作日志列表、在线用户列表与强退、缓存概览与分类、服务监控。
 
 按「业务视角」看，你提到的「约 60%」更接近**用户端前台**的完成度：
 
@@ -331,10 +332,10 @@ Authorization: Bearer <token>
 |---|---|---|
 | **用户端（web）核心流程** | ≈ 70% | 登录注册/改密、游戏库+详情、文章列表+详情、评论、评分、资源下载、签到、积分流水、消息、AI 看板娘 均已打通 |
 | **用户端（web）缺失能力** | — | ①发布文章 UI ②发布资源 UI ③关注/粉丝 UI ④收藏与点赞（**后端也没有 REST 接口**，见 §5）⑤`/community/sign` 签到状态 |
-| **管理端（admin）** | ≈ 65% | 已有：**动态路由导航 + 路由标签卡**、**用户管理全功能（增删改查/导入导出/分配角色/双模式重置密码/头像）**、游戏/会社/标签 CRUD、文章与资源审核、评论删除、角色/菜单/字典/参数/公告**查询**、日志查询、在线用户（含强退）、缓存/服务监控、Druid 数据监控 |
-| **管理端（admin）缺失能力** | — | 角色/菜单/字典/参数/公告的**增删改**、日志的删除/导出/账户解锁、缓存清理、定时任务（后端无接口） |
+| **管理端（admin）** | ≈ 72% | 已有：**动态路由导航 + 路由标签卡**、**用户管理全功能**（增删改查/导入导出/分配角色/双模式重置密码/头像裁剪）、**角色管理全功能**（增删改查/菜单权限树/分配用户/导出）、游戏/会社/标签 CRUD、文章与资源审核、评论删除、菜单/字典/参数/公告**查询**、日志查询、在线用户（含强退）、缓存/服务监控、Druid 数据监控 |
+| **管理端（admin）缺失能力** | — | 菜单/字典/参数/公告的**增删改**、日志的删除/导出/账户解锁、缓存清理、定时任务（后端无接口） |
 
-**结论**：前端缺的主要是「**内容生产**（发文章/发资源）」与「**后台系统管理/监控**」两大类，合计约 87 个接口未封装。
+**结论**：前端缺的主要是「**内容生产**（发文章/发资源）」与「**后台剩余模块的写操作**」两大类，合计约 50 个接口未封装。
 
 ---
 
