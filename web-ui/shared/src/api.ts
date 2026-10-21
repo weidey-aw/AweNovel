@@ -361,24 +361,73 @@ export const getRoleMenuTreeselect = (roleId: number) =>
     `/system/menu/roleMenuTreeselect/${roleId}`,
   )
 
+export const createMenu = (data: Partial<SysMenu>) => http.post<AjaxResult>('/system/menu', data)
+
+export const updateMenu = (data: Partial<SysMenu>) => http.put<AjaxResult>('/system/menu', data)
+
+export const deleteMenu = (menuId: number) => http.delete<AjaxResult>(`/system/menu/${menuId}`)
+
 /* ================= 系统管理：字典 /system/dict ================= */
 
 export const getDictTypeList = (params: PageParams & { dictName?: string; dictType?: string; status?: string }) =>
   http.get<TableDataInfo<SysDictType>>('/system/dict/type/list', { params })
 
+export const getDictTypeDetail = (dictId: number) =>
+  http.get<AjaxResult<SysDictType>>(`/system/dict/type/${dictId}`)
+
 export const getDictTypeOptions = () => http.get<AjaxResult<SysDictType[]>>('/system/dict/type/optionselect')
+
+export const createDictType = (data: Partial<SysDictType>) => http.post<AjaxResult>('/system/dict/type', data)
+
+export const updateDictType = (data: Partial<SysDictType>) => http.put<AjaxResult>('/system/dict/type', data)
+
+export const deleteDictTypes = (dictIds: string) => http.delete<AjaxResult>(`/system/dict/type/${dictIds}`)
+
+/** 刷新字典缓存 */
+export const refreshDictTypeCache = () => http.delete<AjaxResult>('/system/dict/type/refreshCache')
+
+/** 导出字典类型（Excel） */
+export const exportDictTypes = (params: Record<string, unknown>) =>
+  http.post<Blob>('/system/dict/type/export', null, { params, responseType: 'blob', timeout: 60000 })
 
 export const getDictDataList = (params: PageParams & { dictType?: string; dictLabel?: string; status?: string }) =>
   http.get<TableDataInfo<SysDictData>>('/system/dict/data/list', { params })
+
+export const getDictDataDetail = (dictCode: number) =>
+  http.get<AjaxResult<SysDictData>>(`/system/dict/data/${dictCode}`)
 
 /** 按字典类型取字典项（下拉选项用） */
 export const getDictDataByType = (dictType: string) =>
   http.get<AjaxResult<SysDictData[]>>(`/system/dict/data/type/${dictType}`)
 
+export const createDictData = (data: Partial<SysDictData>) => http.post<AjaxResult>('/system/dict/data', data)
+
+export const updateDictData = (data: Partial<SysDictData>) => http.put<AjaxResult>('/system/dict/data', data)
+
+export const deleteDictData = (dictCodes: string) =>
+  http.delete<AjaxResult>(`/system/dict/data/${dictCodes}`)
+
+/** 导出字典数据（Excel） */
+export const exportDictData = (params: Record<string, unknown>) =>
+  http.post<Blob>('/system/dict/data/export', null, { params, responseType: 'blob', timeout: 60000 })
+
 /* ================= 系统管理：参数 /system/config ================= */
 
 export const getConfigList = (params: PageParams & { configName?: string; configKey?: string; configType?: string }) =>
   http.get<TableDataInfo<SysConfig>>('/system/config/list', { params })
+
+export const getConfigDetail = (configId: number) =>
+  http.get<AjaxResult<SysConfig>>(`/system/config/${configId}`)
+
+export const createConfig = (data: Partial<SysConfig>) => http.post<AjaxResult>('/system/config', data)
+
+export const updateConfig = (data: Partial<SysConfig>) => http.put<AjaxResult>('/system/config', data)
+
+export const deleteConfigs = (configIds: string) => http.delete<AjaxResult>(`/system/config/${configIds}`)
+
+/** 导出参数（Excel） */
+export const exportConfigs = (params: Record<string, unknown>) =>
+  http.post<Blob>('/system/config/export', null, { params, responseType: 'blob', timeout: 60000 })
 
 export const refreshConfigCache = () => http.delete<AjaxResult>('/system/config/refreshCache')
 
@@ -390,14 +439,38 @@ export const getNoticeList = (
 
 export const getNoticeDetail = (noticeId: number) => http.get<AjaxResult<SysNotice>>(`/system/notice/${noticeId}`)
 
+export const createNotice = (data: Partial<SysNotice>) => http.post<AjaxResult>('/system/notice', data)
+
+export const updateNotice = (data: Partial<SysNotice>) => http.put<AjaxResult>('/system/notice', data)
+
+export const deleteNotices = (noticeIds: string) =>
+  http.delete<AjaxResult>(`/system/notice/${noticeIds}`)
+
 /* ================= 系统监控 /monitor ================= */
 
 export const getOperlogList = (
   params: PageParams & { title?: string; operName?: string; status?: number; businessType?: number },
 ) => http.get<TableDataInfo<SysOperLog>>('/monitor/operlog/list', { params })
 
+export const deleteOperLogs = (operIds: string) => http.delete<AjaxResult>(`/monitor/operlog/${operIds}`)
+
+/** 清空操作日志（危险操作，前端需二次确认） */
+export const cleanOperLog = () => http.delete<AjaxResult>('/monitor/operlog/clean')
+
+export const exportOperLog = (params: Record<string, unknown>) =>
+  http.post<Blob>('/monitor/operlog/export', null, { params, responseType: 'blob', timeout: 60000 })
+
 export const getLogininforList = (params: PageParams & { userName?: string; ipaddr?: string; status?: string }) =>
   http.get<TableDataInfo<SysLogininfor>>('/monitor/logininfor/list', { params })
+
+export const deleteLogininfor = (infoIds: string) =>
+  http.delete<AjaxResult>(`/monitor/logininfor/${infoIds}`)
+
+/** 清空登录日志（危险操作，前端需二次确认） */
+export const cleanLogininfor = () => http.delete<AjaxResult>('/monitor/logininfor/clean')
+
+export const exportLogininfor = (params: Record<string, unknown>) =>
+  http.post<Blob>('/monitor/logininfor/export', null, { params, responseType: 'blob', timeout: 60000 })
 
 export const unlockUser = (userName: string) =>
   http.get<AjaxResult>(`/monitor/logininfor/unlock/${encodeURIComponent(userName)}`)

@@ -160,75 +160,75 @@ Authorization: Bearer <token>
 
 | 方法 | 路径 | 权限 | 前端状态 |
 |---|---|---|---|
-| GET | `/system/menu/list` | `system:menu:list` | ✅ 查询页 |
-| GET | `/system/menu/{menuId}` | `system:menu:query` | ❌ |
-| GET | `/system/menu/treeselect` | 登录 | ❌ |
-| GET | `/system/menu/roleMenuTreeselect/{roleId}` | 登录 | ❌ |
-| POST | `/system/menu` | `system:menu:add` | ❌ |
-| PUT | `/system/menu` | `system:menu:edit` | ❌ |
-| DELETE | `/system/menu/{menuId}` | `system:menu:remove` | ❌ |
+| GET | `/system/menu/list` | `system:menu:list` | ✅ 树形列表（前端扁平转树） |
+| GET | `/system/menu/{menuId}` | `system:menu:query` | ✅ 修改回显 |
+| GET | `/system/menu/treeselect` | 登录 | ✅ 上级菜单下拉 |
+| GET | `/system/menu/roleMenuTreeselect/{roleId}` | 登录 | ✅ 角色授权 |
+| POST | `/system/menu` | `system:menu:add` | ✅ 新增（外链/排序/权限标识） |
+| PUT | `/system/menu` | `system:menu:edit` | ✅ 修改 |
+| DELETE | `/system/menu/{menuId}` | `system:menu:remove` | ✅ 删除（含子级校验） |
 
 **字典类型（8）**
 
 | 方法 | 路径 | 权限 | 前端状态 |
 |---|---|---|---|
-| GET | `/system/dict/type/list` | `system:dict:list` | ✅ 查询页 |
-| POST | `/system/dict/type/export` | `system:dict:export` | ❌ |
-| GET | `/system/dict/type/{dictId}` | `system:dict:query` | ❌ |
-| POST | `/system/dict/type` | `system:dict:add` | ❌ |
-| PUT | `/system/dict/type` | `system:dict:edit` | ❌ |
-| DELETE | `/system/dict/type/{dictIds}` | `system:dict:remove` | ❌ |
-| DELETE | `/system/dict/type/refreshCache` | `system:dict:remove` | ❌ |
-| GET | `/system/dict/type/optionselect` | 登录 | ❌ |
+| GET | `/system/dict/type/list` | `system:dict:list` | ✅ 列表 |
+| POST | `/system/dict/type/export` | `system:dict:export` | ✅ 导出 |
+| GET | `/system/dict/type/{dictId}` | `system:dict:query` | ✅ 修改回显 |
+| POST | `/system/dict/type` | `system:dict:add` | ✅ 新增 |
+| PUT | `/system/dict/type` | `system:dict:edit` | ✅ 修改 |
+| DELETE | `/system/dict/type/{dictIds}` | `system:dict:remove` | ✅ 批量删除 |
+| DELETE | `/system/dict/type/refreshCache` | `system:dict:remove` | ✅ 刷新缓存 |
+| GET | `/system/dict/type/optionselect` | 登录 | ✅ 数据表单下拉 |
 
 **字典数据（7）**
 
 | 方法 | 路径 | 权限 | 前端状态 |
 |---|---|---|---|
-| GET | `/system/dict/data/list` | `system:dict:list` | ✅ 查询页 |
-| POST | `/system/dict/data/export` | `system:dict:export` | ❌ |
-| GET | `/system/dict/data/{dictCode}` | `system:dict:query` | ❌ |
-| GET | `/system/dict/data/type/{dictType}` | 登录 | ❌ |
-| POST | `/system/dict/data` | `system:dict:add` | ❌ |
-| PUT | `/system/dict/data` | `system:dict:edit` | ❌ |
-| DELETE | `/system/dict/data/{dictCodes}` | `system:dict:remove` | ❌ |
+| GET | `/system/dict/data/list` | `system:dict:list` | ✅ 列表 |
+| POST | `/system/dict/data/export` | `system:dict:export` | ✅ 导出 |
+| GET | `/system/dict/data/{dictCode}` | `system:dict:query` | ✅ 修改回显 |
+| GET | `/system/dict/data/type/{dictType}` | 登录 | ✅ 按类型取字典项 |
+| POST | `/system/dict/data` | `system:dict:add` | ✅ 新增 |
+| PUT | `/system/dict/data` | `system:dict:edit` | ✅ 修改 |
+| DELETE | `/system/dict/data/{dictCodes}` | `system:dict:remove` | ✅ 批量删除 |
 
 **参数配置（8）**
 
 | 方法 | 路径 | 权限 | 前端状态 |
 |---|---|---|---|
-| GET | `/system/config/list` | `system:config:list` | ✅ 查询页 |
-| POST | `/system/config/export` | `system:config:export` | ❌ |
-| GET | `/system/config/{configId}` | `system:config:query` | ❌ |
-| GET | `/system/config/configKey/{configKey}` | 登录 | ❌ |
-| POST | `/system/config` | `system:config:add` | ❌ |
-| PUT | `/system/config` | `system:config:edit` | ❌ |
-| DELETE | `/system/config/{configIds}` | `system:config:remove` | ❌ |
-| DELETE | `/system/config/refreshCache` | `system:config:remove` | ❌ |
+| GET | `/system/config/list` | `system:config:list` | ✅ 列表 |
+| POST | `/system/config/export` | `system:config:export` | ✅ 导出 |
+| GET | `/system/config/{configId}` | `system:config:query` | ✅ 修改回显 |
+| GET | `/system/config/configKey/{configKey}` | 登录 | ❌ 未使用（前端无此场景） |
+| POST | `/system/config` | `system:config:add` | ✅ 新增 |
+| PUT | `/system/config` | `system:config:edit` | ✅ 修改 |
+| DELETE | `/system/config/{configIds}` | `system:config:remove` | ✅ 批量删除（内置参数禁删） |
+| DELETE | `/system/config/refreshCache` | `system:config:remove` | ✅ 刷新缓存 |
 
 **通知公告（5）**
 
 | 方法 | 路径 | 权限 | 前端状态 |
 |---|---|---|---|
-| GET | `/system/notice/list` | `system:notice:list` | ✅ 查询页 |
+| GET | `/system/notice/list` | `system:notice:list` | ✅ 列表 |
 | GET | `/system/notice/{noticeId}` | `system:notice:query` | ✅ 详情弹窗 |
-| POST | `/system/notice` | `system:notice:add` | ❌ |
-| PUT | `/system/notice` | `system:notice:edit` | ❌ |
-| DELETE | `/system/notice/{noticeIds}` | `system:notice:remove` | ❌ |
+| POST | `/system/notice` | `system:notice:add` | ✅ 新增 |
+| PUT | `/system/notice` | `system:notice:edit` | ✅ 修改 |
+| DELETE | `/system/notice/{noticeIds}` | `system:notice:remove` | ✅ 批量删除 |
 
 ### 2.3 系统监控（19）
 
 | 方法 | 路径 | 权限 | 前端状态 |
 |---|---|---|---|
-| GET | `/monitor/logininfor/list` | `monitor:logininfor:list` | ✅ 查询页 |
-| POST | `/monitor/logininfor/export` | `monitor:logininfor:export` | ❌ |
-| DELETE | `/monitor/logininfor/{infoIds}` | `monitor:logininfor:remove` | ❌ |
-| DELETE | `/monitor/logininfor/clean` | `monitor:logininfor:remove` | ❌ |
-| GET | `/monitor/logininfor/unlock/{userName}` | `monitor:logininfor:unlock` | ❌ |
-| GET | `/monitor/operlog/list` | `monitor:operlog:list` | ✅ 查询页 |
-| POST | `/monitor/operlog/export` | `monitor:operlog:export` | ❌ |
-| DELETE | `/monitor/operlog/{operIds}` | `monitor:operlog:remove` | ❌ |
-| DELETE | `/monitor/operlog/clean` | `monitor:operlog:remove` | ❌ |
+| GET | `/monitor/logininfor/list` | `monitor:logininfor:list` | ✅ 列表 |
+| POST | `/monitor/logininfor/export` | `monitor:logininfor:export` | ✅ 导出 |
+| DELETE | `/monitor/logininfor/{infoIds}` | `monitor:logininfor:remove` | ✅ 批量删除 |
+| DELETE | `/monitor/logininfor/clean` | `monitor:logininfor:remove` | ✅ 清空 |
+| GET | `/monitor/logininfor/unlock/{userName}` | `monitor:logininfor:unlock` | ✅ 账户解锁 |
+| GET | `/monitor/operlog/list` | `monitor:operlog:list` | ✅ 列表 |
+| POST | `/monitor/operlog/export` | `monitor:operlog:export` | ✅ 导出 |
+| DELETE | `/monitor/operlog/{operIds}` | `monitor:operlog:remove` | ✅ 批量删除 |
+| DELETE | `/monitor/operlog/clean` | `monitor:operlog:remove` | ✅ 清空 |
 | GET | `/monitor/online/list` | `monitor:online:list` | ✅ 查询页 |
 | DELETE | `/monitor/online/{tokenId}` | `monitor:online:forceLogout` | ✅ 强退按钮 |
 | GET | `/monitor/cache` | `monitor:cache:list` | ✅ 概览 |
@@ -313,18 +313,20 @@ Authorization: Bearer <token>
 
 | 状态 | 数量 | 占比 |
 |---|---|---|
-| ✅ 已对接（有页面调用） | 86 | 61% |
+| ✅ 已对接（有页面调用） | 122 | 87% |
 | 🔸 仅封装未接页面 | 4 | 3% |
-| ❌ 未封装 | 50 | 36% |
+| ❌ 未封装 | 14 | 10% |
 | **合计** | **140** | 100% |
 
-> **本轮（角色管理）新增对接 12 个接口**：角色新增/修改（含菜单权限树）、详情回显、状态切换、批量删除、
+> **本轮（菜单/字典/参数/公告/日志）新增对接 35 个接口**：
+> 菜单（新增/修改/删除/详情/树选择，支持**树形展示、排序、外链、权限标识**）、
+> 字典类型与字典数据（增删改查/导出/刷新缓存/按类型取项）、
+> 参数配置（增删改查/导出/刷新缓存）、通知公告（增删改查）、
+> 操作日志与登录日志（批量删除/清空/导出/账户解锁）。
+>
+> 上一轮（角色管理）新增对接 12 个接口：角色新增/修改（含菜单权限树）、详情回显、状态切换、批量删除、
 > 导出 Excel、已分配/未分配用户列表（支持账号/手机号筛选）、取消单个授权、批量取消授权、批量授权；
 > 后端同步给 `allocatedList` / `unallocatedList` 补上了 `userName` / `phonenumber` 过滤。
->
-> 上一轮（用户管理 + 路由标签卡）新增对接 13 个接口：用户列表/详情/新增/修改/删除、导出/导入/下载模板、
-> 分配角色（查询+保存）、修改状态、系统自动重置密码、手动重置密码、管理员修改用户头像；
-> 并新增 2 个后端接口（`resetPwdManual`、`avatar`），接口总数 138 → 140。
 
 按「业务视角」看，你提到的「约 60%」更接近**用户端前台**的完成度：
 
@@ -332,10 +334,10 @@ Authorization: Bearer <token>
 |---|---|---|
 | **用户端（web）核心流程** | ≈ 70% | 登录注册/改密、游戏库+详情、文章列表+详情、评论、评分、资源下载、签到、积分流水、消息、AI 看板娘 均已打通 |
 | **用户端（web）缺失能力** | — | ①发布文章 UI ②发布资源 UI ③关注/粉丝 UI ④收藏与点赞（**后端也没有 REST 接口**，见 §5）⑤`/community/sign` 签到状态 |
-| **管理端（admin）** | ≈ 72% | 已有：**动态路由导航 + 路由标签卡**、**用户管理全功能**（增删改查/导入导出/分配角色/双模式重置密码/头像裁剪）、**角色管理全功能**（增删改查/菜单权限树/分配用户/导出）、游戏/会社/标签 CRUD、文章与资源审核、评论删除、菜单/字典/参数/公告**查询**、日志查询、在线用户（含强退）、缓存/服务监控、Druid 数据监控 |
-| **管理端（admin）缺失能力** | — | 菜单/字典/参数/公告的**增删改**、日志的删除/导出/账户解锁、缓存清理、定时任务（后端无接口） |
+| **管理端（admin）** | ≈ 90% | 已有：**动态路由导航 + 路由标签卡**、**用户管理全功能**（增删改查/导入导出/分配角色/双模式重置密码/头像裁剪）、**角色管理全功能**（增删改查/菜单权限树/分配用户/导出）、**菜单管理全功能**（树形/排序/外链/权限标识/增删改）、**字典管理全功能**（类型+数据增删改查/刷新缓存/导出）、**参数管理全功能**、**公告管理全功能**、**日志管理全功能**（删除/清空/导出/账户解锁）、游戏/会社/标签 CRUD、文章与资源审核、评论删除、在线用户（含强退）、缓存/服务监控、Druid 数据监控 |
+| **管理端（admin）缺失能力** | — | 缓存 key 明细与清理、定时任务（后端无接口）、配置项按 key 读取（前端无场景） |
 
-**结论**：前端缺的主要是「**内容生产**（发文章/发资源）」与「**后台剩余模块的写操作**」两大类，合计约 50 个接口未封装。
+**结论**：前端缺的主要是「**内容生产**（发文章/发资源）」的页面，管理端剩余缺口集中在缓存清理与定时任务，合计 14 个接口未封装。
 
 ---
 
@@ -361,8 +363,9 @@ Authorization: Bearer <token>
 | 操作日志 / 登录日志 | `/monitor/operlog/**`、`/monitor/logininfor/**`（9 个） | 审计与排查 |
 | 在线用户 | `/monitor/online/**`（2 个） | 强退与在线监控 |
 
-> **进度更新**：上表各模块的**查询页面已全部完成**（列表 + 分页 + 条件筛选，菜单与页面见 [sql/README.md](../../sql/README.md#菜单与动态路由约定)）；
-> 剩余工作集中在**写操作**：新增/修改/删除、重置密码、角色授权、菜单树维护、缓存清理、日志导出与账户解锁、文件上传封装。
+> **进度更新**：P1 表中的模块**已全部完成**（查询 + 写操作）：用户/角色/菜单/字典/参数/公告管理均为全功能页面，
+> 日志管理含删除/清空/导出/账户解锁，在线用户含强退。
+> 剩余未对接：缓存 key 明细与清理（5 个）、定时任务（后端无接口）。
 
 ### P2 — 运维与体验增强
 

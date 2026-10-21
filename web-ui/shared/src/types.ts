@@ -338,6 +338,7 @@ export interface SysMenu {
   perms?: string
   icon?: string
   createTime?: string
+  remark?: string
   children?: SysMenu[]
 }
 

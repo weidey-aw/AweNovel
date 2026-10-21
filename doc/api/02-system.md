@@ -310,6 +310,17 @@
 | 3.6 | `PUT /system/menu` | `system:menu:edit` | 修改菜单（上级菜单不能选自己） |
 | 3.7 | `DELETE /system/menu/{menuId}` | `system:menu:remove` | 存在子菜单或已分配角色时拒绝，返回 `{"code":601,"msg":"存在子菜单,不允许删除"}` |
 
+**菜单管理关键规则（前端实现要点）**
+
+- **`GET /system/menu/list` 返回扁平列表**（不含 `children`），前端需按 `parentId` 自行构建树（管理端已封装
+  `admin/src/utils/tree.ts` 的 `buildTree`）；`/system/menu/treeselect` 才返回现成的树。
+- **外链**：`isFrame = "0"` 表示是外链，此时 `path` 必须是 `http(s)://` 开头，否则后端返回
+  `{"code":500,"msg":"新增菜单'xxx'失败，地址必须以http(s)://开头"}`；`isFrame = "1"` 表示非外链。
+- **排序**：`orderNum` 升序展示，父级下拉/树与侧边栏顺序均依赖该字段。
+- **权限标识**：`perms` 形如 `system:user:list`；按钮类型（`menuType=F`）必须填写，否则前端不渲染按钮。
+- **类型约束**：`M` 目录（有子级、无组件）、`C` 菜单（需 `path` + `component`）、`F` 按钮（仅 `perms` + `orderNum`）。
+- **删除**：存在子菜单或已被角色引用时拒绝；`visible`(0显示/1隐藏) 只影响导航展示，不影响路由注册。
+
 ---
 
 ## 4. 字典管理
