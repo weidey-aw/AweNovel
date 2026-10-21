@@ -73,4 +73,21 @@ public class ReviewServiceImpl implements ReviewService {
             return m;
         }).collect(Collectors.toList());
     }
+
+    @Override
+    public boolean hasPendingReview(String bizType, Long bizId) {
+        return runtimeService.createProcessInstanceQuery()
+                .processInstanceBusinessKey(bizType + ":" + bizId)
+                .count() > 0;
+    }
+
+    @Override
+    public void cancelReview(String bizType, Long bizId) {
+        List<ProcessInstance> instances = runtimeService.createProcessInstanceQuery()
+                .processInstanceBusinessKey(bizType + ":" + bizId)
+                .list();
+        for (ProcessInstance instance : instances) {
+            runtimeService.deleteProcessInstance(instance.getProcessInstanceId(), "撤回审核");
+        }
+    }
 }

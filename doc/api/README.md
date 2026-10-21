@@ -43,7 +43,8 @@
 Authorization: Bearer <token>
 ```
 
-- Token 有效期默认 **30 分钟**（`token.expireTime`，采用滑动续期：每次请求若剩余时间不足 20 分钟会自动刷新）。
+- Token 有效期默认 **7 天**（`token.expireTime = 10080` 分钟），**滑动续期**：每次通过鉴权的请求都会重新计算有效期并刷新 Redis 缓存，
+  只要在有效期内有访问，登录状态就会一直延续（前台 / 后台一致）。
 - 未登录/Token 失效返回 **HTTP 401**，响应体形如 `{"code":401,"msg":"认证失败，无法访问系统资源"}`。
 - 无权限返回 **HTTP 403**，响应体形如 `{"code":403,"msg":"没有访问权限，请联系管理员"}`。
 
@@ -240,7 +241,7 @@ Authorization: Bearer <token>
 | DELETE | `/monitor/cache/clearCacheAll` | `monitor:cache:list` | ❌ |
 | GET | `/monitor/server` | `monitor:server:list` | ✅ 监控页 |
 
-### 2.4 游戏库（17）
+### 2.4 游戏库（18）
 
 | 方法 | 路径 | 鉴权 | 前端状态 |
 |---|---|---|---|
@@ -250,8 +251,9 @@ Authorization: Bearer <token>
 | GET | `/community/game/admin/list` | `community:game:list` | ✅ 管理端多维筛选 |
 | GET | `/community/game/admin/{gameId}` | `community:game:list` | ✅ 编辑页回显 |
 | POST | `/community/game/publish/{gameId}` | `community:game:publish` | ✅ 提交审核 |
+| POST | `/community/game/withdraw/{gameId}` | `community:game:publish` | ✅ 撤回审核（回到草稿） |
 | POST | `/community/game` | `community:game:add` | ✅ 新增（默认草稿） |
-| PUT | `/community/game` | `community:game:edit` | ✅ 修改 |
+| PUT | `/community/game` | `community:game:edit` | ✅ 修改（审核中禁止） |
 | DELETE | `/community/game/{gameIds}` | `community:game:remove` | ✅ 删除 |
 | GET | `/community/brand/list` | **匿名** | ✅ |
 | POST | `/community/brand` | 登录（**无权限校验，见 §6.2**） | ✅ |
@@ -263,7 +265,7 @@ Authorization: Bearer <token>
 | DELETE | `/community/tag/{ids}` | 登录（同上有风险） | ✅ |
 
 > 游戏状态：`0`下架 / `1`已发布 / `2`待审核 / `3`审核驳回 / `4`草稿；
-> 编辑页支持**存草稿**与**发布**，发布后进入 Flowable 审核，通过才在前台展示。
+> 编辑页支持**存草稿**、**发布**与**撤回**（待审核时只能撤回，撤回后回到草稿才可重新发布）。
 > 详见 [04-community-game.md](04-community-game.md)。
 
 ### 2.5 内容：文章 / 资源 / 评论 / 评分（12）
@@ -320,18 +322,21 @@ Authorization: Bearer <token>
 
 | 状态 | 数量 | 占比 |
 |---|---|---|
-| ✅ 已对接（有页面调用） | 125 | 87% |
+| ✅ 已对接（有页面调用） | 126 | 88% |
 | 🔸 仅封装未接页面 | 4 | 3% |
-| ❌ 未封装 | 14 | 10% |
-| **合计** | **143** | 100% |
+| ❌ 未封装 | 14 | 9% |
+| **合计** | **144** | 100% |
 
-> **本轮（游戏管理重构）新增 3 个后端接口**：管理端列表 `GET /community/game/admin/list`（关键词/会社/**标签多选**/
+> **本轮（游戏发布流程修复 + 前台详情 + Token 策略）**：
+> 新增 `POST /community/game/withdraw/{id}`（撤回审核，回到草稿并取消流程）；
+> 「审核中」禁止修改与重复发布，编辑页在待审核时只显示「撤回」；
+> 前台游戏详情支持轮播图与 Markdown 简介（图片/视频）；
+> Token 有效期改为 **7 天**并**每次请求滑动续期**（前后台一致）。
+>
+> **上一轮（游戏管理重构）新增 3 个后端接口**：管理端列表 `GET /community/game/admin/list`（关键词/会社/**标签多选**/
 > **发售日区间**/状态）、管理端详情 `GET /community/game/admin/{id}`、提交发布 `POST /community/game/publish/{id}`；
 > 并新增 `gal_game.carousel`（轮播图，最多 7 张）字段、游戏状态改为 5 态（下架/已发布/待审核/驳回/草稿）、
 > 审核驳回写入 `status=3`、上传支持 **webp**、上传大小上限提升到 200MB。
->
-> 上一轮（菜单/字典/参数/公告/日志）新增对接 35 个接口：菜单增删改、字典类型与数据增删改查、
-> 参数增删改查、公告增删改、日志删除/清空/导出/账户解锁。
 
 > **本轮（菜单/字典/参数/公告/日志）新增对接 35 个接口**：
 > 菜单（新增/修改/删除/详情/树选择，支持**树形展示、排序、外链、权限标识**）、

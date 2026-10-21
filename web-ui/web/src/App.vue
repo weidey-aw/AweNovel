@@ -1,7 +1,22 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import NavBar from '@/components/NavBar.vue'
 import Footer from '@/components/Footer.vue'
 import ChatMaid from '@/components/ChatMaid.vue'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+
+/**
+ * 刷新页面后仅剩 localStorage 中的 token，需要重新拉取用户信息，
+ * 否则导航栏会表现成「未登录」（昵称 / 头像 / 管理入口丢失）。
+ */
+onMounted(() => {
+  if (!userStore.isLoggedIn) return
+  userStore.fetchUserInfo()
+  userStore.fetchProfile()
+  userStore.fetchUnread()
+})
 </script>
 
 <template>

@@ -1,6 +1,6 @@
 # 04 · 游戏库接口（游戏 / 会社 / 标签）
 
-> 共 17 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
+> 共 18 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
 > 表结构见 [`../../sql/awe_novel.sql`](../../sql/awe_novel.sql)（`gal_game` / `gal_brand` / `gal_tag` / `gal_game_tag`）。
 
 | # | 方法 | 路径 | 鉴权 | 前端状态 |
@@ -22,6 +22,7 @@
 | 15 | POST | `/community/tag` | 登录 | ✅ |
 | 16 | PUT | `/community/tag` | 登录 | ✅ |
 | 17 | DELETE | `/community/tag/{ids}` | 登录 | ✅ |
+| 18 | POST | `/community/game/withdraw/{gameId}` | `community:game:publish` | ✅ 撤回审核（回到草稿） |
 
 > ⚠️ 会社/标签的写接口（11~13、15~17）后端**只校验登录、没有 `@PreAuthorize`**，任何注册用户均可调用
 > （详见 [README §6.2](README.md#62-权限风险后端问题前端需知晓)）。游戏的写接口已补权限校验。
@@ -44,13 +45,24 @@
 
 ```
 编辑页「存草稿」 → status=4
-编辑页「发布」   → 保存内容 + PUT /community/game/publish/{id} → status=2 且启动 Flowable 审核
+编辑页「发布」   → 保存内容 + POST /community/game/publish/{id} → status=2 且启动 Flowable 审核
 管理端「内容审核」通过 → status=1（前台可见）
 管理端「内容审核」驳回 → status=3（需修改后重新发布）
+编辑页「撤回」   → POST /community/game/withdraw/{id} → status=4 且取消审核流程
 ```
 
+**状态机约束（避免重复发布 / 卡死）**
+
+| 当前状态 | 存草稿 | 发布 | 撤回 | 修改(PUT) |
+|---|---|---|---|---|
+| `4` 草稿 / `3` 驳回 | ✅ | ✅ | — | ✅ |
+| `2` 待审核 | ❌（前端禁用，后端拒绝修改） | ❌ | ✅ | ❌ `{"code":500,"msg":"该游戏正在审核中，请先撤回后再修改"}` |
+| `1` 已发布 | ✅（转为草稿） | ❌ | — | ✅ |
+
 - 发布前置校验：`title` 与 `cover` 不能为空，否则返回 `{"code":500,"msg":"请先上传封面图"}`。
-- 重复提交：已是待审核（`2`）时再次发布返回 `{"code":500,"msg":"该游戏已提交审核，请等待审核结果"}`。
+- 已经在审核队列（存在运行中的 Flowable 流程）时再次发布：`{"code":500,"msg":"该游戏已在审核队列中，请先撤回后再发布"}`。
+- 撤回后流程实例被删除（审核列表不再出现），状态回到草稿，可重新编辑并发布；重复撤回已发布/草稿状态返回
+  `{"code":500,"msg":"只有待审核的游戏可以撤回"}`。
 - 审核接口见 [07-review-ai-common.md](07-review-ai-common.md)，`bizType = "game"`。
 
 

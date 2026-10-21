@@ -6,7 +6,7 @@
  */
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Delete, Plus, Upload } from '@element-plus/icons-vue'
 import {
   createGame,
@@ -17,12 +17,13 @@ import {
   resolveAssetUrl,
   updateGame,
   uploadFile,
+  withdrawGame,
 } from '@gal/shared'
 import type { Brand, Game, Tag } from '@gal/shared'
+import { renderMarkdown } from '@gal/shared'
 import { useAuthStore } from '@/stores/auth'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import ImageCropper from '@/components/ImageCropper.vue'
-import { renderMarkdown } from '@/utils/markdown'
 
 const route = useRoute()
 const router = useRouter()
@@ -42,6 +43,7 @@ const MAX_CAROUSEL = 7
 const loading = ref(false)
 const saving = ref(false)
 const publishing = ref(false)
+const withdrawing = ref(false)
 const brands = ref<Brand[]>([])
 const tags = ref<Tag[]>([])
 const carousel = ref<string[]>([])
@@ -66,6 +68,11 @@ const statusInfo = computed(() => STATUS_MAP[form.status ?? '4'] ?? STATUS_MAP['
 const brandName = computed(() => brands.value.find((b) => b.brandId === form.brandId)?.name || '未选择会社')
 const selectedTags = computed(() => tags.value.filter((t) => (form.tagIds ?? []).includes(t.tagId)))
 const previewHtml = computed(() => renderMarkdown(form.summary))
+
+/** 审核中：只能撤回，不能保存草稿或重复发布 */
+const isPending = computed(() => form.status === '2')
+const canSaveDraft = computed(() => form.status !== '2')
+const canPublish = computed(() => form.status !== '2' && form.status !== '1')
 
 function parseCarousel(raw?: string | null): string[] {
   if (!raw) return []
@@ -289,6 +296,30 @@ function goBack() {
   router.push('/operation/game')
 }
 
+/** 撤回审核：待审核 → 草稿，撤销后可再次发布 */
+async function onWithdraw() {
+  if (!form.gameId) return
+  try {
+    await ElMessageBox.confirm(
+      '撤回后状态将回到「草稿」，需重新发布并等待审核。确认撤回吗？',
+      '撤回审核',
+      { type: 'warning', confirmButtonText: '确认撤回' },
+    )
+  } catch {
+    return
+  }
+  withdrawing.value = true
+  try {
+    await withdrawGame(form.gameId)
+    form.status = '4'
+    ElMessage.success('已撤回为草稿')
+  } catch (err: unknown) {
+    ElMessage.error(err instanceof Error ? err.message : '撤回失败')
+  } finally {
+    withdrawing.value = false
+  }
+}
+
 onMounted(() => {
   loadOptions()
   loadDetail()
@@ -306,10 +337,35 @@ onMounted(() => {
         <span v-if="form.gameId" class="head-id">#{{ form.gameId }}</span>
       </div>
       <div class="head-actions">
-        <span class="head-tip">发布后进入「待审核」，审核通过才在前台展示</span>
-        <el-button v-if="can('community:game:edit')" :loading="saving" @click="onSaveDraft">存草稿</el-button>
-        <el-button v-if="can('community:game:publish')" type="primary" :loading="publishing" @click="onPublish">
+        <span class="head-tip">
+          <template v-if="isPending">审核中：可撤回为草稿，撤回后才能重新发布</template>
+          <template v-else-if="form.status === '1'">已发布：编辑后请存草稿再重新发布</template>
+          <template v-else>发布后进入「待审核」，审核通过才在前台展示</template>
+        </span>
+        <el-button
+          v-if="can('community:game:edit')"
+          :loading="saving"
+          :disabled="!canSaveDraft"
+          @click="onSaveDraft"
+        >
+          存草稿
+        </el-button>
+        <el-button
+          v-if="can('community:game:publish') && !isPending"
+          type="primary"
+          :loading="publishing"
+          :disabled="!canPublish"
+          @click="onPublish"
+        >
           发布
+        </el-button>
+        <el-button
+          v-if="can('community:game:publish') && isPending"
+          type="warning"
+          :loading="withdrawing"
+          @click="onWithdraw"
+        >
+          撤回
         </el-button>
       </div>
     </div>

@@ -9,6 +9,7 @@ import {
   getMyRating,
   getResourceList,
   rateGame,
+  renderMarkdown,
   reportResource,
   resolveAssetUrl,
 } from '@gal/shared'
@@ -33,6 +34,31 @@ const downloadTarget = ref<Resource | null>(null)
 const downloadVisible = ref(false)
 const downloadUrl = ref('')
 const downloadPwd = ref('')
+
+/** 轮播图（carousel 为 JSON 数组字符串） */
+const carouselList = computed<string[]>(() => {
+  const raw = game.value?.carousel
+  if (!raw) return []
+  try {
+    const arr = JSON.parse(raw)
+    return Array.isArray(arr) ? arr.filter((item): item is string => typeof item === 'string') : []
+  } catch {
+    return []
+  }
+})
+
+/** 封面 + 轮播图，统一用于展示与预览 */
+const gallery = computed<string[]>(() => {
+  const list: string[] = []
+  if (game.value?.cover) list.push(game.value.cover)
+  for (const item of carouselList.value) {
+    if (!list.includes(item)) list.push(item)
+  }
+  return list.map((item) => resolveAssetUrl(item))
+})
+
+/** 简介按 Markdown 渲染（支持图片 / 视频） */
+const summaryHtml = computed(() => renderMarkdown(game.value?.summary))
 
 async function load() {
   loading.value = true
@@ -136,10 +162,30 @@ onMounted(() => {
     <div v-else-if="game" class="detail">
       <div class="detail-main panel-card">
         <div class="detail-left">
-          <div class="detail-cover">
+          <!-- 轮播图：封面 + 最多 7 张，可点击放大 -->
+          <el-carousel
+            v-if="gallery.length > 1"
+            height="347"
+            :interval="5000"
+            indicator-position="outside"
+            class="detail-carousel"
+          >
+            <el-carousel-item v-for="(img, index) in gallery" :key="index">
+              <el-image
+                :src="img"
+                fit="cover"
+                :preview-src-list="gallery"
+                :initial-index="index"
+                preview-teleported
+                class="carousel-img"
+              />
+            </el-carousel-item>
+          </el-carousel>
+
+          <div v-else class="detail-cover">
             <img
-              v-if="resolveAssetUrl(game.cover)"
-              :src="resolveAssetUrl(game.cover)"
+              v-if="gallery.length"
+              :src="gallery[0]"
               :alt="game.title"
             />
             <div v-else class="cover-fallback">🎮</div>
@@ -194,7 +240,10 @@ onMounted(() => {
       <!-- 简介 / 制作阵容 -->
       <div class="detail-sections">
         <div class="section-title">游戏简介</div>
-        <div class="panel-card summary">{{ game.summary || '暂无简介' }}</div>
+        <div class="panel-card summary md-body">
+          <div v-if="summaryHtml" v-html="summaryHtml" />
+          <p v-else class="text-dim">暂无简介</p>
+        </div>
 
         <div v-if="game.staffPaint || game.staffScenario || game.staffVoice" class="section-title">
           制作阵容
@@ -406,6 +455,94 @@ onMounted(() => {
   white-space: pre-wrap;
   line-height: 1.9;
   color: var(--text-sub);
+}
+
+/* ---------- 轮播图 ---------- */
+.detail-carousel {
+  width: 260px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.carousel-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: zoom-in;
+}
+
+/* ---------- Markdown 简介 ---------- */
+.md-body {
+  white-space: normal;
+  line-height: 1.9;
+  color: var(--text-sub);
+}
+
+.md-body :deep(h1),
+.md-body :deep(h2),
+.md-body :deep(h3) {
+  margin: 18px 0 10px;
+  color: var(--text-main, #f5f5ff);
+  font-size: 17px;
+}
+
+.md-body :deep(p) {
+  margin: 8px 0;
+}
+
+.md-body :deep(ul),
+.md-body :deep(ol) {
+  padding-left: 22px;
+  margin: 8px 0;
+}
+
+.md-body :deep(blockquote) {
+  margin: 10px 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--accent);
+  background: rgba(139, 92, 246, 0.08);
+  border-radius: 6px;
+}
+
+.md-body :deep(.md-img) {
+  max-width: 100%;
+  border-radius: 10px;
+  display: block;
+  margin: 12px 0;
+}
+
+.md-body :deep(.md-video) {
+  width: 100%;
+  max-height: 520px;
+  border-radius: 10px;
+  margin: 12px 0;
+  background: #000;
+}
+
+.md-body :deep(code) {
+  background: rgba(139, 92, 246, 0.14);
+  color: var(--accent);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12.5px;
+}
+
+.md-body :deep(.md-code) {
+  background: rgba(0, 0, 0, 0.35);
+  padding: 12px 14px;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.md-body :deep(a) {
+  color: var(--accent);
+}
+
+.md-body :deep(hr) {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 16px 0;
 }
 
 .staff {

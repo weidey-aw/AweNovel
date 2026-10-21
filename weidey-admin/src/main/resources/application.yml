@@ -57,8 +57,8 @@ token:
   header: Authorization
   # 令牌密钥（至少32字节，生产环境务必通过环境变量覆盖）
   secret: ${TOKEN_SECRET:AweNovel-please-change-this-jwt-secret-key-in-prod-2024}
-  # 令牌有效期（默认30分钟）
-  expireTime: 30
+  # 令牌有效期（分钟，默认 7 天；每次请求会在剩余不足一半时自动续期，实现滑动过期）
+  expireTime: 10080
 
 # AI 看板娘配置（DeepSeek，OpenAI 兼容；生产环境务必通过 DEEPSEEK_API_KEY 注入真实密钥）
 ai:

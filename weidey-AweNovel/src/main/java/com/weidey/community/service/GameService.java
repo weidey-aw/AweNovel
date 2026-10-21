@@ -35,6 +35,16 @@ public interface GameService extends IService<Game> {
     void publishGame(Long gameId);
 
     /**
+     * 撤回审核：状态回到草稿(4) 并取消该游戏的审核流程
+     */
+    void withdrawGame(Long gameId);
+
+    /**
+     * 是否已在审核队列中（存在运行中的流程实例）
+     */
+    boolean hasPendingReview(Long gameId);
+
+    /**
      * 游戏详情（含会社名与标签）
      */
     Game getGameDetail(Long gameId);

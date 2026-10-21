@@ -145,6 +145,10 @@ public class GameController extends BaseController {
         if (game.getGameId() == null) {
             return error("游戏ID不能为空");
         }
+        // 审核中的游戏不允许修改（否则状态与流程会不一致：状态被改成草稿但流程仍挂着）
+        if (gameService.hasPendingReview(game.getGameId())) {
+            return error("该游戏正在审核中，请先撤回后再修改");
+        }
         gameService.updateById(game);
         if (game.getTagIds() != null) {
             gameService.saveGameTags(game.getGameId(), game.getTagIds());
@@ -171,8 +175,28 @@ public class GameController extends BaseController {
         if (STATUS_PENDING.equals(game.getStatus())) {
             return error("该游戏已提交审核，请等待审核结果");
         }
+        if (gameService.hasPendingReview(gameId)) {
+            return error("该游戏已在审核队列中，请先撤回后再发布");
+        }
         gameService.publishGame(gameId);
         return success("已提交审核");
+    }
+
+    /**
+     * 撤回审核：待审核 → 草稿，并取消审核流程（撤回后可重新编辑并发布）
+     */
+    @PreAuthorize("@ss.hasPermi('community:game:publish')")
+    @PostMapping("/withdraw/{gameId}")
+    public AjaxResult withdraw(@PathVariable Long gameId) {
+        Game game = gameService.getById(gameId);
+        if (game == null) {
+            return error("游戏不存在");
+        }
+        if (!STATUS_PENDING.equals(game.getStatus()) && !gameService.hasPendingReview(gameId)) {
+            return error("只有待审核的游戏可以撤回");
+        }
+        gameService.withdrawGame(gameId);
+        return success("已撤回为草稿");
     }
 
     /** 删除游戏（管理） */

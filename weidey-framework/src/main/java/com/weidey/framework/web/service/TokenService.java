@@ -129,19 +129,16 @@ public class TokenService
     }
 
     /**
-     * 验证令牌有效期，相差不足20分钟，自动刷新缓存
+     * 验证令牌有效期并续期（滑动过期）
      *
-     * @param loginUser
-     * @return 令牌
+     * <p>每次通过鉴权的请求都会重新计算有效期并刷新 Redis 缓存，
+     * 因此只要用户在有效期内有过访问，登录状态就会自动延长（默认 7 天）。</p>
+     *
+     * @param loginUser 登录信息
      */
     public void verifyToken(LoginUser loginUser)
     {
-        long expireTime = loginUser.getExpireTime();
-        long currentTime = System.currentTimeMillis();
-        if (expireTime - currentTime <= MILLIS_MINUTE_TEN)
-        {
-            refreshToken(loginUser);
-        }
+        refreshToken(loginUser);
     }
 
     /**

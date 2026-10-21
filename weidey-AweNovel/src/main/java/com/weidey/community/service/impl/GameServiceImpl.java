@@ -99,10 +99,26 @@ public class GameServiceImpl extends ServiceImpl<GameMapper, Game> implements Ga
 
     @Override
     public void publishGame(Long gameId) {
+        if (hasPendingReview(gameId)) {
+            throw new com.weidey.common.exception.ServiceException("该游戏已在审核队列中，请先撤回后再发布");
+        }
         update(new LambdaUpdateWrapper<Game>()
                 .set(Game::getStatus, "2")
                 .eq(Game::getGameId, gameId));
         reviewService.startReview("game", gameId);
+    }
+
+    @Override
+    public void withdrawGame(Long gameId) {
+        reviewService.cancelReview("game", gameId);
+        update(new LambdaUpdateWrapper<Game>()
+                .set(Game::getStatus, "4")
+                .eq(Game::getGameId, gameId));
+    }
+
+    @Override
+    public boolean hasPendingReview(Long gameId) {
+        return reviewService.hasPendingReview("game", gameId);
     }
 
     @Override

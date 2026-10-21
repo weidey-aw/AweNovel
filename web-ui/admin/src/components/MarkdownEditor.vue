@@ -7,8 +7,7 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Picture, VideoCamera } from '@element-plus/icons-vue'
-import { uploadFile } from '@gal/shared'
-import { mdImage, mdVideo } from '@/utils/markdown'
+import { uploadFile, mdImage, mdVideo } from '@gal/shared'
 
 const props = withDefaults(
   defineProps<{

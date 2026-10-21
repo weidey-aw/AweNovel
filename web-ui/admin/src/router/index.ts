@@ -180,7 +180,11 @@ router.beforeEach(async (to) => {
     try {
       await auth.fetchUserInfo()
       addDynamicRoutes(buildRoutes(await permission.generateRoutes()))
-      return { ...to, replace: true }
+      // 注意：不能写 `{ ...to, replace: true }`。
+      // 刷新时动态路由尚未注册，to 已被兜底路由 `/:pathMatch(.*)*` 匹配（name = notFound），
+      // 展开后会带 name 重新导航到 404 页面，表现为「刷新后台 404」。
+      // 这里只按 path 重新解析，路由注册完成后即可命中真实路由。
+      return { path: to.path, query: to.query, hash: to.hash, replace: true }
     } catch (err) {
       auth.clearAuth()
       permission.reset()

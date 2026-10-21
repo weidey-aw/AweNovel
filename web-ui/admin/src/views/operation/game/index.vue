@@ -12,6 +12,7 @@ import {
   resolveAssetUrl,
   updateGame,
   uploadFile,
+  withdrawGame,
 } from '@gal/shared'
 import type { Brand, Game, Tag } from '@gal/shared'
 import { useAuthStore } from '@/stores/auth'
@@ -215,6 +216,26 @@ async function handlePublish(row: Game) {
   }
 }
 
+/** 撤回审核：待审核 → 草稿 */
+async function handleWithdraw(row: Game) {
+  try {
+    await ElMessageBox.confirm(
+      `确认撤回「${row.titleCn || row.title}」的审核吗？撤回后状态回到草稿。`,
+      '撤回审核',
+      { type: 'warning', confirmButtonText: '确认撤回' },
+    )
+  } catch {
+    return
+  }
+  try {
+    await withdrawGame(row.gameId)
+    ElMessage.success('已撤回为草稿')
+    load()
+  } catch (err: unknown) {
+    ElMessage.error(err instanceof Error ? err.message : '撤回失败')
+  }
+}
+
 async function handleDelete(rows?: Game[]) {
   const targets = rows ?? selection.value
   if (!targets.length) {
@@ -378,6 +399,14 @@ onMounted(() => {
               @click="handlePublish(row)"
             >
               发布
+            </el-button>
+            <el-button
+              v-if="can('community:game:publish') && row.status === '2'"
+              link
+              type="warning"
+              @click="handleWithdraw(row)"
+            >
+              撤回
             </el-button>
             <el-button
               v-if="can('community:game:remove')"

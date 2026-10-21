@@ -57,8 +57,12 @@ instance.interceptors.response.use(
     const status: number | undefined = error.response?.status
     if (status === 401) {
       removeToken()
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login'
+      // 仅在「需要登录的页面」跳转登录，避免在首页/列表页刷新时被强制踢走
+      const path = window.location.pathname
+      const protectedPrefixes = ['/user', '/system', '/monitor', '/operation', '/dashboard']
+      const needLogin = protectedPrefixes.some((p) => path === p || path.startsWith(`${p}/`))
+      if (path !== '/login' && needLogin) {
+        window.location.href = `/login?redirect=${encodeURIComponent(path + window.location.search)}`
       }
     }
     const msg: string = error.response?.data?.msg || error.message || '网络错误'

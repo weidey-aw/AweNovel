@@ -28,4 +28,14 @@ public interface ReviewService {
      * 查询待审核任务列表（admin 候选组）
      */
     List<Map<String, Object>> listPendingTasks();
+
+    /**
+     * 是否存在处于审核中的流程实例（businessKey = bizType:bizId）
+     */
+    boolean hasPendingReview(String bizType, Long bizId);
+
+    /**
+     * 撤回审核：删除该业务正在运行的流程实例（若已不存在则忽略）
+     */
+    void cancelReview(String bizType, Long bizId);
 }

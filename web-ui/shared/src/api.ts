@@ -124,6 +124,9 @@ export const getAdminGameDetail = (gameId: number) =>
 /** 提交发布：进入待审核状态（审核通过后前台可见） */
 export const publishGame = (gameId: number) => http.post<AjaxResult>(`/community/game/publish/${gameId}`)
 
+/** 撤回审核：待审核 → 草稿（撤回后可修改并重新发布） */
+export const withdrawGame = (gameId: number) => http.post<AjaxResult>(`/community/game/withdraw/${gameId}`)
+
 /** GET /community/game/tag/all → Tag[] */
 export const getAllTags = () => http.get<AjaxResult<Tag[]> | Tag[]>('/community/game/tag/all')
 
