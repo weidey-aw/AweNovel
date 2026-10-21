@@ -15,6 +15,7 @@ import com.weidey.community.mapper.GameMapper;
 import com.weidey.community.mapper.GameTagMapper;
 import com.weidey.community.mapper.TagMapper;
 import com.weidey.community.service.GameService;
+import com.weidey.community.service.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +40,9 @@ public class GameServiceImpl extends ServiceImpl<GameMapper, Game> implements Ga
     @Autowired
     private GameTagMapper gameTagMapper;
 
+    @Autowired
+    private ReviewService reviewService;
+
     @Override
     public IPage<Game> pageGames(IPage<Game> page, String keyword, Long brandId, Long tagId, String status) {
         LambdaQueryWrapper<Game> wrapper = new LambdaQueryWrapper<>();
@@ -51,14 +55,54 @@ public class GameServiceImpl extends ServiceImpl<GameMapper, Game> implements Ga
         }
         wrapper.orderByDesc(Game::getRatingAvg).orderByDesc(Game::getGameId);
         Page<Game> result = (Page<Game>) baseMapper.selectPage((Page<Game>) page, wrapper);
-        // 填充会社名
-        for (Game game : result.getRecords()) {
+        fillRows(result.getRecords());
+        return result;
+    }
+
+    @Override
+    public IPage<Game> pageAdminGames(IPage<Game> page, String keyword, Long brandId, List<Long> tagIds,
+                                      String status, String beginDate, String endDate) {
+        LambdaQueryWrapper<Game> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(StringUtils.isNotBlank(status), Game::getStatus, status)
+                .eq(brandId != null, Game::getBrandId, brandId)
+                .and(StringUtils.isNotBlank(keyword), w -> w.like(Game::getTitle, keyword)
+                        .or().like(Game::getTitleCn, keyword));
+        if (tagIds != null && !tagIds.isEmpty()) {
+            String idList = tagIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+            wrapper.inSql(Game::getGameId, "select game_id from gal_game_tag where tag_id in (" + idList + ")");
+        }
+        if (StringUtils.isNotBlank(beginDate)) {
+            wrapper.ge(Game::getReleaseDate, beginDate);
+        }
+        if (StringUtils.isNotBlank(endDate)) {
+            wrapper.le(Game::getReleaseDate, endDate);
+        }
+        wrapper.orderByDesc(Game::getUpdateTime).orderByDesc(Game::getGameId);
+        Page<Game> result = (Page<Game>) baseMapper.selectPage((Page<Game>) page, wrapper);
+        fillRows(result.getRecords());
+        return result;
+    }
+
+    /** 填充会社名与标签列表 */
+    private void fillRows(List<Game> games) {
+        if (games == null || games.isEmpty()) {
+            return;
+        }
+        for (Game game : games) {
             if (game.getBrandId() != null) {
                 Brand brand = brandMapper.selectById(game.getBrandId());
                 game.setBrandName(brand != null ? brand.getName() : null);
             }
+            game.setTags(getGameTags(game.getGameId()));
         }
-        return result;
+    }
+
+    @Override
+    public void publishGame(Long gameId) {
+        update(new LambdaUpdateWrapper<Game>()
+                .set(Game::getStatus, "2")
+                .eq(Game::getGameId, gameId));
+        reviewService.startReview("game", gameId);
     }
 
     @Override

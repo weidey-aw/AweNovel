@@ -383,7 +383,7 @@ const avatarDialog = reactive({
   uploading: false,
 })
 const avatarInputRef = ref<HTMLInputElement>()
-const cropperRef = ref<{ toBlob: () => Promise<Blob | null> } | null>(null)
+const cropperRef = ref<{ toFile: (name: string) => Promise<File | null> } | null>(null)
 
 function openAvatar(row: SystemUser) {
   revokeCropSrc()
@@ -435,12 +435,11 @@ async function submitAvatar() {
   }
   avatarDialog.uploading = true
   try {
-    const blob = await cropper.toBlob()
-    if (!blob) {
+    const file = await cropper.toFile('avatar')
+    if (!file) {
       ElMessage.error('图片裁剪失败，请重新选择图片')
       return
     }
-    const file = new File([blob], `avatar_${Date.now()}.jpg`, { type: 'image/jpeg' })
     const res = await uploadUserAvatar(avatarDialog.userId, file)
     if (res.imgUrl) avatarDialog.avatar = res.imgUrl
     ElMessage.success('头像修改成功')

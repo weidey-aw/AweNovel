@@ -1,8 +1,9 @@
 <script setup lang="ts">
 /**
  * 轻量图片裁剪组件（无第三方依赖）
- * - 固定正方形裁剪框，支持拖拽平移、滑块缩放
- * - 通过 expose 的 toBlob() 输出裁剪后的正方形 JPEG Blob
+ * - 支持自定义裁剪比例（封面 3:4、轮播图 16:9、头像 1:1）
+ * - 支持拖拽平移、滚轮/滑块缩放
+ * - 默认输出 WebP，可通过 toBlob() / toFile() 取回
  */
 import { computed, onBeforeUnmount, ref } from 'vue'
 
@@ -10,16 +11,20 @@ const props = withDefaults(
   defineProps<{
     /** 图片地址（blob: / data: / http） */
     src: string
-    /** 输出图片边长（px） */
-    size?: number
+    /** 裁剪比例 = 宽 / 高，默认 1:1 */
+    aspect?: number
+    /** 输出宽度（px），高度按比例计算 */
+    outWidth?: number
+    /** 输出格式 */
+    format?: 'image/webp' | 'image/jpeg' | 'image/png'
+    /** 输出质量（jpeg/webp） */
+    quality?: number
   }>(),
-  { size: 300 },
+  { aspect: 1, outWidth: 600, format: 'image/webp', quality: 0.9 },
 )
 
 /** 画布可视区边长 */
-const BOX = 320
-/** 裁剪框边长 */
-const CROP = 260
+const BOX = 360
 
 const imgRef = ref<HTMLImageElement>()
 const naturalW = ref(0)
@@ -30,8 +35,16 @@ const offsetX = ref(0)
 const offsetY = ref(0)
 const zoomPercent = ref(100)
 
-const cropX = (BOX - CROP) / 2
-const cropY = cropX
+/** 裁剪框尺寸（按比例适配可视区） */
+const cropW = computed(() => {
+  const maxW = BOX - 36
+  const maxH = BOX - 36
+  const h = maxW / props.aspect
+  return h <= maxH ? maxW : maxH * props.aspect
+})
+const cropH = computed(() => cropW.value / props.aspect)
+const cropX = computed(() => (BOX - cropW.value) / 2)
+const cropY = computed(() => (BOX - cropH.value) / 2)
 
 const imgStyle = computed(() => ({
   width: `${naturalW.value}px`,
@@ -41,18 +54,18 @@ const imgStyle = computed(() => ({
 }))
 
 const holeStyle = computed(() => ({
-  left: `${cropX}px`,
-  top: `${cropY}px`,
-  width: `${CROP}px`,
-  height: `${CROP}px`,
+  left: `${cropX.value}px`,
+  top: `${cropY.value}px`,
+  width: `${cropW.value}px`,
+  height: `${cropH.value}px`,
 }))
 
 /** 限制平移范围，保证裁剪框始终被图片覆盖 */
 function clampOffsets() {
   const w = naturalW.value * scale.value
   const h = naturalH.value * scale.value
-  offsetX.value = Math.min(cropX, Math.max(cropX + CROP - w, offsetX.value))
-  offsetY.value = Math.min(cropY, Math.max(cropY + CROP - h, offsetY.value))
+  offsetX.value = Math.min(cropX.value, Math.max(cropX.value + cropW.value - w, offsetX.value))
+  offsetY.value = Math.min(cropY.value, Math.max(cropY.value + cropH.value - h, offsetY.value))
 }
 
 function onLoad() {
@@ -60,7 +73,8 @@ function onLoad() {
   if (!img) return
   naturalW.value = img.naturalWidth
   naturalH.value = img.naturalHeight
-  coverScale.value = CROP / Math.min(naturalW.value, naturalH.value)
+  // 让图片刚好覆盖裁剪框
+  coverScale.value = Math.max(cropW.value / naturalW.value, cropH.value / naturalH.value)
   zoomPercent.value = 100
   scale.value = coverScale.value
   offsetX.value = (BOX - naturalW.value * scale.value) / 2
@@ -72,8 +86,8 @@ function onLoad() {
 function onZoom(value: number | number[]) {
   const percent = Array.isArray(value) ? value[0] : value
   const newScale = coverScale.value * (percent / 100)
-  const anchorX = cropX + CROP / 2
-  const anchorY = cropY + CROP / 2
+  const anchorX = cropX.value + cropW.value / 2
+  const anchorY = cropY.value + cropH.value / 2
   const imgX = (anchorX - offsetX.value) / scale.value
   const imgY = (anchorY - offsetY.value) / scale.value
   scale.value = newScale
@@ -123,29 +137,41 @@ function onWheel(e: WheelEvent) {
 
 onBeforeUnmount(onPointerUp)
 
-/** 输出裁剪后的正方形图片 */
+/** 输出裁剪后的图片 Blob */
 function toBlob(): Promise<Blob | null> {
   const img = imgRef.value
   if (!img || !naturalW.value) return Promise.resolve(null)
-  const out = props.size
+  const outW = props.outWidth
+  const outH = Math.round(props.outWidth / props.aspect)
   const canvas = document.createElement('canvas')
-  canvas.width = out
-  canvas.height = out
+  canvas.width = outW
+  canvas.height = outH
   const ctx = canvas.getContext('2d')
   if (!ctx) return Promise.resolve(null)
-  // 透明背景转白，避免 JPEG 出现黑块
+  // 透明背景转白，避免 JPEG 黑块
   ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, out, out)
-  const sw = CROP / scale.value
-  const sx = (cropX - offsetX.value) / scale.value
-  const sy = (cropY - offsetY.value) / scale.value
-  ctx.drawImage(img, sx, sy, sw, sw, 0, 0, out, out)
+  ctx.fillRect(0, 0, outW, outH)
+  ctx.imageSmoothingQuality = 'high'
+  const sx = (cropX.value - offsetX.value) / scale.value
+  const sy = (cropY.value - offsetY.value) / scale.value
+  const sw = cropW.value / scale.value
+  const sh = cropH.value / scale.value
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH)
+
   return new Promise<Blob | null>((resolve) => {
-    canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.92)
+    canvas.toBlob((blob) => resolve(blob), props.format, props.quality)
   })
 }
 
-defineExpose({ toBlob })
+/** 输出为 File（按实际 MIME 命名后缀） */
+async function toFile(baseName = 'image'): Promise<File | null> {
+  const blob = await toBlob()
+  if (!blob) return null
+  const ext = blob.type === 'image/webp' ? 'webp' : blob.type === 'image/png' ? 'png' : 'jpg'
+  return new File([blob], `${baseName}_${Date.now()}.${ext}`, { type: blob.type })
+}
+
+defineExpose({ toBlob, toFile })
 </script>
 
 <template>
@@ -169,7 +195,10 @@ defineExpose({ toBlob })
       <span class="zoom-label">缩放</span>
       <el-slider v-model="zoomPercent" :min="100" :max="300" :show-tooltip="false" @input="onZoom" />
     </div>
-    <p class="tips">拖动图片调整位置，滑动缩放，裁剪框内的正方形区域将作为头像</p>
+    <p class="tips">
+      拖动图片调整位置，滑动缩放；输出 {{ outWidth }}×{{ Math.round(outWidth / aspect) }} ·
+      {{ format.replace('image/', '').toUpperCase() }}
+    </p>
   </div>
 </template>
 
@@ -249,7 +278,7 @@ defineExpose({ toBlob })
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 320px;
+  width: 330px;
   margin-top: 14px;
 }
 
@@ -262,5 +291,6 @@ defineExpose({ toBlob })
   margin: 4px 0 0;
   color: #9a9ab0;
   font-size: 12px;
+  text-align: center;
 }
 </style>

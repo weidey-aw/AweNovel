@@ -24,10 +24,10 @@ spring:
   # 文件上传
   servlet:
     multipart:
-      # 单个文件大小
-      max-file-size: 10MB
+      # 单个文件大小（简介中的视频上传需要更大上限）
+      max-file-size: 200MB
       # 设置总上传的文件大小
-      max-request-size: 20MB
+      max-request-size: 210MB
   # 服务模块
   devtools:
     restart:

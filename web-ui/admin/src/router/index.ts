@@ -33,6 +33,20 @@ export const constantRoutes: RouteRecordRaw[] = [
     ],
   },
   {
+    // 游戏编辑页（全屏页面，从游戏列表进入，不在导航中展示）
+    path: '/operation/game/edit',
+    component: AdminLayout,
+    meta: { hidden: true },
+    children: [
+      {
+        path: '',
+        name: 'gameEdit',
+        component: () => import('@/views/operation/game/edit.vue'),
+        meta: { title: '游戏编辑', hidden: true },
+      },
+    ],
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'notFound',
     component: NotFound,

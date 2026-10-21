@@ -1,26 +1,58 @@
 # 04 · 游戏库接口（游戏 / 会社 / 标签）
 
-> 共 14 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
+> 共 17 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
 > 表结构见 [`../../sql/awe_novel.sql`](../../sql/awe_novel.sql)（`gal_game` / `gal_brand` / `gal_tag` / `gal_game_tag`）。
 
 | # | 方法 | 路径 | 鉴权 | 前端状态 |
 |---|---|---|---|---|
-| 1 | GET | `/community/game/list` | 匿名 | ✅ |
-| 2 | GET | `/community/game/{gameId}` | 匿名 | ✅ |
+| 1 | GET | `/community/game/list` | 匿名 | ✅ 前台列表（仅已发布） |
+| 2 | GET | `/community/game/{gameId}` | 匿名 | ✅ 前台详情 |
 | 3 | GET | `/community/game/tag/all` | 匿名 | ✅ |
-| 4 | POST | `/community/game` | 登录 | ✅ |
-| 5 | PUT | `/community/game` | 登录 | ✅ |
-| 6 | DELETE | `/community/game/{gameIds}` | 登录 | ✅ |
-| 7 | GET | `/community/brand/list` | 匿名 | ✅ |
-| 8 | POST | `/community/brand` | 登录 | ✅ |
-| 9 | PUT | `/community/brand` | 登录 | ✅ |
-| 10 | DELETE | `/community/brand/{ids}` | 登录 | ✅ |
-| 11 | GET | `/community/tag/list` | 匿名 | ✅ |
-| 12 | POST | `/community/tag` | 登录 | ✅ |
-| 13 | PUT | `/community/tag` | 登录 | ✅ |
-| 14 | DELETE | `/community/tag/{ids}` | 登录 | ✅ |
+| 4 | GET | `/community/game/admin/list` | `community:game:list` | ✅ 管理端列表（全状态 + 多维筛选） |
+| 5 | GET | `/community/game/admin/{gameId}` | `community:game:list` | ✅ 编辑页回显（不增浏览量） |
+| 6 | POST | `/community/game/publish/{gameId}` | `community:game:publish` | ✅ 提交发布（进入审核） |
+| 7 | POST | `/community/game` | `community:game:add` | ✅ 新增（默认草稿） |
+| 8 | PUT | `/community/game` | `community:game:edit` | ✅ 修改 |
+| 9 | DELETE | `/community/game/{gameIds}` | `community:game:remove` | ✅ 删除 |
+| 10 | GET | `/community/brand/list` | 匿名 | ✅ |
+| 11 | POST | `/community/brand` | 登录 | ✅ |
+| 12 | PUT | `/community/brand` | 登录 | ✅ |
+| 13 | DELETE | `/community/brand/{ids}` | 登录 | ✅ |
+| 14 | GET | `/community/tag/list` | 匿名 | ✅ |
+| 15 | POST | `/community/tag` | 登录 | ✅ |
+| 16 | PUT | `/community/tag` | 登录 | ✅ |
+| 17 | DELETE | `/community/tag/{ids}` | 登录 | ✅ |
 
-> ⚠️ 第 4~6、8~10、12~14 为管理类写接口，但后端**只校验登录、没有 `@PreAuthorize`**，任何注册用户均可调用（详见 [README §6.2](README.md#62-权限风险后端问题前端需知晓)）。
+> ⚠️ 会社/标签的写接口（11~13、15~17）后端**只校验登录、没有 `@PreAuthorize`**，任何注册用户均可调用
+> （详见 [README §6.2](README.md#62-权限风险后端问题前端需知晓)）。游戏的写接口已补权限校验。
+
+---
+
+## 0. 状态与审核流程（重要）
+
+`gal_game.status` 语义：
+
+| 值 | 含义 | 前台是否可见 |
+|---|---|---|
+| `0` | 已下架 | 否 |
+| `1` | 已发布（审核通过） | **是** |
+| `2` | 待审核 | 否 |
+| `3` | 审核驳回 | 否 |
+| `4` | 草稿 | 否 |
+
+流程：
+
+```
+编辑页「存草稿」 → status=4
+编辑页「发布」   → 保存内容 + PUT /community/game/publish/{id} → status=2 且启动 Flowable 审核
+管理端「内容审核」通过 → status=1（前台可见）
+管理端「内容审核」驳回 → status=3（需修改后重新发布）
+```
+
+- 发布前置校验：`title` 与 `cover` 不能为空，否则返回 `{"code":500,"msg":"请先上传封面图"}`。
+- 重复提交：已是待审核（`2`）时再次发布返回 `{"code":500,"msg":"该游戏已提交审核，请等待审核结果"}`。
+- 审核接口见 [07-review-ai-common.md](07-review-ai-common.md)，`bizType = "game"`。
+
 
 ---
 
@@ -34,16 +66,17 @@
 | `brandId` | long | 制作会社ID |
 | `title` | string | 游戏原名 |
 | `titleCn` | string | 游戏译名 |
-| `cover` | string | 封面图相对路径（`/profile/upload/...`） |
+| `cover` | string | 封面图相对路径（`/profile/upload/...`，前端裁剪后统一 **WebP**，900×1200） |
+| `carousel` | string | **轮播图**，JSON 数组字符串（最多 7 张，16:9 · WebP），如 `["/profile/upload/a.webp","/profile/upload/b.webp"]` |
 | `releaseDate` | string | 发售日期（`yyyy-MM-dd`） |
-| `summary` | string | 简介 |
+| `summary` | string | 简介（**Markdown**，支持内嵌图片/视频：`![x](url)`，`.mp4/.webm` 会渲染为 `<video>`） |
 | `staffPaint` | string | 原画 |
 | `staffScenario` | string | 剧本 |
 | `staffVoice` | string | 主要声优 |
 | `ratingAvg` | number | 平均评分（冗余，由评分接口自动重算，1 位小数） |
 | `ratingCount` | int | 评分人数（冗余） |
 | `viewCount` | int | 浏览量（详情接口自动 +1） |
-| `status` | **string** | `1`上架 / `0`下架（新增时后端强制置 `1`） |
+| `status` | **string** | `0`下架 / `1`已发布 / `2`待审核 / `3`审核驳回 / `4`草稿（新增不传时默认 `4`） |
 | `delFlag` | string | `0`存在 / `2`删除（逻辑删除） |
 | `createTime` / `updateTime` | string | 时间 |
 | `brandName` | string | **非表字段**，连表返回的会社名 |
@@ -77,7 +110,7 @@
 
 ### 2.1 游戏列表
 
-`GET /community/game/list` · **匿名** · 前端 ✅（用户端 GameListView / HomeView，管理端 GameManageView）
+`GET /community/game/list` · **匿名** · 前端 ✅（用户端 GameListView / HomeView）
 
 | 参数 | 类型 | 必填 | 说明 |
 |---|---|---|---|
@@ -94,8 +127,10 @@
   "rows": [
     {
       "gameId": 1, "brandId": 3, "title": "CLANNAD", "titleCn": "团子大家族",
-      "cover": "/profile/upload/2024/01/01/clannad.jpg", "releaseDate": "2004-04-28",
-      "summary": "……", "staffPaint": "樋上いたる", "staffScenario": "麻枝准", "staffVoice": "中原麻衣",
+      "cover": "/profile/upload/2024/01/01/clannad.webp",
+      "carousel": "[\"/profile/upload/2024/01/01/c1.webp\"]",
+      "releaseDate": "2004-04-28",
+      "summary": "## 简介\n\n……", "staffPaint": "樋上いたる", "staffScenario": "麻枝准", "staffVoice": "中原麻衣",
       "ratingAvg": 9.2, "ratingCount": 15, "viewCount": 320, "status": "1",
       "brandName": "Key", "createTime": "2024-01-01 00:00:00"
     }
@@ -105,10 +140,42 @@
 
 **规则**
 
-- 固定只返回 `status = '1'`（已上架）的游戏，**看不到下架的**。
+- 固定只返回 `status = '1'`（已发布）的游戏，**草稿/待审核/驳回/下架都看不到**。
 - 排序：`rating_avg DESC, game_id DESC`。
 - 每行会**额外填充 `brandName`**（会社名），但**不返回 `tags`**。
 - 逻辑删除的记录自动过滤。
+
+### 2.1.1 管理端游戏列表（多维筛选）
+
+`GET /community/game/admin/list` · 权限 `community:game:list` · 前端 ✅（游戏管理页）
+
+| 参数 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `keyword` | string | 否 | 原名 / 译名模糊匹配 |
+| `brandId` | long | 否 | 制作会社 |
+| `tagIds` | string | 否 | **标签多选**，逗号分隔，如 `1,3,5`（与 `tagId` 二选一优先） |
+| `tagId` | long | 否 | 单个标签（兼容旧调用） |
+| `beginDate` / `endDate` | string | 否 | **发售日期**区间（`yyyy-MM-dd`） |
+| `status` | string | 否 | `0`下架 / `1`已发布 / `2`待审核 / `3`驳回 / `4`草稿 |
+| `pageNum` / `pageSize` | int | 否 | 分页 |
+
+- 返回全部状态的游戏，**同时填充 `brandName` 与 `tags`**，排序 `update_time DESC, game_id DESC`。
+- 日期按 `release_date` 字段比较（字符串形式的 `yyyy-MM-dd` 直接参与 SQL 比较）。
+
+### 2.1.2 管理端游戏详情
+
+`GET /community/game/admin/{gameId}` · 权限 `community:game:list` · 前端 ✅（编辑页）
+
+- 与前台详情返回一致（含 `tags`、`carousel`），但**不增加浏览量**，且可读取草稿/待审核数据。
+
+### 2.1.3 提交发布（进入审核）
+
+`POST /community/game/publish/{gameId}` · 权限 `community:game:publish` · 前端 ✅
+
+- 校验：`title`、`cover` 非空；状态不能已是 `2`（待审核）。
+- 成功：`status` 置为 `2` 并启动 Flowable 审核流程（`bizType = "game"`），返回 `{"code":200,"msg":"已提交审核"}`。
+- 审核通过 → `status = 1`（前台可见）；驳回 → `status = 3`。
+- 失败示例：`{"code":500,"msg":"请先上传封面图"}`、`{"code":500,"msg":"该游戏已提交审核，请等待审核结果"}`。
 
 ### 2.2 游戏详情
 

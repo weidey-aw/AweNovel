@@ -113,10 +113,22 @@ export const getGameList = (params: GameQuery) => http.get<TableDataInfo<Game>>(
 
 export const getGameDetail = (gameId: number) => http.get<AjaxResult<Game>>(`/community/game/${gameId}`)
 
+/** 管理端列表：全状态 + 关键词/会社/标签(多选)/发售日区间 */
+export const getAdminGameList = (params: Record<string, unknown>) =>
+  http.get<TableDataInfo<Game>>('/community/game/admin/list', { params })
+
+/** 管理端详情（含草稿/待审核，不增加浏览量） */
+export const getAdminGameDetail = (gameId: number) =>
+  http.get<AjaxResult<Game>>(`/community/game/admin/${gameId}`)
+
+/** 提交发布：进入待审核状态（审核通过后前台可见） */
+export const publishGame = (gameId: number) => http.post<AjaxResult>(`/community/game/publish/${gameId}`)
+
 /** GET /community/game/tag/all → Tag[] */
 export const getAllTags = () => http.get<AjaxResult<Tag[]> | Tag[]>('/community/game/tag/all')
 
-export const createGame = (data: Partial<Game>) => http.post<AjaxResult>('/community/game', data)
+export const createGame = (data: Partial<Game>) =>
+  http.post<AjaxResult & { data?: Game }>('/community/game', data)
 
 export const updateGame = (data: Partial<Game>) => http.put<AjaxResult>('/community/game', data)
 

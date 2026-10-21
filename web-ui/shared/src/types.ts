@@ -89,7 +89,10 @@ export interface Game {
   title: string
   titleCn?: string
   cover?: string
+  /** 轮播图（JSON 数组字符串，最多 7 张） */
+  carousel?: string
   releaseDate?: string
+  /** 简介（Markdown） */
   summary?: string
   staffPaint?: string
   staffScenario?: string
@@ -100,8 +103,11 @@ export interface Game {
   brandId?: number
   brandName?: string
   tags?: Tag[]
-  status?: number
+  tagIds?: number[]
+  /** 状态：0下架 1已发布 2待审核 3审核驳回 4草稿 */
+  status?: string
   createTime?: string
+  updateTime?: string
 }
 
 export interface Resource {
@@ -275,6 +281,13 @@ export interface GameQuery extends PageParams {
   keyword?: string
   brandId?: number
   tagId?: number
+  /** 标签多选（逗号分隔ID） */
+  tagIds?: string
+  /** 0下架 1已发布 2待审核 3审核驳回 4草稿 */
+  status?: string
+  /** 发售日期区间 */
+  beginDate?: string
+  endDate?: string
 }
 
 export interface ArticleQuery extends PageParams {

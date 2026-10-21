@@ -240,24 +240,31 @@ Authorization: Bearer <token>
 | DELETE | `/monitor/cache/clearCacheAll` | `monitor:cache:list` | ❌ |
 | GET | `/monitor/server` | `monitor:server:list` | ✅ 监控页 |
 
-### 2.4 游戏库（14）
+### 2.4 游戏库（17）
 
 | 方法 | 路径 | 鉴权 | 前端状态 |
 |---|---|---|---|
-| GET | `/community/game/list` | **匿名** | ✅ |
-| GET | `/community/game/{gameId}` | **匿名** | ✅ |
+| GET | `/community/game/list` | **匿名** | ✅ 前台列表（仅已发布） |
+| GET | `/community/game/{gameId}` | **匿名** | ✅ 前台详情 |
 | GET | `/community/game/tag/all` | **匿名** | ✅ |
-| POST | `/community/game` | 登录（**无权限校验，见 §6.2**） | ✅ |
-| PUT | `/community/game` | 登录（同上有风险） | ✅ |
-| DELETE | `/community/game/{gameIds}` | 登录（同上有风险） | ✅ |
+| GET | `/community/game/admin/list` | `community:game:list` | ✅ 管理端多维筛选 |
+| GET | `/community/game/admin/{gameId}` | `community:game:list` | ✅ 编辑页回显 |
+| POST | `/community/game/publish/{gameId}` | `community:game:publish` | ✅ 提交审核 |
+| POST | `/community/game` | `community:game:add` | ✅ 新增（默认草稿） |
+| PUT | `/community/game` | `community:game:edit` | ✅ 修改 |
+| DELETE | `/community/game/{gameIds}` | `community:game:remove` | ✅ 删除 |
 | GET | `/community/brand/list` | **匿名** | ✅ |
-| POST | `/community/brand` | 登录（同上有风险） | ✅ |
+| POST | `/community/brand` | 登录（**无权限校验，见 §6.2**） | ✅ |
 | PUT | `/community/brand` | 登录（同上有风险） | ✅ |
 | DELETE | `/community/brand/{ids}` | 登录（同上有风险） | ✅ |
 | GET | `/community/tag/list` | **匿名** | ✅ |
 | POST | `/community/tag` | 登录（同上有风险） | ✅ |
 | PUT | `/community/tag` | 登录（同上有风险） | ✅ |
 | DELETE | `/community/tag/{ids}` | 登录（同上有风险） | ✅ |
+
+> 游戏状态：`0`下架 / `1`已发布 / `2`待审核 / `3`审核驳回 / `4`草稿；
+> 编辑页支持**存草稿**与**发布**，发布后进入 Flowable 审核，通过才在前台展示。
+> 详见 [04-community-game.md](04-community-game.md)。
 
 ### 2.5 内容：文章 / 资源 / 评论 / 评分（12）
 
@@ -313,10 +320,18 @@ Authorization: Bearer <token>
 
 | 状态 | 数量 | 占比 |
 |---|---|---|
-| ✅ 已对接（有页面调用） | 122 | 87% |
+| ✅ 已对接（有页面调用） | 125 | 87% |
 | 🔸 仅封装未接页面 | 4 | 3% |
 | ❌ 未封装 | 14 | 10% |
-| **合计** | **140** | 100% |
+| **合计** | **143** | 100% |
+
+> **本轮（游戏管理重构）新增 3 个后端接口**：管理端列表 `GET /community/game/admin/list`（关键词/会社/**标签多选**/
+> **发售日区间**/状态）、管理端详情 `GET /community/game/admin/{id}`、提交发布 `POST /community/game/publish/{id}`；
+> 并新增 `gal_game.carousel`（轮播图，最多 7 张）字段、游戏状态改为 5 态（下架/已发布/待审核/驳回/草稿）、
+> 审核驳回写入 `status=3`、上传支持 **webp**、上传大小上限提升到 200MB。
+>
+> 上一轮（菜单/字典/参数/公告/日志）新增对接 35 个接口：菜单增删改、字典类型与数据增删改查、
+> 参数增删改查、公告增删改、日志删除/清空/导出/账户解锁。
 
 > **本轮（菜单/字典/参数/公告/日志）新增对接 35 个接口**：
 > 菜单（新增/修改/删除/详情/树选择，支持**树形展示、排序、外链、权限标识**）、

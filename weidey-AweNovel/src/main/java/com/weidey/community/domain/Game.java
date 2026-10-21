@@ -3,6 +3,7 @@ package com.weidey.community.domain;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -36,7 +37,11 @@ public class Game extends BaseGalEntity {
     /** 封面图 */
     private String cover;
 
+    /** 轮播图（JSON 数组字符串，最多 7 张） */
+    private String carousel;
+
     /** 发售日期 */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date releaseDate;
 
     /** 简介 */

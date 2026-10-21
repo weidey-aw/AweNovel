@@ -3,6 +3,7 @@ package com.weidey.community.controller;
 import com.weidey.common.core.controller.BaseController;
 import com.weidey.common.core.domain.AjaxResult;
 import com.weidey.community.service.ArticleService;
+import com.weidey.community.service.GameService;
 import com.weidey.community.service.ResourceService;
 import com.weidey.community.service.ReviewService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,11 +27,14 @@ public class ReviewController extends BaseController {
     private final ReviewService reviewService;
     private final ResourceService resourceService;
     private final ArticleService articleService;
+    private final GameService gameService;
 
-    public ReviewController(ReviewService reviewService, ResourceService resourceService, ArticleService articleService) {
+    public ReviewController(ReviewService reviewService, ResourceService resourceService,
+                            ArticleService articleService, GameService gameService) {
         this.reviewService = reviewService;
         this.resourceService = resourceService;
         this.articleService = articleService;
+        this.gameService = gameService;
     }
 
     /** 待审核任务列表 */
@@ -74,6 +78,12 @@ public class ReviewController extends BaseController {
             articleService.lambdaUpdate()
                     .set(com.weidey.community.domain.Article::getStatus, status)
                     .eq(com.weidey.community.domain.Article::getArticleId, bizId)
+                    .update();
+        } else if ("game".equals(bizType)) {
+            // 游戏状态语义不同：1 已发布 / 2 待审核 / 3 审核驳回
+            gameService.lambdaUpdate()
+                    .set(com.weidey.community.domain.Game::getStatus, approved ? "1" : "3")
+                    .eq(com.weidey.community.domain.Game::getGameId, bizId)
                     .update();
         }
     }

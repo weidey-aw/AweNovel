@@ -20,6 +20,21 @@ public interface GameService extends IService<Game> {
     IPage<Game> pageGames(IPage<Game> page, String keyword, Long brandId, Long tagId, String status);
 
     /**
+     * 管理端分页查询（全状态 + 发售日期区间 + 标签多选/会社）
+     *
+     * @param tagIds    标签ID集合（可空）
+     * @param beginDate 发售日期起（yyyy-MM-dd，可空）
+     * @param endDate   发售日期止（yyyy-MM-dd，可空）
+     */
+    IPage<Game> pageAdminGames(IPage<Game> page, String keyword, Long brandId, List<Long> tagIds,
+                               String status, String beginDate, String endDate);
+
+    /**
+     * 提交发布：状态置为待审核(2) 并启动审核流程
+     */
+    void publishGame(Long gameId);
+
+    /**
      * 游戏详情（含会社名与标签）
      */
     Game getGameDetail(Long gameId);
