@@ -37,17 +37,25 @@ public class GameController extends BaseController {
 
     /** 前台可见状态 */
     private static final String STATUS_PUBLISHED = "1";
+    /** 已下架 */
+    private static final String STATUS_OFFLINE = "0";
     /** 待审核 */
     private static final String STATUS_PENDING = "2";
     /** 草稿 */
     private static final String STATUS_DRAFT = "4";
+    /** 游戏截图：可不上传，上传则至少 3 张（前台一屏 3 张），最多 7 张 */
+    private static final int MIN_SCREENSHOTS = 3;
+    private static final int MAX_SCREENSHOTS = 7;
 
     private final GameService gameService;
     private final TagService tagService;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
-    public GameController(GameService gameService, TagService tagService) {
+    public GameController(GameService gameService, TagService tagService,
+                          com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
         this.gameService = gameService;
         this.tagService = tagService;
+        this.objectMapper = objectMapper;
     }
 
     /** 前台游戏列表（仅已发布，公开） */
@@ -178,8 +186,54 @@ public class GameController extends BaseController {
         if (gameService.hasPendingReview(gameId)) {
             return error("该游戏已在审核队列中，请先撤回后再发布");
         }
+        // 游戏截图（carousel 字段）要么不传，要么至少 3 张（前台按 3 张一屏展示）
+        int shots = countJsonArray(game.getCarousel());
+        if (shots < 0) {
+            return error("游戏截图数据格式不正确");
+        }
+        if (shots > 0 && shots < MIN_SCREENSHOTS) {
+            return error("游戏截图至少上传 " + MIN_SCREENSHOTS + " 张（或不上传）");
+        }
+        if (shots > MAX_SCREENSHOTS) {
+            return error("游戏截图最多 " + MAX_SCREENSHOTS + " 张");
+        }
         gameService.publishGame(gameId);
         return success("已提交审核");
+    }
+
+    /**
+     * 下架：已发布 → 已下架（前台立即不可见），可再次发布（走审核）
+     */
+    @PreAuthorize("@ss.hasPermi('community:game:publish')")
+    @PostMapping("/offline/{gameId}")
+    public AjaxResult offline(@PathVariable Long gameId) {
+        Game game = gameService.getById(gameId);
+        if (game == null) {
+            return error("游戏不存在");
+        }
+        if (!STATUS_PUBLISHED.equals(game.getStatus())) {
+            return error("只有已发布的游戏可以下架");
+        }
+        Game update = new Game();
+        update.setGameId(gameId);
+        update.setStatus(STATUS_OFFLINE);
+        gameService.updateById(update);
+        return success("已下架");
+    }
+
+    /**
+     * 统计 JSON 数组元素个数；空串返回 0，格式错误返回 -1
+     */
+    private int countJsonArray(String json) {
+        if (StringUtils.isBlank(json)) {
+            return 0;
+        }
+        try {
+            com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(json);
+            return node.isArray() ? node.size() : -1;
+        } catch (Exception e) {
+            return -1;
+        }
     }
 
     /**

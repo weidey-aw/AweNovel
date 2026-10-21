@@ -2,7 +2,7 @@
 /**
  * 游戏编辑页（整页编辑，替代原弹窗）
  * 布局：左「简介 Markdown 编辑器」· 中「前台效果预览」· 右「基本信息」
- * 封面 3:4 / 轮播图 16:9，裁剪后统一以 WebP 上传
+ * 封面 3:4 / 游戏截图 16:9，裁剪后统一以 WebP 上传
  */
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -13,6 +13,7 @@ import {
   getAllTags,
   getAdminGameDetail,
   getBrandList,
+  offlineGame,
   publishGame,
   resolveAssetUrl,
   updateGame,
@@ -39,11 +40,14 @@ const STATUS_MAP: Record<string, { label: string; type: 'success' | 'warning' | 
 }
 
 const MAX_CAROUSEL = 7
+/** 游戏截图：可不上传；上传则至少 3 张（前台一屏展示 3 张） */
+const MIN_CAROUSEL = 3
 
 const loading = ref(false)
 const saving = ref(false)
 const publishing = ref(false)
 const withdrawing = ref(false)
+const offlining = ref(false)
 const brands = ref<Brand[]>([])
 const tags = ref<Tag[]>([])
 const carousel = ref<string[]>([])
@@ -71,8 +75,11 @@ const previewHtml = computed(() => renderMarkdown(form.summary))
 
 /** 审核中：只能撤回，不能保存草稿或重复发布 */
 const isPending = computed(() => form.status === '2')
-const canSaveDraft = computed(() => form.status !== '2')
-const canPublish = computed(() => form.status !== '2' && form.status !== '1')
+/** 已发布：只能下架（下架后可修改并重新发布） */
+const isPublished = computed(() => form.status === '1')
+const canSaveDraft = computed(() => !isPending.value && !isPublished.value)
+const canPublish = computed(() => !isPending.value && !isPublished.value)
+const canOffline = computed(() => isPublished.value)
 
 function parseCarousel(raw?: string | null): string[] {
   if (!raw) return []
@@ -135,7 +142,7 @@ async function loadDetail() {
   }
 }
 
-/* ==================== 图片裁剪上传（封面 / 轮播图） ==================== */
+/* ==================== 图片裁剪上传（封面 / 游戏截图） ==================== */
 const crop = reactive({
   visible: false,
   mode: 'cover' as 'cover' | 'carousel',
@@ -150,7 +157,7 @@ const cropWidth = computed(() => (crop.mode === 'cover' ? 900 : 1600))
 
 function openCrop(mode: 'cover' | 'carousel') {
   if (mode === 'carousel' && carousel.value.length >= MAX_CAROUSEL) {
-    ElMessage.warning(`轮播图最多 ${MAX_CAROUSEL} 张`)
+    ElMessage.warning(`游戏截图最多 ${MAX_CAROUSEL} 张`)
     return
   }
   crop.mode = mode
@@ -195,7 +202,7 @@ async function submitCrop() {
       ElMessage.success('封面已更新')
     } else {
       carousel.value.push(path)
-      ElMessage.success('轮播图已添加')
+      ElMessage.success('游戏截图已添加')
     }
     crop.visible = false
   } catch (err: unknown) {
@@ -276,6 +283,11 @@ async function onPublish() {
     ElMessage.warning('发布前请先上传封面')
     return
   }
+  // 游戏截图：可不上传；上传则至少 3 张（前台一屏展示 3 张）
+  if (carousel.value.length > 0 && carousel.value.length < MIN_CAROUSEL) {
+    ElMessage.warning(`游戏截图至少上传 ${MIN_CAROUSEL} 张，或全部不传`)
+    return
+  }
   publishing.value = true
   try {
     if (!(await persist('4'))) return
@@ -320,6 +332,30 @@ async function onWithdraw() {
   }
 }
 
+/** 下架：已发布 → 已下架（前台立即隐藏） */
+async function onOffline() {
+  if (!form.gameId) return
+  try {
+    await ElMessageBox.confirm(
+      '下架后前台立即不可见；如需再次上线需重新发布并等待审核。确认下架吗？',
+      '下架确认',
+      { type: 'warning', confirmButtonText: '确认下架' },
+    )
+  } catch {
+    return
+  }
+  offlining.value = true
+  try {
+    await offlineGame(form.gameId)
+    form.status = '0'
+    ElMessage.success('已下架')
+  } catch (err: unknown) {
+    ElMessage.error(err instanceof Error ? err.message : '下架失败')
+  } finally {
+    offlining.value = false
+  }
+}
+
 onMounted(() => {
   loadOptions()
   loadDetail()
@@ -339,7 +375,7 @@ onMounted(() => {
       <div class="head-actions">
         <span class="head-tip">
           <template v-if="isPending">审核中：可撤回为草稿，撤回后才能重新发布</template>
-          <template v-else-if="form.status === '1'">已发布：编辑后请存草稿再重新发布</template>
+          <template v-else-if="isPublished">已发布：可下架（下架后可修改并重新发布）</template>
           <template v-else>发布后进入「待审核」，审核通过才在前台展示</template>
         </span>
         <el-button
@@ -351,13 +387,22 @@ onMounted(() => {
           存草稿
         </el-button>
         <el-button
-          v-if="can('community:game:publish') && !isPending"
+          v-if="can('community:game:publish') && !isPending && !isPublished"
           type="primary"
           :loading="publishing"
           :disabled="!canPublish"
           @click="onPublish"
         >
           发布
+        </el-button>
+        <el-button
+          v-if="can('community:game:publish') && canOffline"
+          type="danger"
+          plain
+          :loading="offlining"
+          @click="onOffline"
+        >
+          下架
         </el-button>
         <el-button
           v-if="can('community:game:publish') && isPending"
@@ -477,11 +522,12 @@ onMounted(() => {
             <span class="cover-mask">{{ form.cover ? '更换封面' : '上传封面' }}</span>
           </div>
 
-          <!-- 轮播图 -->
+          <!-- 游戏截图 -->
           <div class="block-head">
-            轮播图（16:9 · WebP）
+            游戏截图（16:9 · WebP）
             <span class="block-sub">{{ carousel.length }}/{{ MAX_CAROUSEL }}</span>
           </div>
+          <p class="block-hint">可不上传；上传则至少 {{ MIN_CAROUSEL }} 张（前台一屏展示 3 张）</p>
           <div class="carousel-grid">
             <div v-for="(item, index) in carousel" :key="`${item}-${index}`" class="carousel-item">
               <img :src="resolveAssetUrl(item)" alt="" />
@@ -503,7 +549,7 @@ onMounted(() => {
     <!-- 裁剪弹窗 -->
     <el-dialog
       v-model="crop.visible"
-      :title="crop.mode === 'cover' ? '裁剪封面' : '裁剪轮播图'"
+      :title="crop.mode === 'cover' ? '裁剪封面' : '裁剪游戏截图'"
       width="440px"
       append-to-body
       @closed="onCropClosed"
@@ -801,6 +847,13 @@ onMounted(() => {
   color: #9a9ab0;
   font-weight: 400;
   font-size: 12px;
+}
+
+.block-hint {
+  margin: -4px 0 8px;
+  color: #a0a0b8;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .cover-box {

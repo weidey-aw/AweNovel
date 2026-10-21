@@ -35,27 +35,30 @@ const downloadVisible = ref(false)
 const downloadUrl = ref('')
 const downloadPwd = ref('')
 
-/** 轮播图（carousel 为 JSON 数组字符串） */
-const carouselList = computed<string[]>(() => {
+/** 游戏截图（carousel 字段为 JSON 数组字符串；0 或 3-7 张） */
+const screenshotList = computed<string[]>(() => {
   const raw = game.value?.carousel
   if (!raw) return []
   try {
     const arr = JSON.parse(raw)
-    return Array.isArray(arr) ? arr.filter((item): item is string => typeof item === 'string') : []
+    const list = Array.isArray(arr) ? arr.filter((item): item is string => typeof item === 'string') : []
+    return list.map((item) => resolveAssetUrl(item))
   } catch {
     return []
   }
 })
 
-/** 封面 + 轮播图，统一用于展示与预览 */
-const gallery = computed<string[]>(() => {
-  const list: string[] = []
-  if (game.value?.cover) list.push(game.value.cover)
-  for (const item of carouselList.value) {
-    if (!list.includes(item)) list.push(item)
+/** 每 3 张一屏（左右箭头翻页，不自动滚动） */
+const screenshotSlides = computed<string[][]>(() => {
+  const slides: string[][] = []
+  for (let i = 0; i < screenshotList.value.length; i += 3) {
+    slides.push(screenshotList.value.slice(i, i + 3))
   }
-  return list.map((item) => resolveAssetUrl(item))
+  return slides
 })
+
+/** 封面图 */
+const coverSrc = computed(() => resolveAssetUrl(game.value?.cover))
 
 /** 简介按 Markdown 渲染（支持图片 / 视频） */
 const summaryHtml = computed(() => renderMarkdown(game.value?.summary))
@@ -162,31 +165,15 @@ onMounted(() => {
     <div v-else-if="game" class="detail">
       <div class="detail-main panel-card">
         <div class="detail-left">
-          <!-- 轮播图：封面 + 最多 7 张，可点击放大 -->
-          <el-carousel
-            v-if="gallery.length > 1"
-            height="347"
-            :interval="5000"
-            indicator-position="outside"
-            class="detail-carousel"
-          >
-            <el-carousel-item v-for="(img, index) in gallery" :key="index">
-              <el-image
-                :src="img"
-                fit="cover"
-                :preview-src-list="gallery"
-                :initial-index="index"
-                preview-teleported
-                class="carousel-img"
-              />
-            </el-carousel-item>
-          </el-carousel>
-
-          <div v-else class="detail-cover">
-            <img
-              v-if="gallery.length"
-              :src="gallery[0]"
-              :alt="game.title"
+          <!-- 封面图（游戏截图在简介下方单独展示） -->
+          <div class="detail-cover">
+            <el-image
+              v-if="coverSrc"
+              :src="coverSrc"
+              fit="cover"
+              :preview-src-list="[coverSrc]"
+              preview-teleported
+              class="cover-img"
             />
             <div v-else class="cover-fallback">🎮</div>
           </div>
@@ -244,6 +231,35 @@ onMounted(() => {
           <div v-if="summaryHtml" v-html="summaryHtml" />
           <p v-else class="text-dim">暂无简介</p>
         </div>
+
+        <!-- 游戏截图：无图则整块隐藏；一屏 3 张，左右箭头切换，不自动滚动 -->
+        <template v-if="screenshotSlides.length">
+          <div class="section-title">游戏截图</div>
+          <div class="panel-card shot-panel">
+            <el-carousel
+              height="210px"
+              :autoplay="false"
+              :loop="screenshotSlides.length > 1"
+              arrow="always"
+              indicator-position="none"
+            >
+              <el-carousel-item v-for="(slide, slideIndex) in screenshotSlides" :key="slideIndex">
+                <div class="shot-row">
+                  <el-image
+                    v-for="(img, imgIndex) in slide"
+                    :key="`${img}-${imgIndex}`"
+                    :src="img"
+                    fit="cover"
+                    class="shot-img"
+                    :preview-src-list="screenshotList"
+                    :initial-index="slideIndex * 3 + imgIndex"
+                    preview-teleported
+                  />
+                </div>
+              </el-carousel-item>
+            </el-carousel>
+          </div>
+        </template>
 
         <div v-if="game.staffPaint || game.staffScenario || game.staffVoice" class="section-title">
           制作阵容
@@ -457,19 +473,40 @@ onMounted(() => {
   color: var(--text-sub);
 }
 
-/* ---------- 轮播图 ---------- */
-.detail-carousel {
-  width: 260px;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: var(--shadow-card);
-}
-
-.carousel-img {
+/* ---------- 封面 / 游戏截图 ---------- */
+.cover-img {
   width: 100%;
   height: 100%;
   display: block;
   cursor: zoom-in;
+}
+
+.shot-panel {
+  padding: 12px;
+}
+
+.shot-row {
+  display: flex;
+  gap: 10px;
+  height: 100%;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.shot-img {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: zoom-in;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.shot-img :deep(img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* ---------- Markdown 简介 ---------- */

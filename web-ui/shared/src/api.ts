@@ -127,6 +127,9 @@ export const publishGame = (gameId: number) => http.post<AjaxResult>(`/community
 /** 撤回审核：待审核 → 草稿（撤回后可修改并重新发布） */
 export const withdrawGame = (gameId: number) => http.post<AjaxResult>(`/community/game/withdraw/${gameId}`)
 
+/** 下架：已发布 → 已下架（前台立即隐藏），可再次发布走审核 */
+export const offlineGame = (gameId: number) => http.post<AjaxResult>(`/community/game/offline/${gameId}`)
+
 /** GET /community/game/tag/all → Tag[] */
 export const getAllTags = () => http.get<AjaxResult<Tag[]> | Tag[]>('/community/game/tag/all')
 

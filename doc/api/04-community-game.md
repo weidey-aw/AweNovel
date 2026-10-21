@@ -1,6 +1,6 @@
 # 04 · 游戏库接口（游戏 / 会社 / 标签）
 
-> 共 18 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
+> 共 19 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
 > 表结构见 [`../../sql/awe_novel.sql`](../../sql/awe_novel.sql)（`gal_game` / `gal_brand` / `gal_tag` / `gal_game_tag`）。
 
 | # | 方法 | 路径 | 鉴权 | 前端状态 |
@@ -23,6 +23,7 @@
 | 16 | PUT | `/community/tag` | 登录 | ✅ |
 | 17 | DELETE | `/community/tag/{ids}` | 登录 | ✅ |
 | 18 | POST | `/community/game/withdraw/{gameId}` | `community:game:publish` | ✅ 撤回审核（回到草稿） |
+| 19 | POST | `/community/game/offline/{gameId}` | `community:game:publish` | ✅ 下架（已发布 → 已下架） |
 
 > ⚠️ 会社/标签的写接口（11~13、15~17）后端**只校验登录、没有 `@PreAuthorize`**，任何注册用户均可调用
 > （详见 [README §6.2](README.md#62-权限风险后端问题前端需知晓)）。游戏的写接口已补权限校验。
@@ -49,20 +50,24 @@
 管理端「内容审核」通过 → status=1（前台可见）
 管理端「内容审核」驳回 → status=3（需修改后重新发布）
 编辑页「撤回」   → POST /community/game/withdraw/{id} → status=4 且取消审核流程
+编辑页「下架」   → POST /community/game/offline/{id}  → status=0（前台立即隐藏）
 ```
 
 **状态机约束（避免重复发布 / 卡死）**
 
-| 当前状态 | 存草稿 | 发布 | 撤回 | 修改(PUT) |
-|---|---|---|---|---|
-| `4` 草稿 / `3` 驳回 | ✅ | ✅ | — | ✅ |
-| `2` 待审核 | ❌（前端禁用，后端拒绝修改） | ❌ | ✅ | ❌ `{"code":500,"msg":"该游戏正在审核中，请先撤回后再修改"}` |
-| `1` 已发布 | ✅（转为草稿） | ❌ | — | ✅ |
+| 当前状态 | 存草稿 | 发布 | 撤回 | 下架 | 修改(PUT) |
+|---|---|---|---|---|---|
+| `4` 草稿 / `3` 驳回 / `0` 已下架 | ✅ | ✅ | — | — | ✅ |
+| `2` 待审核 | ❌ | ❌ | ✅ | — | ❌ `{"code":500,"msg":"该游戏正在审核中，请先撤回后再修改"}` |
+| `1` 已发布 | ❌ | ❌ | — | ✅ | ❌（先下架再改） |
 
-- 发布前置校验：`title` 与 `cover` 不能为空，否则返回 `{"code":500,"msg":"请先上传封面图"}`。
+- 发布前置校验：`title` 与 `cover` 不能为空；**游戏截图**（`carousel`）要么为空，要么 **3~7 张**，
+  否则返回 `{"code":500,"msg":"游戏截图至少上传 3 张（或不上传）"}` / `…最多 7 张`。
 - 已经在审核队列（存在运行中的 Flowable 流程）时再次发布：`{"code":500,"msg":"该游戏已在审核队列中，请先撤回后再发布"}`。
 - 撤回后流程实例被删除（审核列表不再出现），状态回到草稿，可重新编辑并发布；重复撤回已发布/草稿状态返回
   `{"code":500,"msg":"只有待审核的游戏可以撤回"}`。
+- 下架仅允许 `1` 已发布状态，其他状态返回 `{"code":500,"msg":"只有已发布的游戏可以下架"}`；
+  下架后再次发布需重新走审核。
 - 审核接口见 [07-review-ai-common.md](07-review-ai-common.md)，`bizType = "game"`。
 
 
@@ -79,7 +84,7 @@
 | `title` | string | 游戏原名 |
 | `titleCn` | string | 游戏译名 |
 | `cover` | string | 封面图相对路径（`/profile/upload/...`，前端裁剪后统一 **WebP**，900×1200） |
-| `carousel` | string | **轮播图**，JSON 数组字符串（最多 7 张，16:9 · WebP），如 `["/profile/upload/a.webp","/profile/upload/b.webp"]` |
+| `carousel` | string | **游戏截图**，JSON 数组字符串（**0 张或 3~7 张**，16:9 · WebP），如 `["/profile/upload/a.webp","/profile/upload/b.webp"]`；前台「游戏截图」一屏 3 张、左右箭头切换、不自动滚动，无图则隐藏整块 |
 | `releaseDate` | string | 发售日期（`yyyy-MM-dd`） |
 | `summary` | string | 简介（**Markdown**，支持内嵌图片/视频：`![x](url)`，`.mp4/.webm` 会渲染为 `<video>`） |
 | `staffPaint` | string | 原画 |

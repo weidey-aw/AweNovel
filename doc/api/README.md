@@ -241,17 +241,18 @@ Authorization: Bearer <token>
 | DELETE | `/monitor/cache/clearCacheAll` | `monitor:cache:list` | ❌ |
 | GET | `/monitor/server` | `monitor:server:list` | ✅ 监控页 |
 
-### 2.4 游戏库（18）
+### 2.4 游戏库（19）
 
 | 方法 | 路径 | 鉴权 | 前端状态 |
 |---|---|---|---|
 | GET | `/community/game/list` | **匿名** | ✅ 前台列表（仅已发布） |
-| GET | `/community/game/{gameId}` | **匿名** | ✅ 前台详情 |
+| GET | `/community/game/{gameId}` | **匿名** | ✅ 前台详情（含截图） |
 | GET | `/community/game/tag/all` | **匿名** | ✅ |
 | GET | `/community/game/admin/list` | `community:game:list` | ✅ 管理端多维筛选 |
 | GET | `/community/game/admin/{gameId}` | `community:game:list` | ✅ 编辑页回显 |
 | POST | `/community/game/publish/{gameId}` | `community:game:publish` | ✅ 提交审核 |
 | POST | `/community/game/withdraw/{gameId}` | `community:game:publish` | ✅ 撤回审核（回到草稿） |
+| POST | `/community/game/offline/{gameId}` | `community:game:publish` | ✅ 下架（已发布 → 已下架） |
 | POST | `/community/game` | `community:game:add` | ✅ 新增（默认草稿） |
 | PUT | `/community/game` | `community:game:edit` | ✅ 修改（审核中禁止） |
 | DELETE | `/community/game/{gameIds}` | `community:game:remove` | ✅ 删除 |
@@ -322,20 +323,25 @@ Authorization: Bearer <token>
 
 | 状态 | 数量 | 占比 |
 |---|---|---|
-| ✅ 已对接（有页面调用） | 126 | 88% |
+| ✅ 已对接（有页面调用） | 127 | 88% |
 | 🔸 仅封装未接页面 | 4 | 3% |
 | ❌ 未封装 | 14 | 9% |
-| **合计** | **144** | 100% |
+| **合计** | **145** | 100% |
 
-> **本轮（游戏发布流程修复 + 前台详情 + Token 策略）**：
+> **本轮（下架 + 游戏截图改版）**：
+> 新增 `POST /community/game/offline/{id}`（已发布 → 已下架，前台立即隐藏，可再次发布走审核）；
+> 「轮播图」改名为**游戏截图**并与封面分离：前台在简介下方单独成块，**一屏 3 张、左右箭头、不自动滚动**，
+> 无图则隐藏；上传则要求 **3~7 张**（草稿可暂存不足 3 张，发布时校验）。
+>
+> **上一轮（游戏发布流程修复 + 前台详情 + Token 策略）**：
 > 新增 `POST /community/game/withdraw/{id}`（撤回审核，回到草稿并取消流程）；
 > 「审核中」禁止修改与重复发布，编辑页在待审核时只显示「撤回」；
-> 前台游戏详情支持轮播图与 Markdown 简介（图片/视频）；
+> 前台游戏详情支持 Markdown 简介（图片/视频）；
 > Token 有效期改为 **7 天**并**每次请求滑动续期**（前后台一致）。
 >
 > **上一轮（游戏管理重构）新增 3 个后端接口**：管理端列表 `GET /community/game/admin/list`（关键词/会社/**标签多选**/
 > **发售日区间**/状态）、管理端详情 `GET /community/game/admin/{id}`、提交发布 `POST /community/game/publish/{id}`；
-> 并新增 `gal_game.carousel`（轮播图，最多 7 张）字段、游戏状态改为 5 态（下架/已发布/待审核/驳回/草稿）、
+> 并新增 `gal_game.carousel`（游戏截图，0 或 3~7 张）字段、游戏状态改为 5 态（下架/已发布/待审核/驳回/草稿）、
 > 审核驳回写入 `status=3`、上传支持 **webp**、上传大小上限提升到 200MB。
 
 > **本轮（菜单/字典/参数/公告/日志）新增对接 35 个接口**：

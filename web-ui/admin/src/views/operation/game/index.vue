@@ -8,6 +8,7 @@ import {
   getAdminGameList,
   getAllTags,
   getBrandList,
+  offlineGame,
   publishGame,
   resolveAssetUrl,
   updateGame,
@@ -236,6 +237,26 @@ async function handleWithdraw(row: Game) {
   }
 }
 
+/** 下架：已发布 → 已下架 */
+async function handleOffline(row: Game) {
+  try {
+    await ElMessageBox.confirm(
+      `确认下架「${row.titleCn || row.title}」吗？下架后前台立即不可见。`,
+      '下架确认',
+      { type: 'warning', confirmButtonText: '确认下架' },
+    )
+  } catch {
+    return
+  }
+  try {
+    await offlineGame(row.gameId)
+    ElMessage.success('已下架')
+    load()
+  } catch (err: unknown) {
+    ElMessage.error(err instanceof Error ? err.message : '下架失败')
+  }
+}
+
 async function handleDelete(rows?: Game[]) {
   const targets = rows ?? selection.value
   if (!targets.length) {
@@ -385,7 +406,7 @@ onMounted(() => {
         <el-table-column label="更新时间" width="165">
           <template #default="{ row }">{{ row.updateTime || row.createTime || '—' }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="215" fixed="right">
+        <el-table-column label="操作" width="255" fixed="right">
           <template #default="{ row }">
             <el-button v-if="can('community:game:edit')" link type="primary" :icon="Edit" @click="goEdit(row)">
               编辑
@@ -407,6 +428,14 @@ onMounted(() => {
               @click="handleWithdraw(row)"
             >
               撤回
+            </el-button>
+            <el-button
+              v-if="can('community:game:publish') && row.status === '1'"
+              link
+              type="danger"
+              @click="handleOffline(row)"
+            >
+              下架
             </el-button>
             <el-button
               v-if="can('community:game:remove')"
