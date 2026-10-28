@@ -1,7 +1,7 @@
 # 05 · 内容接口（文章 / 资源 / 评论 / 评分）
 
-> 共 12 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
-> 表结构见 [`../../sql/awe_novel.sql`](../../sql/awe_novel.sql)（`gal_article` / `gal_resource` / `gal_comment` / `gal_rating`）。
+> 共 24 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
+> 表结构见 [`../../sql/awe_novel.sql`](../../sql/awe_novel.sql)（`gal_article` / `gal_resource` / `gal_resource_source` / `gal_official_resource` / `gal_comment` / `gal_rating`）。
 
 | # | 方法 | 路径 | 鉴权 | 前端状态 |
 |---|---|---|---|---|
@@ -9,14 +9,26 @@
 | 2 | GET | `/community/article/{articleId}` | 匿名 | ✅ |
 | 3 | POST | `/community/article` | 登录 | 🔸 已封装未接页面 |
 | 4 | GET | `/community/resource/list` | 匿名 | ✅ |
-| 5 | POST | `/community/resource` | 登录 | 🔸 已封装未接页面 |
-| 6 | POST | `/community/resource/download/{resourceId}` | 登录 | ✅ |
-| 7 | POST | `/community/resource/report/{resourceId}` | 登录 | ✅ |
-| 8 | GET | `/community/comment/list` | 匿名 | ✅ |
-| 9 | POST | `/community/comment` | 登录 | ✅ |
-| 10 | DELETE | `/community/comment/{ids}` | 登录 | ✅ |
-| 11 | GET | `/community/rating/{gameId}` | **登录** | ✅ |
-| 12 | POST | `/community/rating` | 登录 | ✅ |
+| 5 | GET | `/community/resource/types` | 匿名 | ✅ 资源类型字典 |
+| 6 | GET | `/community/resource/official/list` | 匿名 | ✅ 正版资源 |
+| 7 | POST | `/community/resource` | 登录 | 🔸 已封装未接页面 |
+| 8 | POST | `/community/resource/download/{resourceId}` | 登录 | ✅ 返回多来源 |
+| 9 | POST | `/community/resource/report/{resourceId}` | 登录 | ✅ |
+| 10 | GET | `/community/resource/admin/list` | `community:resource:list` | ✅ 管理端筛选 |
+| 11 | GET | `/community/resource/admin/{resourceId}` | `community:resource:list` | ✅ 含来源详情 |
+| 12 | POST | `/community/resource/admin` | `community:resource:add` | ✅ 新增（含来源） |
+| 13 | PUT | `/community/resource/admin` | `community:resource:edit` | ✅ 修改（来源覆盖） |
+| 14 | DELETE | `/community/resource/admin/{resourceIds}` | `community:resource:remove` | ✅ 删除（级联来源） |
+| 15 | POST | `/community/resource/official` | `community:resource:edit` | ✅ 新增正版 |
+| 16 | PUT | `/community/resource/official` | `community:resource:edit` | ✅ 修改正版 |
+| 17 | DELETE | `/community/resource/official/{ids}` | `community:resource:edit` | ✅ 删除正版 |
+| 18 | GET | `/community/comment/list` | 匿名 | ✅ |
+| 19 | POST | `/community/comment` | 登录 | ✅ |
+| 20 | DELETE | `/community/comment/{ids}` | 登录 | ✅ |
+| 21 | GET | `/community/rating/{gameId}` | **登录** | ✅ |
+| 22 | POST | `/community/rating` | 登录 | ✅ |
+
+> 资源相关权限需执行 [`sql/upgrade_resource_v2.sql`](../../sql/upgrade_resource_v2.sql)（建表 + 字典 + 按钮权限）。
 
 **审核状态约定（文章与资源一致）**：`0` = 待审核、`1` = 审核通过（对外可见）、`2` = 已拒绝
 
@@ -130,140 +142,151 @@
 
 ## 2. 资源 `/community/resource`
 
-### 2.1 数据模型 `Resource`（表 `gal_resource`）
+> 资源拆分为两部分：**元信息**（`gal_resource`）+ **多条来源**（`gal_resource_source`）；
+> 另外每个游戏可配置 **正版资源**（`gal_official_resource`，与用户无关）。
+
+### 2.1 数据模型
+
+**`Resource`（表 `gal_resource`）**
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | `resourceId` | long | 资源ID |
 | `gameId` | long | 所属游戏ID（必填） |
-| `userId` | long | 发布者ID（后端取登录用户） |
+| `userId` | long | 发布者ID（`sys_user.user_id`） |
 | `title` | string | 资源标题（必填） |
-| `type` | string | `netdisk`网盘 / `magnet`磁力 / `torrent`种子 |
-| `url` | string | 下载链接 |
+| `type` | string | 资源类型，字典 **`game_resource_type`**：`netdisk`网盘 / `magnet`磁力 / `direct`直链 / `torrent`种子 / `other`其他 |
 | `version` | string | 版本 |
 | `size` | string | 大小（如 `3.2GB`） |
-| `extractPwd` | string | 解压密码 |
 | `checksum` | string | 校验码（MD5 等） |
-| `points` | int | **下载所需积分**（0 表示免费） |
+| `points` | int | **下载所需积分**，0 表示免费 |
 | `downloadCount` | int | 下载次数 |
 | `reportCount` | int | 失效举报数 |
 | `status` | **string** | `0`待审核 / `1`通过 / `2`拒绝 |
 | `processInstanceId` | string | Flowable 流程实例ID |
+| `url` / `extractPwd` | string | **已废弃**，仅保留兼容，新数据写在来源表 |
+| `sources` | array | **非表字段**，资源来源列表（详情/下载返回） |
+| `sourceCount` | long | **非表字段**，来源数量（列表返回） |
+| `userName` / `userAvatar` | string | **非表字段**，发布者昵称与头像 |
+| `gameTitle` | string | **非表字段**，所属游戏名 |
 | `delFlag` / `createTime` / `updateTime` | — | 基类字段 |
 
-### 2.2 资源列表
+**`ResourceSource`（表 `gal_resource_source`）**
 
-`GET /community/resource/list` · **匿名** · 前端 ✅
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `sourceId` | long | 来源ID |
+| `resourceId` | long | 所属资源 |
+| `sourceType` | string | 来源类型（同 `game_resource_type` 字典） |
+| `url` | string | 资源链接 |
+| `extractPwd` | string | 提取码 |
+| `unzipPwd` | string | 解压码 |
+| `remark` | string | 备注（如「百度网盘」「磁力」） |
+| `sort` | int | 排序 |
+| `createTime` | string | 创建时间 |
+
+**`OfficialResource`（表 `gal_official_resource`）**：`officialId` / `gameId` / `title` / `sourceType`（字典 **`game_official_type`**：`official`/`store`/`steam`/`dlsite`/`other`）/ `url` / `icon` / `sort` / `createTime`
+
+> 关系：`gal_game 1—N gal_resource 1—N gal_resource_source`；`gal_resource N—1 sys_user`；
+> `gal_game 1—N gal_official_resource`。
+
+### 2.2 资源列表（前台）
+
+`GET /community/resource/list` · **匿名**
 
 | 参数 | 类型 | 必填 | 说明 |
 |---|---|---|---|
 | `gameId` | long | 否 | 按游戏筛选 |
+| `type` | string | 否 | 按资源类型筛选（`game_resource_type` 字典值） |
 | `pageNum` / `pageSize` | int | 否 | 分页 |
 
-**响应**：`TableDataInfo<Resource>`
+- 仅返回 `status = '1'`，排序 `resource_id DESC`。
+- 每行返回 `userName`、`userAvatar`、`gameTitle`、`sourceCount`；**不返回具体链接**（需登录下载才可见）。
 
 ```json
 {
-  "code": 200, "msg": "查询成功", "total": 5,
+  "code": 200, "msg": "查询成功", "total": 1,
   "rows": [
-    {
-      "resourceId": 8, "gameId": 1, "userId": 2, "title": "CLANNAD 汉化版 全CG存档",
-      "type": "netdisk", "url": "https://pan.baidu.com/s/xxxx",
-      "version": "v1.2", "size": "3.2GB", "extractPwd": "abcd",
-      "checksum": "d41d8cd98f00b204e9800998ecf8427e", "points": 10,
-      "downloadCount": 23, "reportCount": 0, "status": "1",
-      "createTime": "2024-01-01 00:00:00"
-    }
+    { "resourceId": 8, "gameId": 1, "title": "CLANNAD 汉化版", "type": "netdisk",
+      "version": "v1.2", "size": "3.2GB", "points": 10, "downloadCount": 23,
+      "status": "1", "userName": "小明", "userAvatar": "/profile/avatar/xx.webp",
+      "gameTitle": "团子大家族", "sourceCount": 2, "createTime": "2024-01-01 00:00:00" }
   ]
 }
 ```
 
-**规则**
+### 2.3 资源类型字典
 
-- 固定只返回 `status = '1'`；排序 `resource_id DESC`。
-- ⚠️ **公开列表就会返回 `url` 与 `extractPwd`**（即未扣积分也能看到真实下载链接）。若要做「扣积分后才可见」，需后端在列表接口中屏蔽这两个字段（建议后续优化）。
-- ⚠️ 不支持按发布者/状态查询，管理端审核页目前拉全量（`pageSize=200`）再前端过滤。
-- 不返回 `userName` / `gameTitle`（前端 `types.ts` 中的对应字段拿到的是 `undefined`）。
-
-### 2.3 发布资源
-
-`POST /community/resource` · 登录 · 前端 🔸（`publishResource` 已封装，无页面）
-
-**请求体**
-
-| 字段 | 必填 | 说明 |
-|---|---|---|
-| `gameId` | 是 | 所属游戏 |
-| `title` | 是 | 资源标题 |
-| `type` | 否 | 默认 `netdisk` |
-| `url` | 是 | 下载链接 |
-| `points` | 否 | 下载所需积分，默认 0 |
-| `version` / `size` / `extractPwd` / `checksum` | 否 | 附件信息 |
+`GET /community/resource/types` · **匿名**
 
 ```json
-{
-  "gameId": 1, "title": "CLANNAD 汉化版", "type": "netdisk",
-  "url": "https://pan.baidu.com/s/xxxx", "version": "v1.2", "size": "3.2GB",
-  "extractPwd": "abcd", "points": 10
-}
+{ "code": 200, "msg": "操作成功",
+  "data": {
+    "resource": [ { "dictLabel": "网盘", "dictValue": "netdisk" }, { "dictLabel": "磁力链接", "dictValue": "magnet" } ],
+    "official": [ { "dictLabel": "官方网站", "dictValue": "official" } ]
+  } }
 ```
 
-**响应**
+### 2.4 正版资源列表（前台）
+
+`GET /community/resource/official/list?gameId=1` · **匿名** · 返回 `data:[OfficialResource]`（按 `sort` 升序）
+
+### 2.5 下载资源
+
+`POST /community/resource/download/{resourceId}` · 登录
+
+- 校验资源为 `status='1'`；`points > 0` 时扣积分（不足报错）。
+- `download_count + 1`，返回**含 `sources` 的完整资源**（链接 / 提取码 / 解压码都在 `sources` 里）。
 
 ```json
-{
-  "code": 200, "msg": "操作成功",
-  "data": { "resourceId": 9, "gameId": 1, "userId": 2, "status": "0", "processInstanceId": "25003", "downloadCount": 0, "reportCount": 0 }
-}
+{ "code": 200, "msg": "操作成功",
+  "data": { "resourceId": 8, "title": "CLANNAD 汉化版", "points": 10, "downloadCount": 24,
+    "sources": [
+      { "sourceId": 1, "sourceType": "netdisk", "url": "https://pan.baidu.com/s/xxxx",
+        "extractPwd": "abcd", "unzipPwd": "123456", "remark": "百度网盘", "sort": 0 }
+    ] } }
 ```
 
-**规则**：后端强制 `status="0"`、`downloadCount=0`、`reportCount=0`，并启动 Flowable 审核（`businessKey = resource:<resourceId>`）。
+### 2.6 失效举报
 
-### 2.4 下载资源（扣积分）
+`POST /community/resource/report/{resourceId}` · 登录 · `report_count + 1`
 
-`POST /community/resource/download/{resourceId}` · 登录 · 前端 ✅
+### 2.7 用户发布资源
+
+`POST /community/resource` · 登录 · 状态置为 `0` 并启动 Flowable 审核（`bizType = resource`）
+
+请求体同 `Resource`，可通过 `sources` 数组同时提交来源。
+
+### 2.8 管理端列表
+
+`GET /community/resource/admin/list` · 权限 `community:resource:list`
 
 | 参数 | 说明 |
 |---|---|
-| `resourceId` | 资源ID（路径参数） |
+| `keyword` | 标题模糊 |
+| `gameId` | 所属游戏 |
+| `type` | 资源类型 |
+| `status` | `0`/`1`/`2` |
+| `pageNum` / `pageSize` | 分页 |
 
-**响应**
+每行返回 `userName`、`gameTitle`、`sourceCount`，可按游戏/类型/状态筛选（满足「编辑资源跳转后只看该游戏」的场景）。
 
-```json
-{
-  "code": 200, "msg": "操作成功",
-  "data": {
-    "resourceId": 8, "gameId": 1, "title": "CLANNAD 汉化版",
-    "type": "netdisk", "url": "https://pan.baidu.com/s/xxxx",
-    "extractPwd": "abcd", "points": 10, "downloadCount": 24, "status": "1"
-  }
-}
-```
+### 2.9 管理端详情 / 新增 / 修改 / 删除
 
-**失败示例**
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `/community/resource/admin/{resourceId}` | `community:resource:list` | 详情（含 `sources`） |
+| POST | `/community/resource/admin` | `community:resource:add` | 新增（可带 `sources`；`userId` 缺省为当前管理员） |
+| PUT | `/community/resource/admin` | `community:resource:edit` | 修改；**传 `sources` 即全量覆盖来源**，不传则不动 |
+| DELETE | `/community/resource/admin/{resourceIds}` | `community:resource:remove` | 批量删除，**级联删除来源** |
 
-```json
-{ "code": 500, "msg": "资源不存在" }
-{ "code": 500, "msg": "资源暂不可下载" }
-{ "code": 500, "msg": "积分不足，无法下载" }
-```
+### 2.10 正版资源管理
 
-**规则**
-
-1. 资源必须存在且 `status = '1'`（审核通过），否则报「资源暂不可下载」。
-2. `points > 0` 时从 `gal_user_profile.points` 扣减并写积分流水（`change_type = 'download'`）；余额不足报「积分不足」。
-3. 扣分成功后 `download_count + 1`，返回完整资源对象（含 `url`、`extractPwd`）。
-4. 整个操作为事务（扣积分与计数一致）。
-
-### 2.5 失效举报
-
-`POST /community/resource/report/{resourceId}` · 登录 · 前端 ✅
-
-**响应**：`{"code":200,"msg":"操作成功"}`
-
-**规则**：仅将 `report_count + 1`，**不校验重复举报**、不自动下架。
-
----
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| POST | `/community/resource/official` | `community:resource:edit` | 新增（`gameId`/`title`/`url` 必填） |
+| PUT | `/community/resource/official` | `community:resource:edit` | 修改（需 `officialId`） |
+| DELETE | `/community/resource/official/{ids}` | `community:resource:edit` | 批量删除 |
 
 ## 3. 评论 `/community/comment`
 

@@ -274,7 +274,7 @@ Authorization: Bearer <token>
 > 游戏列表排序：`sortBy=hot|download|rating|publish|release` + `isAsc`；多标签 `tagIds=1,2`。
 > 详见 [04-community-game.md](04-community-game.md)。
 
-### 2.5 内容：文章 / 资源 / 评论 / 评分（12）
+### 2.5 内容：文章 / 资源 / 评论 / 评分（24）
 
 | 方法 | 路径 | 鉴权 | 前端状态 |
 |---|---|---|---|
@@ -282,14 +282,27 @@ Authorization: Bearer <token>
 | GET | `/community/article/{articleId}` | **匿名** | ✅ |
 | POST | `/community/article` | 登录 | 🔸 |
 | GET | `/community/resource/list` | **匿名** | ✅ |
+| GET | `/community/resource/types` | **匿名** | ✅ 资源类型字典 |
+| GET | `/community/resource/official/list` | **匿名** | ✅ 正版资源 |
 | POST | `/community/resource` | 登录 | 🔸 |
-| POST | `/community/resource/download/{resourceId}` | 登录 | ✅ |
+| POST | `/community/resource/download/{resourceId}` | 登录 | ✅ 返回多来源 |
 | POST | `/community/resource/report/{resourceId}` | 登录 | ✅ |
+| GET | `/community/resource/admin/list` | `community:resource:list` | ✅ 管理端筛选 |
+| GET | `/community/resource/admin/{resourceId}` | `community:resource:list` | ✅ 含来源 |
+| POST | `/community/resource/admin` | `community:resource:add` | ✅ 新增 |
+| PUT | `/community/resource/admin` | `community:resource:edit` | ✅ 修改 |
+| DELETE | `/community/resource/admin/{resourceIds}` | `community:resource:remove` | ✅ 级联删除来源 |
+| POST | `/community/resource/official` | `community:resource:edit` | ✅ 正版新增 |
+| PUT | `/community/resource/official` | `community:resource:edit` | ✅ 正版修改 |
+| DELETE | `/community/resource/official/{ids}` | `community:resource:edit` | ✅ 正版删除 |
 | GET | `/community/comment/list` | **匿名** | ✅ |
 | POST | `/community/comment` | 登录 | ✅ |
 | DELETE | `/community/comment/{ids}` | 登录（同上有风险） | ✅ |
 | GET | `/community/rating/{gameId}` | 登录 | ✅ |
 | POST | `/community/rating` | 登录 | ✅ |
+
+> 资源拆分为「元信息 + 多来源」：`gal_resource`（资源）→ `gal_resource_source`（链接/提取码/解压码）；
+> 另新增 `gal_official_resource`（正版资源，按游戏配置、不关联用户），详见 [05-community-content.md](05-community-content.md)。
 
 ### 2.6 用户中心（10）
 
@@ -328,12 +341,19 @@ Authorization: Bearer <token>
 
 | 状态 | 数量 | 占比 |
 |---|---|---|
-| ✅ 已对接（有页面调用） | 131 | 88% |
-| 🔸 仅封装未接页面 | 4 | 3% |
+| ✅ 已对接（有页面调用） | 141 | 89% |
+| 🔸 仅封装未接页面 | 4 | 2% |
 | ❌ 未封装 | 14 | 9% |
-| **合计** | **149** | 100% |
+| **合计** | **159** | 100% |
 
-> **本轮（会社管理 + 标签管理 + 多标签搜索/排序）**：
+> **本轮（资源管理重构）新增 10 个接口**：资源类型字典 `GET /community/resource/types`、
+> 正版资源列表、管理端资源列表/详情/新增/修改/删除、正版资源新增/修改/删除；
+> 数据库拆分出 **`gal_resource_source`（资源来源：链接/提取码/解压码，多对一）** 与
+> **`gal_official_resource`（正版资源，按游戏、不关联用户）**，新增字典 `game_resource_type` / `game_official_type`；
+> 前台详情页先展示正版资源，再展示社区资源（发布者头像/名称 + 多来源下载弹窗）；
+> 管理端游戏列表操作列改为「编辑 / 删除 / 更多（编辑资源、发布、撤回、下架）」。
+>
+> **上一轮（会社管理 + 标签管理 + 多标签搜索/排序）**：
 > 会社新增 **官网外链字段 `website`** 与完整 CRUD（分页/游戏数/重名校验/有游戏时禁删）；
 > 标签 CRUD（类型 theme/play/type、关联游戏数、删除时**级联清理 `gal_game_tag`**）；
 > 游戏列表支持**多标签 `tagIds`** 与 **5 种排序**（hot/download/rating/publish/release + isAsc）；

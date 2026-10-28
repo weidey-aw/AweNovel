@@ -8,6 +8,7 @@
 | `upgrade_user_perm.sql` | **权限增量升级**：新增「手动重置密码」按钮权限 `system:user:resetPwdManual`（重置密码拆分为系统自动 / 管理员手动两种模式）；可重复执行 |
 | `upgrade_game_v2.sql` | **游戏模块升级**：`gal_game` 新增轮播图字段 `carousel`、状态语义改为 5 态（0下架/1已发布/2待审核/3驳回/4草稿）、新增游戏按钮权限（add/edit/remove/publish）；可重复执行 |
 | `upgrade_brand_tag.sql` | **会社/标签升级**：`gal_brand` 新增官网外链字段 `website`，新增会社与标签的按钮权限（brand/tag 的 add/edit/remove）；可重复执行 |
+| `upgrade_resource_v2.sql` | **资源管理升级**：新增 `gal_resource_source`（资源来源：链接/提取码/解压码，一个资源多条）、`gal_official_resource`（正版资源，按游戏、不关联用户），迁移旧 `url`/`extract_pwd`，新增字典 `game_resource_type` / `game_official_type` 与资源按钮权限；可重复执行 |
 
 ## 使用方式
 

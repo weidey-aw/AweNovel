@@ -392,6 +392,41 @@ CREATE TABLE `gal_resource` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='资源表';
 
 -- ----------------------------------------------------------------------------
+-- 3.6.1 资源来源（一个资源多条：网盘/磁力/直链，各自提取码与解压码）
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `gal_resource_source`;
+CREATE TABLE `gal_resource_source` (
+  `source_id`   bigint(20)   NOT NULL AUTO_INCREMENT COMMENT '来源ID',
+  `resource_id` bigint(20)   NOT NULL                COMMENT '资源ID',
+  `source_type` varchar(20)  DEFAULT 'netdisk'       COMMENT '来源类型（netdisk/magnet/direct/torrent/other）',
+  `url`         text                                 COMMENT '资源链接',
+  `extract_pwd` varchar(100) DEFAULT ''              COMMENT '提取码',
+  `unzip_pwd`   varchar(100) DEFAULT ''              COMMENT '解压码',
+  `remark`      varchar(255) DEFAULT ''              COMMENT '备注',
+  `sort`        int(11)      DEFAULT 0               COMMENT '排序',
+  `create_time` datetime                             COMMENT '创建时间',
+  PRIMARY KEY (`source_id`),
+  KEY `idx_gal_resource_source_resource` (`resource_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='游戏资源来源表';
+
+-- ----------------------------------------------------------------------------
+-- 3.6.2 正版资源（按游戏配置，不关联用户）
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `gal_official_resource`;
+CREATE TABLE `gal_official_resource` (
+  `official_id` bigint(20)   NOT NULL AUTO_INCREMENT COMMENT '正版资源ID',
+  `game_id`     bigint(20)   NOT NULL                COMMENT '游戏ID',
+  `title`       varchar(255) NOT NULL                COMMENT '标题',
+  `source_type` varchar(20)  DEFAULT 'official'      COMMENT '类型（official/store/steam/dlsite/other）',
+  `url`         varchar(500) NOT NULL                COMMENT '官方链接',
+  `icon`        varchar(255) DEFAULT ''              COMMENT '小图标',
+  `sort`        int(11)      DEFAULT 0               COMMENT '排序',
+  `create_time` datetime                             COMMENT '创建时间',
+  PRIMARY KEY (`official_id`),
+  KEY `idx_gal_official_game` (`game_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='游戏正版资源表';
+
+-- ----------------------------------------------------------------------------
 -- 3.7 评论
 -- ----------------------------------------------------------------------------
 DROP TABLE IF EXISTS `gal_comment`;
@@ -606,6 +641,10 @@ INSERT INTO `sys_menu` VALUES
 (2014, '标签新增', 202, 1, '', NULL, '', 1, 0, 'F', '0', '0', 'community:tag:add',      '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
 (2015, '标签修改', 202, 2, '', NULL, '', 1, 0, 'F', '0', '0', 'community:tag:edit',     '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
 (2016, '标签删除', 202, 3, '', NULL, '', 1, 0, 'F', '0', '0', 'community:tag:remove',   '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+-- 网站运营-资源管理按钮
+(2017, '资源新增', 203, 1, '', NULL, '', 1, 0, 'F', '0', '0', 'community:resource:add',    '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+(2018, '资源修改', 203, 2, '', NULL, '', 1, 0, 'F', '0', '0', 'community:resource:edit',   '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+(2019, '资源删除', 203, 3, '', NULL, '', 1, 0, 'F', '0', '0', 'community:resource:remove', '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
 -- 系统管理-用户管理按钮
 (1000, '用户查询', 100, 1, '', NULL, '', 1, 0, 'F', '0', '0', 'system:user:query',  '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
 (1001, '用户新增', 100, 2, '', NULL, '', 1, 0, 'F', '0', '0', 'system:user:add',    '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
@@ -683,7 +722,9 @@ INSERT INTO `sys_dict_type` VALUES
 (6,  '通知类型', 'sys_notice_type', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '通知类型列表'),
 (7,  '通知状态', 'sys_notice_status', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '通知状态列表'),
 (8,  '操作类型', 'sys_oper_type',   '0', 'admin', '2024-01-01 00:00:00', '', NULL, '操作类型列表'),
-(9,  '系统状态', 'sys_common_status', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '登录状态列表');
+(9,  '系统状态', 'sys_common_status', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '登录状态列表'),
+(10, '游戏资源类型', 'game_resource_type', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '社区资源来源类型'),
+(11, '正版资源类型', 'game_official_type', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '正版来源类型');
 
 -- ----------------------------------------------------------------------------
 -- 4.6 字典数据
@@ -719,7 +760,19 @@ INSERT INTO `sys_dict_data` VALUES
 (21, 8, '清空数据', '9', 'sys_oper_type', '', 'danger', 'N', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '清空数据操作'),
 -- 系统状态（登录）
 (22, 1, '成功', '0', 'sys_common_status', '', 'primary', 'N', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '成功状态'),
-(23, 2, '失败', '1', 'sys_common_status', '', 'danger',  'N', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '失败状态');
+(23, 2, '失败', '1', 'sys_common_status', '', 'danger',  'N', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '失败状态'),
+-- 游戏资源类型
+(24, 1, '网盘', 'netdisk', 'game_resource_type', '', 'primary', 'N', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '网盘分享'),
+(25, 2, '磁力链接', 'magnet', 'game_resource_type', '', 'warning', 'N', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '磁力/种子'),
+(26, 3, '直链下载', 'direct', 'game_resource_type', '', 'success', 'N', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '直链/离线下载'),
+(27, 4, '种子文件', 'torrent', 'game_resource_type', '', 'info', 'N', '0', 'admin', '2024-01-01 00:00:00', '', NULL, 'BT 种子'),
+(28, 5, '其他', 'other', 'game_resource_type', '', 'info', 'N', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '其他来源'),
+-- 正版资源类型
+(29, 1, '官方网站', 'official', 'game_official_type', '', 'primary', 'N', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '官方/发行商官网'),
+(30, 2, '官方商店', 'store', 'game_official_type', '', 'success', 'N', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '官方商店'),
+(31, 3, 'Steam', 'steam', 'game_official_type', '', 'info', 'N', '0', 'admin', '2024-01-01 00:00:00', '', NULL, 'Steam 商店页'),
+(32, 4, 'DLsite', 'dlsite', 'game_official_type', '', 'warning', 'N', '0', 'admin', '2024-01-01 00:00:00', '', NULL, 'DLsite'),
+(33, 5, '其他', 'other', 'game_official_type', '', 'info', 'N', '0', 'admin', '2024-01-01 00:00:00', '', NULL, '其他正版渠道');
 
 -- ----------------------------------------------------------------------------
 -- 4.7 系统参数配置

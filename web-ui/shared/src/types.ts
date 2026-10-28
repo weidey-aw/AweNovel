@@ -116,24 +116,71 @@ export interface Game {
   updateTime?: string
 }
 
+/** 资源来源（一个资源可有多条：网盘 / 磁力 / 直链…） */
+export interface ResourceSource {
+  sourceId?: number
+  resourceId?: number
+  /** 来源类型（game_resource_type 字典：netdisk/magnet/direct/torrent/other） */
+  sourceType?: string
+  url?: string
+  /** 提取码 */
+  extractPwd?: string
+  /** 解压码 */
+  unzipPwd?: string
+  remark?: string
+  sort?: number
+  createTime?: string
+}
+
+/** 正版资源（按游戏配置，与用户无关） */
+export interface OfficialResource {
+  officialId?: number
+  gameId: number
+  title: string
+  /** 类型（game_official_type 字典：official/store/steam/dlsite/other） */
+  sourceType?: string
+  url: string
+  /** 小图标（相对路径或图标名） */
+  icon?: string
+  sort?: number
+  createTime?: string
+}
+
+/** 字典项（下拉回显用） */
+export interface DictItem {
+  dictCode?: number
+  dictLabel: string
+  dictValue: string
+  listClass?: string
+}
+
 export interface Resource {
   resourceId: number
   gameId: number
   userId?: number
   title: string
+  /** 资源类型（game_resource_type 字典） */
   type: string
+  /** @deprecated 旧版单链接，已迁移到 sources */
   url?: string
+  /** @deprecated 旧版提取码，已迁移到 sources */
+  extractPwd?: string
   version?: string
   size?: string
-  extractPwd?: string
   checksum?: string
   points?: number
   downloadCount?: number
+  reportCount?: number
   /** 0=待审核 1=已通过 2=已拒绝 */
-  status?: number
+  status?: string
   createTime?: string
+  /** 资源来源列表（详情 / 下载返回） */
+  sources?: ResourceSource[]
+  /** 来源数量 */
+  sourceCount?: number
   /** 联表冗余字段 */
   userName?: string
+  userAvatar?: string
   gameTitle?: string
 }
 

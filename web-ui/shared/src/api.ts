@@ -9,6 +9,7 @@ import type {
   CaptchaResponse,
   Comment,
   CommentQuery,
+  DictItem,
   Favorite,
   FollowItem,
   Game,
@@ -16,11 +17,13 @@ import type {
   LoginParams,
   MenuTreeNode,
   Message,
+  OfficialResource,
   PageParams,
   PointLog,
   Rating,
   RegisterParams,
   Resource,
+  ResourceSource,
   ReviewTask,
   RoleMenuTreeData,
   RouterVo,
@@ -182,17 +185,54 @@ export const deleteTags = (tagIds: string) => http.delete<AjaxResult>(`/communit
 
 /* ================= 资源 ================= */
 
-export const getResourceList = (params: PageParams & { gameId?: number; status?: number }) =>
+/** 前台资源列表（仅审核通过），可按游戏 / 类型过滤 */
+export const getResourceList = (params: PageParams & { gameId?: number; type?: string; status?: string }) =>
   http.get<TableDataInfo<Resource>>('/community/resource/list', { params })
+
+/** 资源类型字典（社区资源 + 正版资源） */
+export const getResourceTypes = () =>
+  http.get<AjaxResult<{ resource: DictItem[]; official: DictItem[] }>>('/community/resource/types')
+
+/** 正版资源列表（公开，按游戏） */
+export const getOfficialResources = (gameId: number) =>
+  http.get<AjaxResult<OfficialResource[]>>('/community/resource/official/list', { params: { gameId } })
 
 /** 发布资源（登录） */
 export const publishResource = (data: Partial<Resource>) => http.post<AjaxResult<Resource>>('/community/resource', data)
 
-/** 下载资源（扣积分，返回含 url 的资源） */
+/** 下载资源（扣积分，返回含 sources 的资源详情） */
 export const downloadResource = (resourceId: number) => http.post<AjaxResult<Resource>>(`/community/resource/download/${resourceId}`)
 
 /** 失效举报 */
 export const reportResource = (resourceId: number) => http.post<AjaxResult>(`/community/resource/report/${resourceId}`)
+
+/* ---------- 资源（管理端） ---------- */
+
+export const getAdminResourceList = (params: Record<string, unknown>) =>
+  http.get<TableDataInfo<Resource>>('/community/resource/admin/list', { params })
+
+export const getAdminResourceDetail = (resourceId: number) =>
+  http.get<AjaxResult<Resource>>(`/community/resource/admin/${resourceId}`)
+
+export const createResource = (data: Partial<Resource>) =>
+  http.post<AjaxResult<Resource>>('/community/resource/admin', data)
+
+export const updateResource = (data: Partial<Resource>) =>
+  http.put<AjaxResult<Resource>>('/community/resource/admin', data)
+
+export const deleteResources = (resourceIds: string) =>
+  http.delete<AjaxResult>(`/community/resource/admin/${resourceIds}`)
+
+/* ---------- 正版资源（管理端） ---------- */
+
+export const createOfficialResource = (data: Partial<OfficialResource>) =>
+  http.post<AjaxResult<OfficialResource>>('/community/resource/official', data)
+
+export const updateOfficialResource = (data: Partial<OfficialResource>) =>
+  http.put<AjaxResult>('/community/resource/official', data)
+
+export const deleteOfficialResources = (ids: string) =>
+  http.delete<AjaxResult>(`/community/resource/official/${ids}`)
 
 /* ================= 文章 ================= */
 

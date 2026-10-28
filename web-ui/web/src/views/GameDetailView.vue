@@ -2,18 +2,20 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Download, Warning, ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowLeft, CopyDocument, Download, Link, Warning } from '@element-plus/icons-vue'
 import {
   downloadResource,
   getGameDetail,
   getMyRating,
+  getOfficialResources,
   getResourceList,
+  getResourceTypes,
   rateGame,
   renderMarkdown,
   reportResource,
   resolveAssetUrl,
 } from '@gal/shared'
-import type { Game, Resource } from '@gal/shared'
+import type { DictItem, Game, OfficialResource, Resource, ResourceSource } from '@gal/shared'
 import { useUserStore } from '@/stores/user'
 import ScoreBar from '@/components/ScoreBar.vue'
 import CommentSection from '@/components/CommentSection.vue'
@@ -27,13 +29,15 @@ const gameId = computed(() => Number(route.params.id))
 const game = ref<Game | null>(null)
 const loading = ref(true)
 const resources = ref<Resource[]>([])
+const officialResources = ref<OfficialResource[]>([])
+const resourceTypeDict = ref<DictItem[]>([])
+const officialTypeDict = ref<DictItem[]>([])
 const resLoading = ref(false)
 const myScore = ref(0)
 const ratingLoading = ref(false)
 const downloadTarget = ref<Resource | null>(null)
+const downloadSources = ref<ResourceSource[]>([])
 const downloadVisible = ref(false)
-const downloadUrl = ref('')
-const downloadPwd = ref('')
 
 /** 游戏截图（carousel 字段为 JSON 数组字符串；0 或 3-7 张） */
 const screenshotList = computed<string[]>(() => {
@@ -78,12 +82,36 @@ async function load() {
 async function loadResources() {
   resLoading.value = true
   try {
-    const res = await getResourceList({ pageNum: 1, pageSize: 100, gameId: gameId.value })
-    resources.value = (res.rows ?? []).filter((r) => r.status === undefined || r.status === 1)
+    const [res, official, types] = await Promise.all([
+      getResourceList({ pageNum: 1, pageSize: 100, gameId: gameId.value }),
+      getOfficialResources(gameId.value).catch(() => null),
+      getResourceTypes().catch(() => null),
+    ])
+    resources.value = (res.rows ?? []).filter((r) => r.status === undefined || r.status === '1')
+    officialResources.value = official?.data ?? []
+    resourceTypeDict.value = types?.data?.resource ?? []
+    officialTypeDict.value = types?.data?.official ?? []
   } catch {
     resources.value = []
+    officialResources.value = []
   } finally {
     resLoading.value = false
+  }
+}
+
+/** 字典回显 */
+function typeLabel(value?: string, list = resourceTypeDict.value) {
+  return list.find((d) => d.dictValue === value)?.dictLabel ?? value ?? '其他'
+}
+
+/** 复制文本 */
+async function copyText(text?: string) {
+  if (!text) return
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success('已复制')
+  } catch {
+    ElMessage.warning('复制失败，请手动选择复制')
   }
 }
 
@@ -124,12 +152,13 @@ async function doDownload(r: Resource) {
   try {
     const res = await downloadResource(r.resourceId)
     const data = (res as { data?: Resource }).data ?? r
-    downloadTarget.value = r
+    downloadTarget.value = data
+    downloadSources.value = data.sources ?? []
     downloadVisible.value = true
-    downloadUrl.value = resolveAssetUrl(data.url)
-    downloadPwd.value = data.extractPwd || ''
     await loadResources()
-    ElMessage.success(`下载成功，已扣除 ${data.points ?? 0} 积分`)
+    if ((data.points ?? 0) > 0) {
+      ElMessage.success(`下载成功，已扣除 ${data.points} 积分`)
+    }
   } catch (err: unknown) {
     ElMessage.error(err instanceof Error ? err.message : '下载失败')
   }
@@ -293,29 +322,67 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- 资源列表 -->
-      <div class="section-title">资源分享</div>
+      <!-- 正版资源（优先展示） -->
+      <template v-if="officialResources.length">
+        <div class="section-title">
+          正版资源
+          <span class="section-sub">支持正版，从这里购买</span>
+        </div>
+        <div class="official-grid">
+          <div
+            v-for="item in officialResources"
+            :key="item.officialId"
+            class="official-card panel-card"
+            @click="openUrl(item.url)"
+          >
+            <el-avatar v-if="item.icon" :size="40" shape="square" :src="resolveAssetUrl(item.icon)" />
+            <div v-else class="official-icon">🏷️</div>
+            <div class="official-main">
+              <div class="official-title">{{ item.title }}</div>
+              <div class="official-type">{{ typeLabel(item.sourceType, officialTypeDict) }}</div>
+            </div>
+            <el-icon class="official-link"><Link /></el-icon>
+          </div>
+        </div>
+      </template>
+
+      <!-- 社区资源 -->
+      <div class="section-title">
+        社区资源
+        <span class="section-sub">由社区用户分享</span>
+      </div>
       <div class="panel-card">
         <el-skeleton v-if="resLoading" :rows="3" animated />
-        <el-empty v-else-if="!resources.length" description="暂无资源" :image-size="80" />
-        <el-table v-else :data="resources" class="res-table">
-          <el-table-column prop="title" label="资源名称" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="type" label="类型" width="90" />
-          <el-table-column prop="version" label="版本" width="100" />
-          <el-table-column prop="size" label="大小" width="100" />
-          <el-table-column prop="points" label="所需积分" width="90">
-            <template #default="{ row }">
-              <span class="points">{{ row.points ?? 0 }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="downloadCount" label="下载" width="80" />
-          <el-table-column label="操作" width="160" fixed="right">
-            <template #default="{ row }">
-              <el-button size="small" :icon="Download" @click="doDownload(row)">下载</el-button>
-              <el-button size="small" text :icon="Warning" @click="doReport(row)">举报</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <el-empty v-else-if="!resources.length" description="暂无社区资源" :image-size="80" />
+        <div v-else class="resource-list">
+          <div v-for="r in resources" :key="r.resourceId" class="resource-item">
+            <el-avatar :size="42" :src="r.userAvatar ? resolveAssetUrl(r.userAvatar) : undefined" class="res-avatar">
+              {{ (r.userName || 'U').slice(0, 1) }}
+            </el-avatar>
+            <div class="res-main">
+              <div class="res-title">{{ r.title }}</div>
+              <div class="res-meta">
+                <span class="res-user">{{ r.userName || '社区用户' }}</span>
+                <span class="dot">·</span>
+                <el-tag size="small" effect="plain">{{ typeLabel(r.type) }}</el-tag>
+                <span v-if="r.version" class="dot">·</span>
+                <span v-if="r.version">版本 {{ r.version }}</span>
+                <span v-if="r.size" class="dot">·</span>
+                <span v-if="r.size">{{ r.size }}</span>
+                <span class="dot">·</span>
+                <span>{{ r.sourceCount ?? r.sources?.length ?? 0 }} 个下载来源</span>
+                <span class="dot">·</span>
+                <span>已下载 {{ r.downloadCount ?? 0 }} 次</span>
+                <span v-if="(r.points ?? 0) > 0" class="dot">·</span>
+                <span v-if="(r.points ?? 0) > 0" class="points">{{ r.points }} 积分</span>
+              </div>
+            </div>
+            <div class="res-actions">
+              <el-button size="small" type="primary" :icon="Download" @click="doDownload(r)">下载</el-button>
+              <el-button size="small" text :icon="Warning" @click="doReport(r)">举报</el-button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- 评论区 -->
@@ -325,31 +392,47 @@ onMounted(() => {
     <el-empty v-else description="游戏不存在或已被删除" />
   </div>
 
-  <!-- 下载结果弹窗 -->
-  <el-dialog v-model="downloadVisible" title="下载资源" width="460px" @closed="downloadTarget = null">
+  <!-- 下载结果弹窗：多来源（链接 / 提取码 / 解压码） -->
+  <el-dialog v-model="downloadVisible" title="资源下载" width="620px" @closed="downloadTarget = null">
     <div v-if="downloadTarget" class="dl-dialog">
       <div class="dl-title">{{ downloadTarget.title }}</div>
-      <el-alert
-        v-if="downloadPwd"
-        title="该资源需要提取码"
-        type="warning"
-        :closable="false"
-        show-icon
-        class="dl-alert"
-      />
-      <div class="dl-row">
-        <span class="dl-label">提取码</span>
-        <el-tag v-if="downloadPwd" type="warning">{{ downloadPwd }}</el-tag>
-        <span v-else class="text-dim">无</span>
+      <div class="dl-sub">
+        <el-tag size="small" effect="plain">{{ typeLabel(downloadTarget.type) }}</el-tag>
+        <span v-if="downloadTarget.version">版本 {{ downloadTarget.version }}</span>
+        <span v-if="downloadTarget.size">{{ downloadTarget.size }}</span>
+        <span>分享者：{{ downloadTarget.userName || '社区用户' }}</span>
       </div>
-      <div class="dl-row">
-        <span class="dl-label">下载地址</span>
-        <el-input :model-value="downloadUrl" readonly>
-          <template #append>
-            <el-button @click="openUrl(downloadUrl)">打开</el-button>
-          </template>
-        </el-input>
+
+      <el-empty v-if="!downloadSources.length" description="该资源暂未提供下载来源" :image-size="64" />
+
+      <div v-for="(s, index) in downloadSources" :key="s.sourceId ?? index" class="dl-source">
+        <div class="dl-source-head">
+          <el-tag size="small" effect="plain">{{ typeLabel(s.sourceType) }}</el-tag>
+          <span v-if="s.remark" class="dl-remark">{{ s.remark }}</span>
+        </div>
+        <div class="dl-row">
+          <span class="dl-label">下载地址</span>
+          <el-input :model-value="s.url" readonly class="dl-input">
+            <template #append>
+              <el-button @click="openUrl(s.url || '')">打开</el-button>
+              <el-button :icon="CopyDocument" @click="copyText(s.url)" />
+            </template>
+          </el-input>
+        </div>
+        <div class="dl-row">
+          <span class="dl-label">提取码</span>
+          <el-tag v-if="s.extractPwd" type="warning" class="dl-code">{{ s.extractPwd }}</el-tag>
+          <span v-else class="text-dim">无</span>
+          <el-button v-if="s.extractPwd" text :icon="CopyDocument" @click="copyText(s.extractPwd)" />
+        </div>
+        <div class="dl-row">
+          <span class="dl-label">解压码</span>
+          <el-tag v-if="s.unzipPwd" type="success" class="dl-code">{{ s.unzipPwd }}</el-tag>
+          <span v-else class="text-dim">无</span>
+          <el-button v-if="s.unzipPwd" text :icon="CopyDocument" @click="copyText(s.unzipPwd)" />
+        </div>
       </div>
+
       <p class="dl-tip text-dim">积分已扣除，请尽快保存资源。若链接失效可点击「举报」告知我们。</p>
     </div>
   </el-dialog>
@@ -638,9 +721,171 @@ onMounted(() => {
   --el-table-border-color: rgba(46, 46, 72, 0.5);
 }
 
+/* ---------- 正版资源 ---------- */
+.section-sub {
+  margin-left: 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.official-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.official-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--border-glow);
+}
+
+.official-card:hover {
+  border-color: rgba(167, 139, 250, 0.55);
+  transform: translateY(-2px);
+}
+
+.official-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(139, 92, 246, 0.12);
+  font-size: 20px;
+}
+
+.official-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.official-title {
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.official-type {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.official-link {
+  color: var(--accent);
+}
+
+/* ---------- 社区资源 ---------- */
+.resource-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resource-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-glow);
+}
+
+.res-avatar {
+  flex-shrink: 0;
+  background: var(--grad-main);
+  color: #fff;
+  font-weight: 700;
+}
+
+.res-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.res-title {
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.res-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.res-user {
+  color: var(--text-sub);
+}
+
+.res-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ---------- 下载弹窗 ---------- */
 .dl-dialog .dl-title {
   font-weight: 700;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
+}
+
+.dl-sub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.dl-source {
+  border: 1px solid var(--border-glow);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dl-source-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.dl-remark {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.dl-input {
+  flex: 1;
+}
+
+.dl-code {
+  font-family: ui-monospace, Consolas, monospace;
+  letter-spacing: 1px;
 }
 
 .dl-alert {

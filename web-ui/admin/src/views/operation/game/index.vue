@@ -2,7 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Delete, Edit, Plus, Refresh, Search, Upload } from '@element-plus/icons-vue'
+import { Delete, Download, Edit, FolderOpened, MoreFilled, Plus, Refresh, RefreshLeft, Search, Upload } from '@element-plus/icons-vue'
 import {
   deleteGames,
   getAdminGameList,
@@ -196,6 +196,17 @@ function goEdit(row?: Game) {
     path: '/operation/game/edit',
     query: row ? { id: String(row.gameId) } : undefined,
   })
+}
+
+/** 「更多」下拉：编辑资源 / 发布 / 撤回 / 下架 */
+function onMoreCommand(command: string, row: Game) {
+  if (command === 'resource') {
+    router.push({ path: '/operation/resource', query: { gameId: String(row.gameId) } })
+    return
+  }
+  if (command === 'publish') handlePublish(row)
+  else if (command === 'withdraw') handleWithdraw(row)
+  else if (command === 'offline') handleOffline(row)
 }
 
 async function handlePublish(row: Game) {
@@ -406,36 +417,10 @@ onMounted(() => {
         <el-table-column label="更新时间" width="165">
           <template #default="{ row }">{{ row.updateTime || row.createTime || '—' }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="255" fixed="right">
+        <el-table-column label="操作" width="210" fixed="right">
           <template #default="{ row }">
             <el-button v-if="can('community:game:edit')" link type="primary" :icon="Edit" @click="goEdit(row)">
               编辑
-            </el-button>
-            <el-button
-              v-if="can('community:game:publish')"
-              link
-              type="warning"
-              :icon="Upload"
-              :disabled="row.status === '2' || row.status === '1'"
-              @click="handlePublish(row)"
-            >
-              发布
-            </el-button>
-            <el-button
-              v-if="can('community:game:publish') && row.status === '2'"
-              link
-              type="warning"
-              @click="handleWithdraw(row)"
-            >
-              撤回
-            </el-button>
-            <el-button
-              v-if="can('community:game:publish') && row.status === '1'"
-              link
-              type="danger"
-              @click="handleOffline(row)"
-            >
-              下架
             </el-button>
             <el-button
               v-if="can('community:game:remove')"
@@ -446,6 +431,33 @@ onMounted(() => {
             >
               删除
             </el-button>
+            <el-dropdown
+              trigger="click"
+              class="more-dropdown"
+              @command="(cmd: string) => onMoreCommand(cmd, row)"
+            >
+              <el-button link type="info" :icon="MoreFilled">更多</el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="resource">
+                    <el-icon class="act-resource"><FolderOpened /></el-icon>
+                    <span>编辑资源</span>
+                  </el-dropdown-item>
+                  <el-dropdown-item command="publish" :disabled="row.status === '1' || row.status === '2'">
+                    <el-icon class="act-publish"><Upload /></el-icon>
+                    <span>发布</span>
+                  </el-dropdown-item>
+                  <el-dropdown-item v-if="row.status === '2'" command="withdraw">
+                    <el-icon class="act-withdraw"><RefreshLeft /></el-icon>
+                    <span>撤回审核</span>
+                  </el-dropdown-item>
+                  <el-dropdown-item v-if="row.status === '1'" command="offline">
+                    <el-icon class="act-offline"><Download /></el-icon>
+                    <span>下架</span>
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
@@ -537,6 +549,31 @@ onMounted(() => {
 
 .cover-cell:hover .cover-mask {
   opacity: 1;
+}
+
+.more-dropdown {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.act-resource {
+  color: #409eff;
+  margin-right: 6px;
+}
+
+.act-publish {
+  color: #e6a23c;
+  margin-right: 6px;
+}
+
+.act-withdraw {
+  color: #e6a23c;
+  margin-right: 6px;
+}
+
+.act-offline {
+  color: #f56c6c;
+  margin-right: 6px;
 }
 
 .game-title {
