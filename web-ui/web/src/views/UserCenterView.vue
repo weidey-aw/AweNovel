@@ -724,6 +724,11 @@ onMounted(async () => {
     border-left: none;
     padding-left: 0;
     flex-direction: row;
+    margin-left: 0;
   }
 }
+.profile-actions :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
 </style>
