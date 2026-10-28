@@ -189,22 +189,28 @@ export interface Article {
   userId?: number
   title: string
   summary?: string
+  /** 正文（Markdown） */
   content: string
   cover?: string
+  /** news 资讯 / review 评测 / guide 攻略 */
   category?: string
   viewCount?: number
   likeCount?: number
   commentCount?: number
-  /** 0=待审核 1=已发布 */
-  status?: number
+  /** 0=待审核 1=已发布 2=已拒绝 */
+  status?: string
+  processInstanceId?: string
   createTime?: string
+  updateTime?: string
+  /** 联表冗余字段 */
   userName?: string
+  userAvatar?: string
   nickname?: string
 }
 
 export interface Comment {
   commentId: number
-  /** 'game' | 'article' */
+  /** 目标类型：G 游戏 / A 文章 / R 资源 */
   targetType: string
   targetId: number
   userId?: number
@@ -212,8 +218,11 @@ export interface Comment {
   pid?: number
   content: string
   likeCount?: number
+  /** 1 正常 / 0 隐藏 */
+  status?: string
   createTime?: string
   /** 联表冗余字段 */
+  nickName?: string
   userName?: string
   nickname?: string
   avatar?: string
@@ -350,11 +359,15 @@ export interface GameQuery extends PageParams {
 export interface ArticleQuery extends PageParams {
   category?: string
   keyword?: string
+  /** 0待审核 1已发布 2已拒绝 */
+  status?: string
 }
 
 export interface CommentQuery extends PageParams {
   targetType?: string
   targetId?: number
+  keyword?: string
+  status?: string
 }
 
 /* ---------------- 系统管理（后端返回结构对齐） ---------------- */

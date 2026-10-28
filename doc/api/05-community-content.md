@@ -1,34 +1,45 @@
 # 05 · 内容接口（文章 / 资源 / 评论 / 评分）
 
-> 共 24 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
+> 共 32 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
 > 表结构见 [`../../sql/awe_novel.sql`](../../sql/awe_novel.sql)（`gal_article` / `gal_resource` / `gal_resource_source` / `gal_official_resource` / `gal_comment` / `gal_rating`）。
 
 | # | 方法 | 路径 | 鉴权 | 前端状态 |
 |---|---|---|---|---|
 | 1 | GET | `/community/article/list` | 匿名 | ✅ |
 | 2 | GET | `/community/article/{articleId}` | 匿名 | ✅ |
-| 3 | POST | `/community/article` | 登录 | 🔸 已封装未接页面 |
-| 4 | GET | `/community/resource/list` | 匿名 | ✅ |
-| 5 | GET | `/community/resource/types` | 匿名 | ✅ 资源类型字典 |
-| 6 | GET | `/community/resource/official/list` | 匿名 | ✅ 正版资源 |
-| 7 | POST | `/community/resource` | 登录 | 🔸 已封装未接页面 |
-| 8 | POST | `/community/resource/download/{resourceId}` | 登录 | ✅ 返回多来源 |
-| 9 | POST | `/community/resource/report/{resourceId}` | 登录 | ✅ |
-| 10 | GET | `/community/resource/admin/list` | `community:resource:list` | ✅ 管理端筛选 |
-| 11 | GET | `/community/resource/admin/{resourceId}` | `community:resource:list` | ✅ 含来源详情 |
-| 12 | POST | `/community/resource/admin` | `community:resource:add` | ✅ 新增（含来源） |
-| 13 | PUT | `/community/resource/admin` | `community:resource:edit` | ✅ 修改（来源覆盖） |
-| 14 | DELETE | `/community/resource/admin/{resourceIds}` | `community:resource:remove` | ✅ 删除（级联来源） |
-| 15 | POST | `/community/resource/official` | `community:resource:edit` | ✅ 新增正版 |
-| 16 | PUT | `/community/resource/official` | `community:resource:edit` | ✅ 修改正版 |
-| 17 | DELETE | `/community/resource/official/{ids}` | `community:resource:edit` | ✅ 删除正版 |
-| 18 | GET | `/community/comment/list` | 匿名 | ✅ |
-| 19 | POST | `/community/comment` | 登录 | ✅ |
-| 20 | DELETE | `/community/comment/{ids}` | 登录 | ✅ |
-| 21 | GET | `/community/rating/{gameId}` | **登录** | ✅ |
-| 22 | POST | `/community/rating` | 登录 | ✅ |
+| 3 | POST | `/community/article` | 登录 | ✅ 发布页 `/article/new` |
+| 4 | GET | `/community/article/admin/list` | `community:article:list` | ✅ 管理端筛选 |
+| 5 | GET | `/community/article/admin/{articleId}` | `community:article:list` | ✅ |
+| 6 | POST | `/community/article/admin` | `community:article:add` | ✅ |
+| 7 | PUT | `/community/article/admin` | `community:article:edit` | ✅ |
+| 8 | PUT | `/community/article/admin/status` | `community:article:edit` | ✅ 通过/拒绝 |
+| 9 | DELETE | `/community/article/admin/{articleIds}` | `community:article:remove` | ✅ 级联删评论 |
+| 10 | GET | `/community/resource/list` | 匿名 | ✅ |
+| 11 | GET | `/community/resource/types` | 匿名 | ✅ 资源类型字典 |
+| 12 | GET | `/community/resource/official/list` | 匿名 | ✅ 正版资源 |
+| 13 | POST | `/community/resource` | 登录 | 🔸 已封装未接页面 |
+| 14 | POST | `/community/resource/download/{resourceId}` | 登录 | ✅ 返回多来源 |
+| 15 | POST | `/community/resource/report/{resourceId}` | 登录 | ✅ |
+| 16 | GET | `/community/resource/admin/list` | `community:resource:list` | ✅ 管理端筛选 |
+| 17 | GET | `/community/resource/admin/{resourceId}` | `community:resource:list` | ✅ 含来源详情 |
+| 18 | POST | `/community/resource/admin` | `community:resource:add` | ✅ 新增（含来源） |
+| 19 | PUT | `/community/resource/admin` | `community:resource:edit` | ✅ 修改（来源覆盖） |
+| 20 | DELETE | `/community/resource/admin/{resourceIds}` | `community:resource:remove` | ✅ 删除（级联来源） |
+| 21 | POST | `/community/resource/official` | `community:resource:edit` | ✅ 新增正版 |
+| 22 | PUT | `/community/resource/official` | `community:resource:edit` | ✅ 修改正版 |
+| 23 | DELETE | `/community/resource/official/{ids}` | `community:resource:edit` | ✅ 删除正版 |
+| 24 | GET | `/community/comment/list` | 匿名 | ✅ |
+| 25 | POST | `/community/comment` | 登录 | ✅ |
+| 26 | DELETE | `/community/comment/own/{commentId}` | 登录 | ✅ 删除自己的评论 |
+| 27 | GET | `/community/comment/admin/list` | `community:comment:list` | ✅ 管理端筛选 |
+| 28 | GET | `/community/comment/admin/{commentId}` | `community:comment:list` | ✅ |
+| 29 | PUT | `/community/comment/admin/status` | `community:comment:edit` | ✅ 显示/隐藏 |
+| 30 | DELETE | `/community/comment/admin/{commentIds}` | `community:comment:remove` | ✅ 含子回复 |
+| 31 | GET | `/community/rating/{gameId}` | **登录** | ✅ |
+| 32 | POST | `/community/rating` | 登录 | ✅ |
 
-> 资源相关权限需执行 [`sql/upgrade_resource_v2.sql`](../../sql/upgrade_resource_v2.sql)（建表 + 字典 + 按钮权限）。
+> 资源相关权限需执行 [`sql/upgrade_resource_v2.sql`](../../sql/upgrade_resource_v2.sql)（建表 + 字典 + 按钮权限）；
+> 文章/评论权限与评论表 `update_time` 修复见 [`sql/upgrade_article_comment.sql`](../../sql/upgrade_article_comment.sql)。
 
 **审核状态约定（文章与资源一致）**：`0` = 待审核、`1` = 审核通过（对外可见）、`2` = 已拒绝
 
@@ -54,7 +65,7 @@
 | `commentCount` | int | 评论数（评论接口自动 +1） |
 | `delFlag` / `createTime` / `updateTime` | — | 基类字段 |
 
-> ⚠️ 后端**不返回**作者昵称/头像（`userName`、`nickname`）。列表/详情要展示作者，需后端补联表字段。
+> 作者昵称与头像由后端联表 `sys_user` 返回：`userName`（优先昵称）、`userAvatar`。
 
 ### 1.2 文章列表
 
@@ -87,7 +98,8 @@
 
 - 固定只返回 `status = '1'`（审核通过）的文章。
 - 排序：`article_id DESC`（最新在前）。
-- ⚠️ 管理端要展示「待审核/已拒绝」文章时，本接口**无法按状态筛选**（后端把 `status` 写死为 `"1"`），需后端新增管理端列表接口（支持 `status` 参数）。
+- 列表行包含 `userName` / `userAvatar`，可直接展示作者。
+- 管理端要查看「待审核/已拒绝」文章，请用下文 §1.5 管理端接口。
 
 ### 1.3 文章详情
 
@@ -137,6 +149,19 @@
 - 后端强制：`status = "0"`（待审核）、计数清零、`userId` 取当前登录用户。
 - 同时启动 **Flowable 审核流程**（`processKey = contentReview`，`businessKey = article:<articleId>`），流程实例ID写入 `processInstanceId`。
 - 审核通过后 `status` 才会变成 `"1"`，此时才会出现在公开列表。（审核接口见 [07-review-ai-common.md](07-review-ai-common.md)）
+
+### 1.5 管理端文章接口
+
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `/community/article/admin/list` | `community:article:list` | 分页，支持 `keyword` / `category` / `status` |
+| GET | `/community/article/admin/{articleId}` | `community:article:list` | 详情（含作者） |
+| POST | `/community/article/admin` | `community:article:add` | 新增，可指定 `status`（默认 `1`） |
+| PUT | `/community/article/admin` | `community:article:edit` | 修改（字段同 `Article`） |
+| PUT | `/community/article/admin/status` | `community:article:edit` | `{ articleId, status }`，快速通过/拒绝 |
+| DELETE | `/community/article/admin/{articleIds}` | `community:article:remove` | 批量删除，**级联删除该文章评论** |
+
+> 管理端新增的文章直接以指定状态落库，不启动 Flowable 流程；用户端 `POST /community/article` 才走审核。
 
 ---
 
@@ -357,17 +382,26 @@
 - 当 `targetType = 'A'` 时，对应文章 `comment_count + 1`（**仅文章**，游戏/资源不计数）。
 - 评论**不消耗也不奖励积分**；不会给被回复者发消息通知。
 
-### 3.4 删除评论（管理端）
+### 3.4 删除自己的评论
 
-`DELETE /community/comment/{ids}` · 登录 · 前端 ✅
+`DELETE /community/comment/own/{commentId}` · 登录 · 前端 ✅
 
-| 参数 | 说明 |
-|---|---|
-| `ids` | 评论ID，多个逗号分隔 |
+- 仅能删除**本人**评论，否则返回 `{"code":500,"msg":"只能删除自己的评论"}`。
+- 其下的回复会一并删除，并同步扣减文章 `comment_count`。
 
-**响应**：`{"code":200,"msg":"操作成功"}`（逻辑删除）
+### 3.5 管理端评论接口
 
-> ⚠️ 该接口**没有 `@PreAuthorize`**，任何登录用户都能删除任意评论。
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `/community/comment/admin/list` | `community:comment:list` | 分页，支持 `keyword` / `targetType` / `targetId` / `status` |
+| GET | `/community/comment/admin/{commentId}` | `community:comment:list` | 详情（含用户昵称头像） |
+| PUT | `/community/comment/admin/status` | `community:comment:edit` | `{ commentId, status }`，`1` 正常 / `0` 隐藏 |
+| DELETE | `/community/comment/admin/{commentIds}` | `community:comment:remove` | 批量删除（含子回复），同步扣减文章评论数 |
+
+> 管理端列表行返回 `nickName` / `avatar`；公开列表只返回 `status='1'` 的评论。
+
+> ⚠️ 历史问题已修复：`gal_comment` 缺少 `update_time` 列导致发表评论报 `Unknown column 'update_time'`，
+> 升级脚本 [`../../sql/upgrade_article_comment.sql`](../../sql/upgrade_article_comment.sql) 会自动补列。
 
 ---
 
@@ -432,5 +466,6 @@
 2. `Article.status` / `Resource.status` 是**字符串**，不是数字。
 3. 评论列表返回**平铺结构**，需前端按 `pid` 自行组装楼中楼（当前 `CommentSection.vue` 已处理）。
 4. 评分接口**需要登录**，游戏详情页在未登录时应跳过 `/community/rating/{gameId}`，否则会触发 401 跳转。
-5. 「发布文章」「发布资源」两个接口已封装但**没有页面入口**，是 P0 待补齐项；两者都依赖 `/common/upload` 上传封面。
+5. 「发布文章」已有页面入口 `/article/new`（`ArticleEditorView.vue`，支持 Markdown + 实时预览 + 封面上传，提交后进入待审核）；「发布资源」仍为接口封装、无页面入口。
 6. 点赞功能（文章/评论/资源）**后端没有接口**，`likeCount` 恒为 0；如需该功能需后端先补齐（见 [README §5](README.md#5-后端接口缺口前端无法实现需后端补齐)）。
+7. 文章详情正文为 **Markdown**，前端用 `renderMarkdown()`（`@gal/shared`）渲染，不要直接 `v-html` 原文。

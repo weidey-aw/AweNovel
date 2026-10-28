@@ -274,13 +274,19 @@ Authorization: Bearer <token>
 > 游戏列表排序：`sortBy=hot|download|rating|publish|release` + `isAsc`；多标签 `tagIds=1,2`。
 > 详见 [04-community-game.md](04-community-game.md)。
 
-### 2.5 内容：文章 / 资源 / 评论 / 评分（24）
+### 2.5 内容：文章 / 资源 / 评论 / 评分（32）
 
 | 方法 | 路径 | 鉴权 | 前端状态 |
 |---|---|---|---|
 | GET | `/community/article/list` | **匿名** | ✅ |
-| GET | `/community/article/{articleId}` | **匿名** | ✅ |
-| POST | `/community/article` | 登录 | 🔸 |
+| GET | `/community/article/{articleId}` | **匿名** | ✅ Markdown 渲染 |
+| POST | `/community/article` | 登录 | ✅ 发布页 `/article/new` |
+| GET | `/community/article/admin/list` | `community:article:list` | ✅ 管理端筛选 |
+| GET | `/community/article/admin/{articleId}` | `community:article:list` | ✅ |
+| POST | `/community/article/admin` | `community:article:add` | ✅ |
+| PUT | `/community/article/admin` | `community:article:edit` | ✅ |
+| PUT | `/community/article/admin/status` | `community:article:edit` | ✅ 通过/拒绝 |
+| DELETE | `/community/article/admin/{articleIds}` | `community:article:remove` | ✅ 级联删评论 |
 | GET | `/community/resource/list` | **匿名** | ✅ |
 | GET | `/community/resource/types` | **匿名** | ✅ 资源类型字典 |
 | GET | `/community/resource/official/list` | **匿名** | ✅ 正版资源 |
@@ -297,12 +303,17 @@ Authorization: Bearer <token>
 | DELETE | `/community/resource/official/{ids}` | `community:resource:edit` | ✅ 正版删除 |
 | GET | `/community/comment/list` | **匿名** | ✅ |
 | POST | `/community/comment` | 登录 | ✅ |
-| DELETE | `/community/comment/{ids}` | 登录（同上有风险） | ✅ |
+| DELETE | `/community/comment/own/{commentId}` | 登录 | ✅ 删除自己的评论 |
+| GET | `/community/comment/admin/list` | `community:comment:list` | ✅ 管理端筛选 |
+| GET | `/community/comment/admin/{commentId}` | `community:comment:list` | ✅ |
+| PUT | `/community/comment/admin/status` | `community:comment:edit` | ✅ 显示/隐藏 |
+| DELETE | `/community/comment/admin/{commentIds}` | `community:comment:remove` | ✅ 含子回复 |
 | GET | `/community/rating/{gameId}` | 登录 | ✅ |
 | POST | `/community/rating` | 登录 | ✅ |
 
 > 资源拆分为「元信息 + 多来源」：`gal_resource`（资源）→ `gal_resource_source`（链接/提取码/解压码）；
 > 另新增 `gal_official_resource`（正版资源，按游戏配置、不关联用户），详见 [05-community-content.md](05-community-content.md)。
+> 文章/评论管理权限与评论表 `update_time` 修复见 [`sql/upgrade_article_comment.sql`](../../sql/upgrade_article_comment.sql)。
 
 ### 2.6 用户中心（10）
 
@@ -341,12 +352,20 @@ Authorization: Bearer <token>
 
 | 状态 | 数量 | 占比 |
 |---|---|---|
-| ✅ 已对接（有页面调用） | 141 | 89% |
-| 🔸 仅封装未接页面 | 4 | 2% |
-| ❌ 未封装 | 14 | 9% |
-| **合计** | **159** | 100% |
+| ✅ 已对接（有页面调用） | 152 | 90% |
+| 🔸 仅封装未接页面 | 3 | 2% |
+| ❌ 未封装 | 14 | 8% |
+| **合计** | **169** | 100% |
 
-> **本轮（资源管理重构）新增 10 个接口**：资源类型字典 `GET /community/resource/types`、
+> **本轮（文章 / 评论管理 + 页面）新增 10 个接口**：
+> 文章管理端列表/详情/新增/修改/**审核状态切换**/删除（级联删评论）；
+> 评论管理端列表/详情/**显示隐藏**/删除（含子回复），并新增「删除自己的评论」接口；
+> 修复 `gal_comment` 缺 `update_time` 导致发表评论必然 500 的历史问题；
+> 前端：管理端文章页支持 Markdown 编辑器 + 封面 + 预览 + 通过/拒绝，评论页支持筛选/显示隐藏/删除；
+> 前台新增「写文章」页面（`/article/new`，Markdown + 实时预览），文章详情改为 Markdown 渲染并展示作者，
+> 评论区支持头像与删除自己的评论；`targetType` 统一为 `G`/`A`/`R`。
+>
+> **上一轮（资源管理重构）新增 10 个接口**：资源类型字典 `GET /community/resource/types`、
 > 正版资源列表、管理端资源列表/详情/新增/修改/删除、正版资源新增/修改/删除；
 > 数据库拆分出 **`gal_resource_source`（资源来源：链接/提取码/解压码，多对一）** 与
 > **`gal_official_resource`（正版资源，按游戏、不关联用户）**，新增字典 `game_resource_type` / `game_official_type`；

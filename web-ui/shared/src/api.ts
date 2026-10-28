@@ -240,18 +240,53 @@ export const getArticleList = (params: ArticleQuery) => http.get<TableDataInfo<A
 
 export const getArticleDetail = (articleId: number) => http.get<AjaxResult<Article>>(`/community/article/${articleId}`)
 
-/** 发布文章（登录） */
+/** 发布文章（登录，进入待审核） */
 export const publishArticle = (data: Partial<Article>) => http.post<AjaxResult<Article>>('/community/article', data)
+
+/* ---------- 文章（管理端） ---------- */
+
+export const getAdminArticleList = (params: Record<string, unknown>) =>
+  http.get<TableDataInfo<Article>>('/community/article/admin/list', { params })
+
+export const getAdminArticleDetail = (articleId: number) =>
+  http.get<AjaxResult<Article>>(`/community/article/admin/${articleId}`)
+
+export const createArticle = (data: Partial<Article>) =>
+  http.post<AjaxResult<Article>>('/community/article/admin', data)
+
+export const updateArticle = (data: Partial<Article>) =>
+  http.put<AjaxResult<Article>>('/community/article/admin', data)
+
+/** 修改文章审核状态：0 待审核 / 1 通过 / 2 拒绝 */
+export const changeArticleStatus = (articleId: number, status: string) =>
+  http.put<AjaxResult>('/community/article/admin/status', { articleId, status })
+
+export const deleteArticles = (articleIds: string) =>
+  http.delete<AjaxResult>(`/community/article/admin/${articleIds}`)
 
 /* ================= 评论 ================= */
 
-export const getCommentList = (params: CommentQuery) => http.get<TableDataInfo<Comment>>('/community/comment/list', { params })
+export const getCommentList = (params: CommentQuery) =>
+  http.get<TableDataInfo<Comment>>('/community/comment/list', { params })
 
 /** 发表评论（登录） */
 export const publishComment = (data: Partial<Comment>) => http.post<AjaxResult<Comment>>('/community/comment', data)
 
-/** 删除评论（管理端，路径为约定，需与后端核对） */
-export const deleteComments = (commentIds: string) => http.delete<AjaxResult>(`/community/comment/${commentIds}`)
+/** 管理端评论列表（关键词 / 目标类型 / 目标ID / 状态） */
+export const getAdminCommentList = (params: CommentQuery) =>
+  http.get<TableDataInfo<Comment>>('/community/comment/admin/list', { params })
+
+/** 修改评论状态（1 显示 / 0 隐藏） */
+export const changeCommentStatus = (commentId: number, status: string) =>
+  http.put<AjaxResult>('/community/comment/admin/status', { commentId, status })
+
+/** 删除评论（管理端，含子回复） */
+export const deleteComments = (commentIds: string) =>
+  http.delete<AjaxResult>(`/community/comment/admin/${commentIds}`)
+
+/** 删除自己的评论（登录） */
+export const deleteOwnComment = (commentId: number) =>
+  http.delete<AjaxResult>(`/community/comment/own/${commentId}`)
 
 /* ================= 评分 ================= */
 

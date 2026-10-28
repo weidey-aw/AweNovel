@@ -55,7 +55,10 @@ onMounted(load)
 
 <template>
   <div class="page-container">
-    <div class="section-title">社区文章</div>
+    <div class="section-title">
+      社区文章
+      <span class="more" @click="router.push('/article/new')">写文章 →</span>
+    </div>
 
     <div class="toolbar">
       <div class="cats">
@@ -100,7 +103,12 @@ onMounted(load)
           <div class="ac-summary">{{ a.summary || a.content?.slice(0, 100) }}</div>
           <div class="ac-meta">
             <span class="ac-cat">{{ a.category || '杂谈' }}</span>
-            <span>{{ a.nickname || a.userName || '匿名' }}</span>
+            <span class="ac-author">
+              <el-avatar :size="20" :src="a.userAvatar ? resolveAssetUrl(a.userAvatar) : undefined">
+                {{ (a.userName || 'U').slice(0, 1) }}
+              </el-avatar>
+              {{ a.userName || '匿名' }}
+            </span>
             <span>{{ a.createTime || '' }}</span>
             <span class="ac-stats">👁 {{ a.viewCount || 0 }} · 👍 {{ a.likeCount || 0 }} · 💬 {{ a.commentCount || 0 }}</span>
           </div>
@@ -244,6 +252,24 @@ onMounted(load)
 
 .ac-stats {
   margin-left: auto;
+}
+
+.ac-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.more {
+  float: right;
+  font-size: 12.5px;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.more:hover {
+  text-decoration: underline;
 }
 
 .pager {

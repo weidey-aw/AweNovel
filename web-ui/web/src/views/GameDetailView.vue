@@ -386,7 +386,7 @@ onMounted(() => {
       </div>
 
       <!-- 评论区 -->
-      <CommentSection :target-type="'game'" :target-id="gameId" />
+      <CommentSection :target-type="'G'" :target-id="gameId" />
     </div>
 
     <el-empty v-else description="游戏不存在或已被删除" />

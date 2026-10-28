@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Close } from '@element-plus/icons-vue'
-import { getCommentList, publishComment } from '@gal/shared'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Close, Delete } from '@element-plus/icons-vue'
+import { deleteOwnComment, getCommentList, publishComment, resolveAssetUrl } from '@gal/shared'
 import type { Comment } from '@gal/shared'
 import { useUserStore } from '@/stores/user'
 
 const props = defineProps<{ targetType: string; targetId: number }>()
+const emit = defineEmits<{ (e: 'changed', total: number): void }>()
 
 const userStore = useUserStore()
 const list = ref<Comment[]>([])
@@ -16,6 +17,9 @@ const content = ref('')
 const submitting = ref(false)
 const replyPid = ref<number | undefined>(undefined)
 const replyName = ref('')
+
+const isMine = (c: Comment) =>
+  !!userStore.userInfo?.userId && Number(c.userId) === Number(userStore.userInfo.userId)
 
 async function load() {
   loading.value = true
@@ -28,6 +32,7 @@ async function load() {
     })
     list.value = res.rows ?? []
     total.value = res.total ?? list.value.length
+    emit('changed', total.value)
   } catch (err: unknown) {
     ElMessage.error(err instanceof Error ? err.message : '评论加载失败')
   } finally {
@@ -37,12 +42,28 @@ async function load() {
 
 function startReply(c: Comment) {
   replyPid.value = c.commentId
-  replyName.value = c.nickname || c.userName || '该用户'
+  replyName.value = c.nickName || '该用户'
 }
 
 function cancelReply() {
   replyPid.value = undefined
   replyName.value = ''
+}
+
+/** 删除自己的评论 */
+async function removeOwn(c: Comment) {
+  try {
+    await ElMessageBox.confirm('确认删除这条评论吗？', '删除评论', { type: 'warning' })
+  } catch {
+    return
+  }
+  try {
+    await deleteOwnComment(c.commentId)
+    ElMessage.success('已删除')
+    await load()
+  } catch (err: unknown) {
+    ElMessage.error(err instanceof Error ? err.message : '删除失败')
+  }
 }
 
 async function submit() {
@@ -88,21 +109,26 @@ watch(() => props.targetId, load)
 
     <div v-else class="comment-list">
       <div v-for="c in list" :key="c.commentId" class="comment-item">
-        <div class="c-avatar">{{ (c.nickname || c.userName || 'U').slice(0, 1) }}</div>
+        <el-avatar :size="38" :src="c.avatar ? resolveAssetUrl(c.avatar) : undefined" class="c-avatar">
+          {{ (c.nickName || 'U').slice(0, 1) }}
+        </el-avatar>
         <div class="c-body">
           <div class="c-meta">
-            <span class="c-name">{{ c.nickname || c.userName || '匿名用户' }}</span>
+            <span class="c-name">{{ c.nickName || '匿名用户' }}</span>
             <span class="c-time">{{ c.createTime || '' }}</span>
           </div>
           <div class="c-content">
             <template v-if="c.pid">
-              <span class="c-reply">回复 {{ c.replyTo || '该用户' }}：</span>
+              <span class="c-reply">回复 #{{ c.pid }}：</span>
             </template>
             {{ c.content }}
           </div>
           <div class="c-actions">
             <span class="c-like">👍 {{ c.likeCount || 0 }}</span>
             <span class="c-reply-btn" @click="startReply(c)">回复</span>
+            <span v-if="isMine(c)" class="c-del-btn" @click="removeOwn(c)">
+              <el-icon><Delete /></el-icon>删除
+            </span>
           </div>
         </div>
       </div>
@@ -235,6 +261,18 @@ watch(() => props.targetId, load)
 
 .c-reply-btn:hover {
   color: var(--accent);
+}
+
+.c-del-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.c-del-btn:hover {
+  color: #f56c6c;
 }
 
 .comment-editor {

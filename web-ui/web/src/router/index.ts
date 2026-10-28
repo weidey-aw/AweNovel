@@ -27,6 +27,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '文章' },
   },
   {
+    path: '/article/new',
+    name: 'articleNew',
+    component: () => import('@/views/ArticleEditorView.vue'),
+    meta: { title: '写文章', requiresAuth: true },
+  },
+  {
     path: '/article/:id',
     name: 'articleDetail',
     component: () => import('@/views/ArticleDetailView.vue'),

@@ -52,4 +52,12 @@ public class Article extends BaseGalEntity {
 
     /** 评论数 */
     private Integer commentCount;
+
+    /** 作者昵称（非表字段） */
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private String userName;
+
+    /** 作者头像（非表字段） */
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private String userAvatar;
 }
