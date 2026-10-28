@@ -274,6 +274,7 @@ CREATE TABLE `gal_brand` (
   `brand_id`    bigint(20)   NOT NULL AUTO_INCREMENT COMMENT '会社ID',
   `name`        varchar(100) NOT NULL                COMMENT '会社名称',
   `logo`        varchar(255) DEFAULT ''              COMMENT 'Logo',
+  `website`     varchar(255) DEFAULT NULL            COMMENT '官方网站（外链，可空）',
   `description` text                                 COMMENT '会社简介',
   `del_flag`    char(1)      DEFAULT '0'             COMMENT '删除标志（0存在 2删除）',
   `create_time` datetime                             COMMENT '创建时间',
@@ -597,6 +598,14 @@ INSERT INTO `sys_menu` VALUES
 (2008, '游戏修改', 200, 2, '', NULL, '', 1, 0, 'F', '0', '0', 'community:game:edit',    '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
 (2009, '游戏删除', 200, 3, '', NULL, '', 1, 0, 'F', '0', '0', 'community:game:remove',  '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
 (2010, '游戏发布', 200, 4, '', NULL, '', 1, 0, 'F', '0', '0', 'community:game:publish', '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+-- 网站运营-会社管理按钮
+(2011, '会社新增', 201, 1, '', NULL, '', 1, 0, 'F', '0', '0', 'community:brand:add',    '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+(2012, '会社修改', 201, 2, '', NULL, '', 1, 0, 'F', '0', '0', 'community:brand:edit',   '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+(2013, '会社删除', 201, 3, '', NULL, '', 1, 0, 'F', '0', '0', 'community:brand:remove', '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+-- 网站运营-标签管理按钮
+(2014, '标签新增', 202, 1, '', NULL, '', 1, 0, 'F', '0', '0', 'community:tag:add',      '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+(2015, '标签修改', 202, 2, '', NULL, '', 1, 0, 'F', '0', '0', 'community:tag:edit',     '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
+(2016, '标签删除', 202, 3, '', NULL, '', 1, 0, 'F', '0', '0', 'community:tag:remove',   '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
 -- 系统管理-用户管理按钮
 (1000, '用户查询', 100, 1, '', NULL, '', 1, 0, 'F', '0', '0', 'system:user:query',  '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),
 (1001, '用户新增', 100, 2, '', NULL, '', 1, 0, 'F', '0', '0', 'system:user:add',    '#', 'admin', '2024-01-01 00:00:00', '', NULL, ''),

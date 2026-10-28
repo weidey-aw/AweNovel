@@ -1,6 +1,7 @@
 package com.weidey.community.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -26,6 +27,13 @@ public class Brand extends BaseGalEntity {
     /** Logo */
     private String logo;
 
+    /** 官方网站（外链，可空） */
+    private String website;
+
     /** 会社简介 */
     private String description;
+
+    /** 关联游戏数（非表字段，列表统计） */
+    @TableField(exist = false)
+    private Long gameCount;
 }

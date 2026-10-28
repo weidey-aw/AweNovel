@@ -1,11 +1,11 @@
 # 04 · 游戏库接口（游戏 / 会社 / 标签）
 
-> 共 19 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
+> 共 23 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
 > 表结构见 [`../../sql/awe_novel.sql`](../../sql/awe_novel.sql)（`gal_game` / `gal_brand` / `gal_tag` / `gal_game_tag`）。
 
 | # | 方法 | 路径 | 鉴权 | 前端状态 |
 |---|---|---|---|---|
-| 1 | GET | `/community/game/list` | 匿名 | ✅ 前台列表（仅已发布） |
+| 1 | GET | `/community/game/list` | 匿名 | ✅ 前台列表（仅已发布 + 多标签 + 排序） |
 | 2 | GET | `/community/game/{gameId}` | 匿名 | ✅ 前台详情 |
 | 3 | GET | `/community/game/tag/all` | 匿名 | ✅ |
 | 4 | GET | `/community/game/admin/list` | `community:game:list` | ✅ 管理端列表（全状态 + 多维筛选） |
@@ -14,19 +14,23 @@
 | 7 | POST | `/community/game` | `community:game:add` | ✅ 新增（默认草稿） |
 | 8 | PUT | `/community/game` | `community:game:edit` | ✅ 修改 |
 | 9 | DELETE | `/community/game/{gameIds}` | `community:game:remove` | ✅ 删除 |
-| 10 | GET | `/community/brand/list` | 匿名 | ✅ |
-| 11 | POST | `/community/brand` | 登录 | ✅ |
-| 12 | PUT | `/community/brand` | 登录 | ✅ |
-| 13 | DELETE | `/community/brand/{ids}` | 登录 | ✅ |
-| 14 | GET | `/community/tag/list` | 匿名 | ✅ |
-| 15 | POST | `/community/tag` | 登录 | ✅ |
-| 16 | PUT | `/community/tag` | 登录 | ✅ |
-| 17 | DELETE | `/community/tag/{ids}` | 登录 | ✅ |
-| 18 | POST | `/community/game/withdraw/{gameId}` | `community:game:publish` | ✅ 撤回审核（回到草稿） |
-| 19 | POST | `/community/game/offline/{gameId}` | `community:game:publish` | ✅ 下架（已发布 → 已下架） |
+| 10 | GET | `/community/brand/list` | 匿名 | ✅ 会社下拉/筛选 |
+| 11 | GET | `/community/brand/admin/list` | `community:brand:list` | ✅ 会社管理列表（分页 + 游戏数） |
+| 12 | GET | `/community/brand/{brandId}` | `community:brand:list` | ✅ 会社详情 |
+| 13 | POST | `/community/brand` | `community:brand:add` | ✅ 新增（含官网外链） |
+| 14 | PUT | `/community/brand` | `community:brand:edit` | ✅ 修改 |
+| 15 | DELETE | `/community/brand/{ids}` | `community:brand:remove` | ✅ 删除（有游戏时拒绝） |
+| 16 | GET | `/community/tag/list` | 匿名 | ✅ 标签下拉/筛选 |
+| 17 | GET | `/community/tag/admin/list` | `community:tag:list` | ✅ 标签管理列表（分页 + 游戏数） |
+| 18 | GET | `/community/tag/{tagId}` | `community:tag:list` | ✅ 标签详情 |
+| 19 | POST | `/community/tag` | `community:tag:add` | ✅ 新增 |
+| 20 | PUT | `/community/tag` | `community:tag:edit` | ✅ 修改 |
+| 21 | DELETE | `/community/tag/{ids}` | `community:tag:remove` | ✅ 删除（级联清关联） |
+| 22 | POST | `/community/game/withdraw/{gameId}` | `community:game:publish` | ✅ 撤回审核（回到草稿） |
+| 23 | POST | `/community/game/offline/{gameId}` | `community:game:publish` | ✅ 下架（已发布 → 已下架） |
 
-> ⚠️ 会社/标签的写接口（11~13、15~17）后端**只校验登录、没有 `@PreAuthorize`**，任何注册用户均可调用
-> （详见 [README §6.2](README.md#62-权限风险后端问题前端需知晓)）。游戏的写接口已补权限校验。
+> ✅ 会社/标签的写接口已补 `@PreAuthorize`（`community:brand:*` / `community:tag:*`），
+> 需要执行 [`sql/upgrade_brand_tag.sql`](../../sql/upgrade_brand_tag.sql) 生成按钮权限并授权给角色。
 
 ---
 
@@ -133,10 +137,13 @@
 |---|---|---|---|
 | `keyword` | string | 否 | 关键词，同时模糊匹配 `title` 与 `titleCn` |
 | `brandId` | long | 否 | 按会社筛选 |
-| `tagId` | long | 否 | 按标签筛选（子查询 `gal_game_tag`） |
+| `tagId` | long | 否 | 单个标签（兼容旧参数） |
+| `tagIds` | string | 否 | **多标签**，逗号分隔（`1,2,3`），命中任一标签即返回（并集） |
+| `sortBy` | string | 否 | `hot` 点击量（默认）/ `download` 资源下载总量 / `rating` 评分 / `publish` 发布时间 / `release` 发售时间 |
+| `isAsc` | boolean | 否 | 是否升序，默认 `false`（降序） |
 | `pageNum` / `pageSize` | int | 否 | 分页 |
 
-**响应**：`TableDataInfo<Game>`
+**响应**：`TableDataInfo<Game>`（每行含 `brandName`、`tags`、`downloadCount`）
 
 ```json
 {
@@ -148,8 +155,9 @@
       "carousel": "[\"/profile/upload/2024/01/01/c1.webp\"]",
       "releaseDate": "2004-04-28",
       "summary": "## 简介\n\n……", "staffPaint": "樋上いたる", "staffScenario": "麻枝准", "staffVoice": "中原麻衣",
-      "ratingAvg": 9.2, "ratingCount": 15, "viewCount": 320, "status": "1",
-      "brandName": "Key", "createTime": "2024-01-01 00:00:00"
+      "ratingAvg": 9.2, "ratingCount": 15, "viewCount": 320, "downloadCount": 42, "status": "1",
+      "brandName": "Key", "tags": [ { "tagId": 2, "name": "恋爱", "type": "theme" } ],
+      "createTime": "2024-01-01 00:00:00"
     }
   ]
 }
@@ -293,85 +301,131 @@
 
 ## 3. 会社接口
 
-### 3.1 会社列表
+### 3.1 会社列表（公开）
 
-`GET /community/brand/list` · **匿名** · 前端 ✅
+`GET /community/brand/list` · **匿名** · 前端 ✅（前台筛选下拉、管理端下拉）
 
-**响应**（`data` 为**数组**，不是分页结构 —— 后端未使用 `getDataTable`，忽略分页参数）
+| 参数 | 必填 | 说明 |
+|---|---|---|
+| `keyword` | 否 | 按名称模糊过滤 |
+
+**响应**（`data` 为**数组**，不分页）
 
 ```json
 {
   "code": 200, "msg": "操作成功",
-  "data": [ { "brandId": 1, "name": "Key", "logo": "", "description": "日本视觉小说品牌", "createTime": "2024-01-01 00:00:00" } ]
+  "data": [ { "brandId": 1, "name": "Key", "logo": "", "website": "https://key.visualarts.gr.jp/", "description": "日本视觉小说品牌", "createTime": "2024-01-01 00:00:00" } ]
 }
 ```
 
-> ⚠️ 前端 `getBrandList` 类型声明为 `TableDataInfo<Brand> | Brand[]`，实际返回的是 `AjaxResult{data: Brand[]}`，取数时需读 `res.data`。
+### 3.2 管理端会社列表（分页）
 
-### 3.2 新增会社
+`GET /community/brand/admin/list` · 权限 `community:brand:list` · 前端 ✅（会社管理页）
 
-`POST /community/brand` · 登录 · 前端 ✅
+| 参数 | 必填 | 说明 |
+|---|---|---|
+| `pageNum` / `pageSize` | 否 | 分页 |
+| `keyword` | 否 | 名称模糊 |
+
+- 返回 `TableDataInfo`，每行附带 **`gameCount`**（该会社下的游戏数量）。
+
+### 3.3 会社详情
+
+`GET /community/brand/{brandId}` · 权限 `community:brand:list` · 返回 `{code,msg,data:Brand}`（含 `gameCount`）
+
+### 3.4 新增会社
+
+`POST /community/brand` · 权限 `community:brand:add` · 前端 ✅
+
+| 字段 | 必填 | 说明 |
+|---|---|---|
+| `name` | 是 | 会社名称（唯一，重名返回 500） |
+| `website` | 否 | **官方网站外链**，可空；前端会做 `http(s)://` 校验 |
+| `logo` | 否 | Logo 相对路径（上传接口返回的 `fileName`） |
+| `description` | 否 | 会社简介 |
 
 ```json
-{ "name": "Key", "logo": "/profile/upload/.../key.png", "description": "日本视觉小说品牌" }
+{ "name": "Key", "website": "https://key.visualarts.gr.jp/", "logo": "/profile/upload/.../key.webp", "description": "日本视觉小说品牌" }
 ```
 
-**响应**：`{"code":200,"msg":"操作成功","data":{ "brandId": 19, "name": "Key" }}`
+### 3.5 修改会社
 
-### 3.3 修改会社
+`PUT /community/brand` · 权限 `community:brand:edit` · 请求体同新增，需带 `brandId`；重名校验排除自身。
 
-`PUT /community/brand` · 登录 · 前端 ✅ · 请求体同新增，需带 `brandId`
+### 3.6 删除会社
 
-### 3.4 删除会社
+`DELETE /community/brand/{ids}` · 权限 `community:brand:remove` · 多 ID 逗号分隔
 
-`DELETE /community/brand/{ids}` · 登录 · 前端 ✅ · 多 ID 逗号分隔
-
-> 注意：删除会社**不会**级联处理 `gal_game.brand_id`，前端应在删除前提示「该会社下仍有游戏」。
+- **会社下存在游戏时拒绝删除**：`{"code":500,"msg":"会社「Key」下还有 5 个游戏，无法删除"}`（保留数据完整性）。
 
 ---
 
 ## 4. 标签接口
 
-### 4.1 标签列表
+> 标签与游戏是**多对多**关系（`gal_game_tag` 关联表）：一个标签可关联多个游戏，一个游戏可有多个标签。
+
+### 4.1 标签列表（公开）
 
 `GET /community/tag/list` · **匿名** · 前端 ✅
 
-**响应**（同 `data` 数组结构，按 `tagId` 升序）
+| 参数 | 必填 | 说明 |
+|---|---|---|
+| `name` | 否 | 名称模糊 |
+| `type` | 否 | `theme` 题材 / `play` 玩法 / `type` 类型 |
+
+**响应**（`data` 数组，按 `tagId` 升序）
 
 ```json
 { "code": 200, "msg": "操作成功", "data": [ { "tagId": 1, "name": "校园", "type": "theme", "createTime": "2024-01-01 00:00:00" } ] }
 ```
 
-### 4.2 新增标签
+### 4.2 管理端标签列表（分页）
 
-`POST /community/tag` · 登录 · 前端 ✅
+`GET /community/tag/admin/list` · 权限 `community:tag:list` · 前端 ✅（标签管理页）
+
+| 参数 | 必填 | 说明 |
+|---|---|---|
+| `pageNum` / `pageSize` | 否 | 分页 |
+| `name` | 否 | 名称模糊 |
+| `type` | 否 | 标签类型 |
+
+- 每行附带 **`gameCount`**（关联游戏数量）。
+
+### 4.3 标签详情
+
+`GET /community/tag/{tagId}` · 权限 `community:tag:list` · 返回 `{code,msg,data:Tag}`（含 `gameCount`）
+
+### 4.4 新增标签
+
+`POST /community/tag` · 权限 `community:tag:add` · 前端 ✅
 
 | 字段 | 必填 | 说明 |
 |---|---|---|
-| `name` | 是 | 标签名称（表上有唯一索引 `uk_gal_tag_name`） |
+| `name` | 是 | 标签名称（唯一，重名返回 500） |
 | `type` | 否 | `theme` / `play` / `type`，默认 `theme` |
 
 ```json
 { "name": "废萌", "type": "play" }
 ```
 
-**响应**：`{"code":200,"msg":"操作成功","data":{"tagId":21,"name":"废萌","type":"play"}}`
+### 4.5 修改标签
 
-### 4.3 修改标签
+`PUT /community/tag` · 权限 `community:tag:edit` · 需带 `tagId`；重名校验排除自身。
 
-`PUT /community/tag` · 登录 · 前端 ✅ · 需带 `tagId`
+### 4.6 删除标签
 
-### 4.4 删除标签
+`DELETE /community/tag/{ids}` · 权限 `community:tag:remove` · 多 ID 逗号分隔
 
-`DELETE /community/tag/{ids}` · 登录 · 前端 ✅ · 多 ID 逗号分隔
-
-> 删除标签**不会**清理 `gal_game_tag` 中的关联记录，可能残留无效关联（游戏详情查标签时会按 `tag_id` 批量查询，查不到则不展示）。
+- 删除时**级联清理** `gal_game_tag` 中对应的关联记录（返回 `删除成功（已同步清理游戏标签关联）`），
+  游戏本身不受影响，仅少一个标签。
 
 ---
 
 ## 5. 前端对接提示（本模块）
 
-1. `Tag.type` 前端定义为 `number`，后端是**字符串** `theme/play/type`，需同步修改类型并调整筛选逻辑。
-2. `Game.status` 前端定义为 `number`，后端是**字符串** `'0'/'1'`。
-3. 会社列表/标签列表返回的是 `AjaxResult.data`（数组），不是 `TableDataInfo.rows`，前端 `GameListView.vue` / `GameManageView.vue` 已做兼容读取，新增页面请沿用 `unwrap()` 或读 `data`。
-4. `GameDetailView` 中「评分」与「资源」是两个独立接口，需分别请求（`/community/rating/{gameId}` 需登录，`/community/resource/list` 匿名）。
+1. `Tag.type` 为字符串 `theme/play/type`（前端类型已同步），标签管理页用单选框维护。
+2. `Game.status` 为字符串 `'0'~'4'`（前端类型已同步）。
+3. 会社列表/标签列表返回 `AjaxResult.data`（数组）；管理端分页接口返回 `TableDataInfo.rows`。
+4. 游戏列表排序：`sortBy` 取 `hot`（点击量）/ `download`（资源下载总量）/ `rating`（评分）/ `publish`（`create_time`）/ `release`（`release_date`），
+   `isAsc=true` 升序（默认降序）；多标签用 `tagIds=1,2`（并集）。
+5. `GameDetailView` 中「评分」与「资源」是两个独立接口，需分别请求（`/community/rating/{gameId}` 需登录，`/community/resource/list` 匿名）。

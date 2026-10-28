@@ -79,4 +79,8 @@ public class Game extends BaseGalEntity {
     /** 会社名称（非表字段，连表展示用） */
     @com.baomidou.mybatisplus.annotation.TableField(exist = false)
     private String brandName;
+
+    /** 资源总下载次数（非表字段，由 gal_resource 汇总） */
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private Integer downloadCount;
 }

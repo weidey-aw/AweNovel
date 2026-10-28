@@ -241,11 +241,11 @@ Authorization: Bearer <token>
 | DELETE | `/monitor/cache/clearCacheAll` | `monitor:cache:list` | ❌ |
 | GET | `/monitor/server` | `monitor:server:list` | ✅ 监控页 |
 
-### 2.4 游戏库（19）
+### 2.4 游戏库（23）
 
 | 方法 | 路径 | 鉴权 | 前端状态 |
 |---|---|---|---|
-| GET | `/community/game/list` | **匿名** | ✅ 前台列表（仅已发布） |
+| GET | `/community/game/list` | **匿名** | ✅ 前台列表（多标签 + 排序） |
 | GET | `/community/game/{gameId}` | **匿名** | ✅ 前台详情（含截图） |
 | GET | `/community/game/tag/all` | **匿名** | ✅ |
 | GET | `/community/game/admin/list` | `community:game:list` | ✅ 管理端多维筛选 |
@@ -257,16 +257,21 @@ Authorization: Bearer <token>
 | PUT | `/community/game` | `community:game:edit` | ✅ 修改（审核中禁止） |
 | DELETE | `/community/game/{gameIds}` | `community:game:remove` | ✅ 删除 |
 | GET | `/community/brand/list` | **匿名** | ✅ |
-| POST | `/community/brand` | 登录（**无权限校验，见 §6.2**） | ✅ |
-| PUT | `/community/brand` | 登录（同上有风险） | ✅ |
-| DELETE | `/community/brand/{ids}` | 登录（同上有风险） | ✅ |
+| GET | `/community/brand/admin/list` | `community:brand:list` | ✅ 会社管理（分页 + 游戏数） |
+| GET | `/community/brand/{brandId}` | `community:brand:list` | ✅ 会社详情 |
+| POST | `/community/brand` | `community:brand:add` | ✅ 新增（含官网外链） |
+| PUT | `/community/brand` | `community:brand:edit` | ✅ 修改 |
+| DELETE | `/community/brand/{ids}` | `community:brand:remove` | ✅ 删除（有游戏时拒绝） |
 | GET | `/community/tag/list` | **匿名** | ✅ |
-| POST | `/community/tag` | 登录（同上有风险） | ✅ |
-| PUT | `/community/tag` | 登录（同上有风险） | ✅ |
-| DELETE | `/community/tag/{ids}` | 登录（同上有风险） | ✅ |
+| GET | `/community/tag/admin/list` | `community:tag:list` | ✅ 标签管理（分页 + 游戏数） |
+| GET | `/community/tag/{tagId}` | `community:tag:list` | ✅ 标签详情 |
+| POST | `/community/tag` | `community:tag:add` | ✅ 新增 |
+| PUT | `/community/tag` | `community:tag:edit` | ✅ 修改 |
+| DELETE | `/community/tag/{ids}` | `community:tag:remove` | ✅ 删除（级联清关联） |
 
 > 游戏状态：`0`下架 / `1`已发布 / `2`待审核 / `3`审核驳回 / `4`草稿；
-> 编辑页支持**存草稿**、**发布**与**撤回**（待审核时只能撤回，撤回后回到草稿才可重新发布）。
+> 编辑页支持**存草稿**、**发布**、**撤回**与**下架**。
+> 游戏列表排序：`sortBy=hot|download|rating|publish|release` + `isAsc`；多标签 `tagIds=1,2`。
 > 详见 [04-community-game.md](04-community-game.md)。
 
 ### 2.5 内容：文章 / 资源 / 评论 / 评分（12）
@@ -323,12 +328,18 @@ Authorization: Bearer <token>
 
 | 状态 | 数量 | 占比 |
 |---|---|---|
-| ✅ 已对接（有页面调用） | 127 | 88% |
+| ✅ 已对接（有页面调用） | 131 | 88% |
 | 🔸 仅封装未接页面 | 4 | 3% |
 | ❌ 未封装 | 14 | 9% |
-| **合计** | **145** | 100% |
+| **合计** | **149** | 100% |
 
-> **本轮（下架 + 游戏截图改版）**：
+> **本轮（会社管理 + 标签管理 + 多标签搜索/排序）**：
+> 会社新增 **官网外链字段 `website`** 与完整 CRUD（分页/游戏数/重名校验/有游戏时禁删）；
+> 标签 CRUD（类型 theme/play/type、关联游戏数、删除时**级联清理 `gal_game_tag`**）；
+> 游戏列表支持**多标签 `tagIds`** 与 **5 种排序**（hot/download/rating/publish/release + isAsc）；
+> 详情页标签可点击跳转搜索；首页「最新游戏」按发布时间倒序，各栏「查看全部」携带对应排序参数。
+>
+> **上一轮（下架 + 游戏截图改版）**：
 > 新增 `POST /community/game/offline/{id}`（已发布 → 已下架，前台立即隐藏，可再次发布走审核）；
 > 「轮播图」改名为**游戏截图**并与封面分离：前台在简介下方单独成块，**一屏 3 张、左右箭头、不自动滚动**，
 > 无图则隐藏；上传则要求 **3~7 张**（草稿可暂存不足 3 张，发布时校验）。

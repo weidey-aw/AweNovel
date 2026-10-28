@@ -15,9 +15,14 @@ import java.util.List;
 public interface GameService extends IService<Game> {
 
     /**
-     * 分页查询游戏（关键词/会社/标签过滤）
+     * 前台分页查询游戏（关键词 / 会社 / 多标签 / 状态 + 排序）
+     *
+     * @param tagIds 标签ID集合（可空，多个标签取并集）
+     * @param sortBy 排序维度：hot 点击量 / download 下载量 / rating 评分 / publish 发布时间 / release 发售时间
+     * @param isAsc  是否升序（默认降序）
      */
-    IPage<Game> pageGames(IPage<Game> page, String keyword, Long brandId, Long tagId, String status);
+    IPage<Game> pageGames(IPage<Game> page, String keyword, Long brandId, List<Long> tagIds,
+                          String status, String sortBy, boolean isAsc);
 
     /**
      * 管理端分页查询（全状态 + 发售日期区间 + 标签多选/会社）

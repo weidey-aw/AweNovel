@@ -141,9 +141,19 @@ export const updateGame = (data: Partial<Game>) => http.put<AjaxResult>('/commun
 /** gameIds 为逗号分隔的字符串 */
 export const deleteGames = (gameIds: string) => http.delete<AjaxResult>(`/community/game/${gameIds}`)
 
-/* ================= 会社（管理端，接口路径为约定，需与后端核对） ================= */
+/* ================= 会社 ================= */
 
-export const getBrandList = (params?: PageParams) => http.get<TableDataInfo<Brand> | Brand[]>('/community/brand/list', { params })
+/** 会社列表（公开，全量；用于下拉与前台筛选） */
+export const getBrandList = (params?: { keyword?: string }) =>
+  http.get<AjaxResult<Brand[]>>('/community/brand/list', { params })
+
+/** 管理端会社列表（分页 + 名称模糊 + 关联游戏数） */
+export const getAdminBrandList = (params: PageParams & { keyword?: string }) =>
+  http.get<TableDataInfo<Brand>>('/community/brand/admin/list', { params })
+
+/** 会社详情（管理） */
+export const getBrandDetail = (brandId: number) =>
+  http.get<AjaxResult<Brand>>(`/community/brand/${brandId}`)
 
 export const createBrand = (data: Partial<Brand>) => http.post<AjaxResult>('/community/brand', data)
 
@@ -151,9 +161,18 @@ export const updateBrand = (data: Partial<Brand>) => http.put<AjaxResult>('/comm
 
 export const deleteBrands = (brandIds: string) => http.delete<AjaxResult>(`/community/brand/${brandIds}`)
 
-/* ================= 标签（管理端） ================= */
+/* ================= 标签 ================= */
 
-export const getTagList = (params?: PageParams) => http.get<TableDataInfo<Tag> | Tag[]>('/community/tag/list', { params })
+/** 标签列表（公开，全量；用于下拉与前台筛选） */
+export const getTagList = (params?: { name?: string; type?: string }) =>
+  http.get<AjaxResult<Tag[]>>('/community/tag/list', { params })
+
+/** 管理端标签列表（分页 + 名称模糊 + 类型 + 关联游戏数） */
+export const getAdminTagList = (params: PageParams & { name?: string; type?: string }) =>
+  http.get<TableDataInfo<Tag>>('/community/tag/admin/list', { params })
+
+/** 标签详情（管理） */
+export const getTagDetail = (tagId: number) => http.get<AjaxResult<Tag>>(`/community/tag/${tagId}`)
 
 export const createTag = (data: Partial<Tag>) => http.post<AjaxResult>('/community/tag', data)
 

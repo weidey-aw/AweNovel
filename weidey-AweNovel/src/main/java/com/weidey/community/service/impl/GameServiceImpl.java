@@ -9,10 +9,12 @@ import com.weidey.common.utils.StringUtils;
 import com.weidey.community.domain.Brand;
 import com.weidey.community.domain.Game;
 import com.weidey.community.domain.GameTag;
+import com.weidey.community.domain.Resource;
 import com.weidey.community.domain.Tag;
 import com.weidey.community.mapper.BrandMapper;
 import com.weidey.community.mapper.GameMapper;
 import com.weidey.community.mapper.GameTagMapper;
+import com.weidey.community.mapper.ResourceMapper;
 import com.weidey.community.mapper.TagMapper;
 import com.weidey.community.service.GameService;
 import com.weidey.community.service.ReviewService;
@@ -41,22 +43,62 @@ public class GameServiceImpl extends ServiceImpl<GameMapper, Game> implements Ga
     private GameTagMapper gameTagMapper;
 
     @Autowired
+    private ResourceMapper resourceMapper;
+
+    @Autowired
     private ReviewService reviewService;
 
     @Override
-    public IPage<Game> pageGames(IPage<Game> page, String keyword, Long brandId, Long tagId, String status) {
+    public IPage<Game> pageGames(IPage<Game> page, String keyword, Long brandId, List<Long> tagIds,
+                                 String status, String sortBy, boolean isAsc) {
         LambdaQueryWrapper<Game> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(StringUtils.isNotBlank(status), Game::getStatus, status)
                 .eq(brandId != null, Game::getBrandId, brandId)
                 .and(StringUtils.isNotBlank(keyword), w -> w.like(Game::getTitle, keyword)
                         .or().like(Game::getTitleCn, keyword));
-        if (tagId != null) {
-            wrapper.inSql(Game::getGameId, "select game_id from gal_game_tag where tag_id = " + tagId);
+        if (tagIds != null && !tagIds.isEmpty()) {
+            String idList = tagIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+            wrapper.inSql(Game::getGameId, "select game_id from gal_game_tag where tag_id in (" + idList + ")");
         }
-        wrapper.orderByDesc(Game::getRatingAvg).orderByDesc(Game::getGameId);
+        // 排序：hot 点击量 / download 资源下载总量 / rating 评分 / publish 发布时间 / release 发售时间
+        String direction = isAsc ? "asc" : "desc";
+        String orderBy;
+        if ("download".equalsIgnoreCase(sortBy)) {
+            orderBy = "(select ifnull(sum(r.download_count), 0) from gal_resource r "
+                    + "where r.game_id = gal_game.game_id and r.del_flag = '0') " + direction;
+        } else if ("rating".equalsIgnoreCase(sortBy)) {
+            orderBy = "rating_avg " + direction;
+        } else if ("publish".equalsIgnoreCase(sortBy)) {
+            orderBy = "create_time " + direction;
+        } else if ("release".equalsIgnoreCase(sortBy)) {
+            orderBy = "release_date " + direction;
+        } else {
+            // 默认：热门（点击量）
+            orderBy = "view_count " + direction;
+        }
+        wrapper.last("order by " + orderBy + ", game_id desc");
         Page<Game> result = (Page<Game>) baseMapper.selectPage((Page<Game>) page, wrapper);
         fillRows(result.getRecords());
+        fillDownloadCounts(result.getRecords());
         return result;
+    }
+
+    /** 汇总每个游戏下资源的下载次数 */
+    private void fillDownloadCounts(List<Game> games) {
+        if (games == null || games.isEmpty()) {
+            return;
+        }
+        List<Long> ids = games.stream().map(Game::getGameId).collect(Collectors.toList());
+        List<Resource> resources = resourceMapper.selectList(new LambdaQueryWrapper<Resource>()
+                .select(Resource::getGameId, Resource::getDownloadCount)
+                .in(Resource::getGameId, ids));
+        java.util.Map<Long, Integer> sums = resources.stream()
+                .filter(r -> r.getGameId() != null)
+                .collect(Collectors.groupingBy(Resource::getGameId,
+                        Collectors.summingInt(r -> r.getDownloadCount() == null ? 0 : r.getDownloadCount())));
+        for (Game game : games) {
+            game.setDownloadCount(sums.getOrDefault(game.getGameId(), 0));
+        }
     }
 
     @Override

@@ -16,14 +16,15 @@ const stats = ref({ games: 0, articles: 0, loading: true })
 onMounted(async () => {
   try {
     const [latestRes, topRes, articleRes] = await Promise.all([
-      getGameList({ pageNum: 1, pageSize: 8 }),
-      getGameList({ pageNum: 1, pageSize: 50 }),
+      // 最新游戏：按发布时间倒序
+      getGameList({ pageNum: 1, pageSize: 8, sortBy: 'publish', isAsc: false }),
+      // 高分推荐：按评分倒序
+      getGameList({ pageNum: 1, pageSize: 50, sortBy: 'rating', isAsc: false }),
       getArticleList({ pageNum: 1, pageSize: 4 }),
     ])
     latest.value = latestRes.rows ?? []
     topRated.value = (topRes.rows ?? [])
       .filter((g) => Number(g.ratingAvg) > 0)
-      .sort((a, b) => Number(b.ratingAvg) - Number(a.ratingAvg))
       .slice(0, 8)
     articles.value = articleRes.rows ?? []
     stats.value = {
@@ -77,20 +78,24 @@ onMounted(async () => {
     </section>
 
     <div class="page-container">
-      <!-- 最新游戏 -->
+      <!-- 最新游戏（按发布时间倒序） -->
       <div class="section-title">
         最新游戏
-        <span class="more" @click="router.push('/games')">查看全部 →</span>
+        <span class="more" @click="router.push({ path: '/games', query: { sortBy: 'publish' } })">
+          查看全部 →
+        </span>
       </div>
       <div v-if="latest.length" class="game-grid">
         <GameCard v-for="g in latest" :key="g.gameId" :game="g" />
       </div>
       <el-empty v-else description="暂无游戏数据，请确认后端已启动" />
 
-      <!-- 高分游戏 -->
+      <!-- 高分游戏（按评分倒序） -->
       <div class="section-title">
         高分推荐
-        <span class="more" @click="router.push('/games')">查看全部 →</span>
+        <span class="more" @click="router.push({ path: '/games', query: { sortBy: 'rating' } })">
+          查看全部 →
+        </span>
       </div>
       <div v-if="topRated.length" class="game-grid">
         <GameCard v-for="g in topRated" :key="g.gameId" :game="g" />

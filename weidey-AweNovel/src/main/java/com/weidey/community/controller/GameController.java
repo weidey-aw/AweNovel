@@ -58,12 +58,22 @@ public class GameController extends BaseController {
         this.objectMapper = objectMapper;
     }
 
-    /** 前台游戏列表（仅已发布，公开） */
+    /**
+     * 前台游戏列表（仅已发布，公开）
+     *
+     * @param tagIds 多标签（逗号分隔，与其他标签取并集）
+     * @param sortBy hot 点击量 / download 下载量 / rating 评分 / publish 发布时间 / release 发售时间
+     * @param isAsc  是否升序，默认降序
+     */
     @GetMapping("/list")
     public TableDataInfo list(@RequestParam(required = false) String keyword,
                               @RequestParam(required = false) Long brandId,
-                              @RequestParam(required = false) Long tagId) {
-        return getDataTable(gameService.pageGames(startPage(), keyword, brandId, tagId, STATUS_PUBLISHED));
+                              @RequestParam(required = false) Long tagId,
+                              @RequestParam(required = false) String tagIds,
+                              @RequestParam(required = false) String sortBy,
+                              @RequestParam(required = false) Boolean isAsc) {
+        return getDataTable(gameService.pageGames(startPage(), keyword, brandId,
+                parseTagIds(tagIds, tagId), STATUS_PUBLISHED, sortBy, Boolean.TRUE.equals(isAsc)));
     }
 
     /**

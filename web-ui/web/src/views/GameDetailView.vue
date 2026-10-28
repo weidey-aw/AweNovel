@@ -149,6 +149,11 @@ function openUrl(url: string) {
   window.open(url, '_blank')
 }
 
+/** 点击标签 → 带参数跳转到游戏搜索页（多标签用 tagIds） */
+function goTag(tagId: number) {
+  router.push({ path: '/games', query: { tagIds: String(tagId) } })
+}
+
 onMounted(() => {
   load()
   loadResources()
@@ -199,7 +204,15 @@ onMounted(() => {
           </div>
 
           <div class="detail-tags">
-            <span v-for="t in game.tags || []" :key="t.tagId" class="dtag">{{ t.name }}</span>
+            <span
+              v-for="t in game.tags || []"
+              :key="t.tagId"
+              class="dtag clickable"
+              title="查看该标签下的游戏"
+              @click="goTag(t.tagId)"
+            >
+              {{ t.name }}
+            </span>
           </div>
 
           <!-- 评分 -->
@@ -433,6 +446,17 @@ onMounted(() => {
   border: 1px solid rgba(139, 92, 246, 0.3);
   padding: 4px 12px;
   border-radius: 999px;
+}
+
+.dtag.clickable {
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.dtag.clickable:hover {
+  background: rgba(139, 92, 246, 0.26);
+  border-color: rgba(167, 139, 250, 0.75);
+  transform: translateY(-1px);
 }
 
 .detail-rating {

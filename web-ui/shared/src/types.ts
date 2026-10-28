@@ -69,19 +69,23 @@ export interface UserInfo {
 export interface Tag {
   tagId: number
   name: string
-  /** 0=风格 1=题材 2=其它 */
-  type: number
+  /** 标签类型：theme 题材 / play 玩法 / type 类型 */
+  type?: string
+  createTime?: string
+  /** 关联游戏数（管理端列表统计） */
+  gameCount?: number
 }
 
 export interface Brand {
   brandId: number
   name: string
-  nameCn?: string
-  country?: string
+  /** 官方网站（外链，可空） */
+  website?: string
   description?: string
   logo?: string
-  website?: string
   createTime?: string
+  /** 关联游戏数（管理端列表统计） */
+  gameCount?: number
 }
 
 export interface Game {
@@ -100,6 +104,8 @@ export interface Game {
   ratingAvg?: number
   ratingCount?: number
   viewCount?: number
+  /** 资源总下载次数（后端按资源汇总） */
+  downloadCount?: number
   brandId?: number
   brandName?: string
   tags?: Tag[]
@@ -285,6 +291,10 @@ export interface GameQuery extends PageParams {
   tagIds?: string
   /** 0下架 1已发布 2待审核 3审核驳回 4草稿 */
   status?: string
+  /** 排序维度：hot 点击量 / download 下载量 / rating 评分 / publish 发布时间 / release 发售时间 */
+  sortBy?: 'hot' | 'download' | 'rating' | 'publish' | 'release'
+  /** 是否升序（默认降序） */
+  isAsc?: boolean
   /** 发售日期区间 */
   beginDate?: string
   endDate?: string
