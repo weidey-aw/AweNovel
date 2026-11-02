@@ -1,52 +1,4 @@
-/* ================= AweNovel · 深色 ACG 主题 ================= */
-
-:root {
-  --accent: #a78bfa;
-  --accent-2: #f472b6;
-  --grad-main: linear-gradient(120deg, #8b5cf6 0%, #ec4899 100%);
-  --bg-body: #0e0e16;
-  --bg-card: #171726;
-  --bg-soft: #1e1e31;
-  --border-glow: rgba(167, 139, 250, 0.18);
-  --text-main: #eaeaf6;
-  --text-sub: #9c9cbb;
-  --text-dim: #6d6d8c;
-  --radius: 12px;
-  --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.35);
-}
-
-/* Element Plus 暗色变量覆写 */
-html.dark {
-  color-scheme: dark;
-  --el-color-primary: #8b5cf6;
-  --el-color-primary-light-3: #a78bfa;
-  --el-color-primary-light-5: #bdb1fb;
-  --el-color-primary-light-7: #4c3a8f;
-  --el-color-primary-light-8: #3a2c70;
-  --el-color-primary-light-9: #251b4d;
-  --el-color-primary-dark-2: #7c4de0;
-  --el-bg-color: #14141f;
-  --el-bg-color-page: #0e0e16;
-  --el-bg-color-overlay: #1d1d2e;
-  --el-fill-color-blank: #171726;
-  --el-fill-color: #23233a;
-  --el-fill-color-light: #1f1f31;
-  --el-fill-color-lighter: #23233a;
-  --el-fill-color-extra-light: #1a1a2b;
-  --el-fill-color-dark: #2a2a44;
-  --el-fill-color-darker: #32324f;
-  --el-border-color: #2e2e48;
-  --el-border-color-light: #26263e;
-  --el-border-color-lighter: #212138;
-  --el-border-color-extra-light: #1d1d30;
-  --el-text-color-primary: #ececf7;
-  --el-text-color-regular: #c9c9de;
-  --el-text-color-secondary: #8e8eab;
-  --el-text-color-placeholder: #6a6a85;
-  --el-text-color-disabled: #55556e;
-  --el-mask-color: rgba(8, 8, 16, 0.72);
-  --el-box-shadow-light: 0 8px 30px rgba(0, 0, 0, 0.45);
-}
+/* ================= AweNovel · 基础样式（配色见 theme.css） ================= */
 
 * {
   box-sizing: border-box;
@@ -68,16 +20,19 @@ body {
     sans-serif;
   color: var(--text-main);
   background:
-    radial-gradient(1200px 500px at 80% -10%, rgba(139, 92, 246, 0.14), transparent 60%),
-    radial-gradient(900px 420px at 10% 0%, rgba(236, 72, 153, 0.1), transparent 55%),
+    radial-gradient(1200px 500px at 80% -10%, var(--hero-glow-1), transparent 60%),
+    radial-gradient(900px 420px at 10% 0%, var(--hero-glow-2), transparent 55%),
     var(--bg-body);
   background-attachment: fixed;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  transition:
+    background-color 0.25s ease,
+    color 0.2s ease;
 }
 
-/* 星空点缀 */
-body::before {
+/* 星空点缀（仅暗色主题） */
+:root[data-theme='dark'] body::before {
   content: '';
   position: fixed;
   inset: 0;
@@ -125,6 +80,7 @@ img {
   font-size: 22px;
   font-weight: 700;
   letter-spacing: 1px;
+  color: var(--text-main);
 }
 
 .section-title::before {
@@ -135,7 +91,8 @@ img {
   background: var(--grad-main);
 }
 
-.section-title .more {
+.section-title .more,
+.section-title .more-link {
   margin-left: auto;
   font-size: 13px;
   font-weight: 400;
@@ -144,12 +101,13 @@ img {
   transition: color 0.2s;
 }
 
-.section-title .more:hover {
+.section-title .more:hover,
+.section-title .more-link:hover {
   color: var(--accent);
 }
 
 .panel-card {
-  background: linear-gradient(160deg, rgba(139, 92, 246, 0.06), transparent 40%), var(--bg-card);
+  background: linear-gradient(160deg, var(--accent-soft), transparent 40%), var(--bg-card);
   border: 1px solid var(--border-glow);
   border-radius: var(--radius);
   box-shadow: var(--shadow-card);
@@ -193,12 +151,12 @@ img {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #33334f;
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4a4a6e;
+  background: var(--scrollbar-thumb-hover);
 }
 
 ::-webkit-scrollbar-track {
@@ -228,21 +186,21 @@ img {
   margin: 16px 0;
   padding: 10px 16px;
   border-left: 3px solid var(--accent);
-  background: rgba(139, 92, 246, 0.08);
+  background: var(--accent-soft);
   border-radius: 0 8px 8px 0;
   color: var(--text-sub);
 }
 
 .article-body pre {
-  background: #11111d;
-  border: 1px solid #26263e;
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
   border-radius: 8px;
   padding: 14px;
   overflow-x: auto;
 }
 
 .article-body code {
-  background: rgba(139, 92, 246, 0.14);
+  background: var(--accent-soft);
   border-radius: 4px;
   padding: 2px 6px;
   font-size: 0.9em;

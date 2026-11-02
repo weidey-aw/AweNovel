@@ -5,6 +5,31 @@
     <link rel="icon" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AweNovel · 管理后台</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #f2f6fd;
+      }
+      html[data-theme='dark'],
+      html[data-theme='dark'] body {
+        background: #0e0e16;
+      }
+    </style>
+    <script>
+      // 首帧前应用主题，避免暗色用户看到白屏闪烁
+      ;(function () {
+        try {
+          var t = localStorage.getItem('gal-theme')
+          if (t !== 'dark') t = 'light'
+          var d = document.documentElement
+          d.dataset.theme = t
+          if (t === 'dark') d.classList.add('dark')
+        } catch (e) {
+          /* ignore */
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="app"></div>

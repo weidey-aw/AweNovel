@@ -525,8 +525,8 @@ onMounted(() => {
 .dtag {
   font-size: 12.5px;
   color: var(--accent);
-  background: rgba(139, 92, 246, 0.12);
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
   padding: 4px 12px;
   border-radius: 999px;
 }
@@ -537,7 +537,7 @@ onMounted(() => {
 }
 
 .dtag.clickable:hover {
-  background: rgba(139, 92, 246, 0.26);
+  background: var(--accent-soft);
   border-color: rgba(167, 139, 250, 0.75);
   transform: translateY(-1px);
 }
@@ -607,7 +607,7 @@ onMounted(() => {
   border-radius: 8px;
   overflow: hidden;
   cursor: zoom-in;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--overlay-strong);
 }
 
 .shot-img :deep(img) {
@@ -645,7 +645,7 @@ onMounted(() => {
   margin: 10px 0;
   padding: 8px 12px;
   border-left: 3px solid var(--accent);
-  background: rgba(139, 92, 246, 0.08);
+  background: var(--accent-soft);
   border-radius: 6px;
 }
 
@@ -665,7 +665,7 @@ onMounted(() => {
 }
 
 .md-body :deep(code) {
-  background: rgba(139, 92, 246, 0.14);
+  background: var(--accent-soft);
   color: var(--accent);
   padding: 1px 5px;
   border-radius: 4px;
@@ -673,7 +673,7 @@ onMounted(() => {
 }
 
 .md-body :deep(.md-code) {
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--overlay-strong);
   padding: 12px 14px;
   border-radius: 8px;
   overflow-x: auto;
@@ -685,7 +685,7 @@ onMounted(() => {
 
 .md-body :deep(hr) {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--border-glow);
   margin: 16px 0;
 }
 
@@ -705,8 +705,8 @@ onMounted(() => {
   width: 46px;
   text-align: center;
   color: var(--accent);
-  background: rgba(139, 92, 246, 0.12);
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
   border-radius: 6px;
   padding: 2px 0;
   font-size: 12.5px;
@@ -758,7 +758,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(139, 92, 246, 0.12);
+  background: var(--accent-soft);
   font-size: 20px;
 }
 
@@ -798,7 +798,7 @@ onMounted(() => {
   gap: 14px;
   padding: 12px 14px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--overlay-soft);
   border: 1px solid var(--border-glow);
 }
 
@@ -864,7 +864,7 @@ onMounted(() => {
   border-radius: 10px;
   padding: 12px 14px;
   margin-bottom: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--overlay-soft);
 }
 
 .dl-source-head {

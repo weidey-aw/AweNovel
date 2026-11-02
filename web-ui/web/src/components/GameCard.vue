@@ -52,7 +52,7 @@ const coverUrl = computed(() => resolveAssetUrl(props.game.cover))
 .game-card:hover {
   transform: translateY(-6px);
   border-color: rgba(167, 139, 250, 0.55);
-  box-shadow: 0 14px 34px rgba(139, 92, 246, 0.25);
+  box-shadow: var(--shadow-hover);
 }
 
 .cover {
@@ -143,8 +143,8 @@ const coverUrl = computed(() => resolveAssetUrl(props.game.cover))
 .tag {
   font-size: 11px;
   color: var(--accent);
-  background: rgba(139, 92, 246, 0.12);
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft);
   padding: 2px 8px;
   border-radius: 999px;
 }

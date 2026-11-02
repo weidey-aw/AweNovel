@@ -1,18 +1,20 @@
 # 07 · 内容审核 / AI 看板娘 / 通用接口
 
-> 共 9 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
+> 共 11 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
 
 | # | 方法 | 路径 | 鉴权 | 前端状态 |
 |---|---|---|---|---|
 | 1 | GET | `/community/review/tasks` | `community:review:list` | ✅ |
 | 2 | POST | `/community/review/approve/{processInstanceId}` | `community:review:edit` | ✅ |
 | 3 | POST | `/community/review/reject/{processInstanceId}` | `community:review:edit` | ✅ |
-| 4 | GET | `/ai/chat?message=` | 登录（SSE） | ✅ |
-| 5 | POST | `/common/upload` | 登录 | ❌ |
-| 6 | POST | `/common/uploads` | 登录 | ❌ |
-| 7 | GET | `/common/download` | 登录 | ❌ |
-| 8 | GET | `/common/download/resource` | 登录 | ❌ |
-| 9 | GET | `/` | 匿名 | ❌（无需对接） |
+| 4 | POST | `/ai/chat` | 登录（SSE） | ✅ 支持历史上下文 |
+| 5 | POST | `/ai/chat/sync` | 登录 | ✅ 非流式兜底 |
+| 6 | GET | `/ai/chat?message=` | 登录（SSE） | ✅ 兼容旧版 |
+| 7 | POST | `/common/upload` | 登录 | ❌ |
+| 8 | POST | `/common/uploads` | 登录 | ❌ |
+| 9 | GET | `/common/download` | 登录 | ❌ |
+| 10 | GET | `/common/download/resource` | 登录 | ❌ |
+| 11 | GET | `/` | 匿名 | ❌（无需对接） |
 
 ---
 
@@ -107,41 +109,58 @@
 
 ---
 
-## 2. AI 看板娘（SSE 流式聊天）
+## 2. AI 看板娘（蓝色大肥鱼）
 
-`GET /ai/chat?message=xxx` · 登录 · 前端 ✅（`ChatMaid.vue`）
+> 推荐使用 `POST /ai/chat`（支持历史上下文与长消息）；SSE 被代理缓冲/不可用时，前端自动降级到
+> `POST /ai/chat/sync`。旧的 `GET /ai/chat?message=` 保留兼容。
 
-| 参数 | 类型 | 必填 | 说明 |
+### 2.1 请求体（`ChatRequest`）
+
+```json
+{
+  "message": "推荐几款治愈系 Galgame",
+  "history": [
+    { "role": "user", "content": "你好" },
+    { "role": "assistant", "content": "咕噜～主人好！" }
+  ]
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
-| `message` | string | 是 | 用户消息内容（URL 编码） |
+| `message` | string | 是 | 本轮消息，最长 2000 字 |
+| `history` | array | 否 | 最近对话，最多携带 12 条（`role` 仅 `user` / `assistant`） |
 
-**请求头**：`Authorization: Bearer <token>`（`Content-Type` 无需设置）
+### 2.2 流式聊天（SSE）
 
-**响应**：`text/event-stream`（SSE），逐个 `data:` 事件推送增量文本：
+`POST /ai/chat` · 登录 · `Content-Type: application/json` · 响应 `text/event-stream`
 
 ```
-data:你
-data:好
-data:，主人
+data:咕噜
+data:～
+data:主人
 ```
 
-> 前端需用 `fetch + ReadableStream` 手动解析（`EventSource` 无法携带 Authorization 头），仓库中 `web-ui/shared/src/api.ts` 的 `streamChat()` 已实现该解析，可直接复用。
+前端用 `fetch + ReadableStream` 手动解析（`EventSource` 无法携带 Authorization 与请求体），
+仓库中 `web-ui/shared/src/api.ts` 的 `streamChat()` 已实现，并内置：
+首包 15 秒守卫 → 超时/失败自动降级 `chatSync()` → 未收到任何内容重试一次。
 
-**错误与边界**
+### 2.3 非流式兜底
 
-| 场景 | 服务端行为 |
+`POST /ai/chat/sync` · 登录 · 返回 `{"code":200,"data":{"reply":"..."}}`
+
+### 2.4 错误与计费
+
+| 场景 | 行为 |
 |---|---|
-| 积分不足 | 推送一条 `data:积分不足，无法与看板娘聊天，请先签到获取积分～` 后结束 |
-| 未配置 API Key | 推送 `data:AI 服务未配置，请联系管理员设置 DEEPSEEK_API_KEY` 后结束 |
-| DeepSeek 返回非 200 | 推送 `data:AI 服务返回错误：<状态码>` 后结束 |
-| 正常结束 | 关闭连接（前端 `reader.read()` 返回 `done`） |
+| 积分不足 | 返回/推送「积分不足…」提示，**不扣费** |
+| 未配置 API Key | 「AI 服务未配置…」，**不扣费** |
+| DeepSeek 401 / 429 / 5xx | 返回友好提示（密钥无效 / 说话太快 / 服务打瞌睡） |
+| 请求失败 | **自动退还本轮 1 积分**（`change_type = ai_chat_refund`） |
 
-**规则**
-
-- 每次调用**消耗 1 积分**（`change_type = 'ai_chat'`），且**扣费在流式返回之前**：即使后续 AI 调用失败，积分也已扣除。
-- 服务端超时 **120 秒**（`SseEmitter(120000L)`），DeepSeek 请求超时同为 120 秒。
-- **无多轮上下文**：每次请求只发送 `system`（人设）+ 当前 `user` 消息，历史对话不入库、不带上下文。
-- 人设/模型/地址由配置决定：`ai.deepseek.persona` / `model`（默认 `deepseek-chat`）/ `base-url`。
+- 每次成功对话 **消耗 1 积分**（`change_type = 'ai_chat'`）。
+- 超时：SSE 180 秒，DeepSeek 请求 120 秒。
+- 人设默认「蓝色大肥鱼」，可由 `ai.deepseek.persona` 覆盖；模型 `deepseek-chat`、地址 `base-url` 均可配置。
 - 并发线程池固定 8 个线程。
 
 ---

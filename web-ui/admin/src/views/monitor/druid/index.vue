@@ -49,6 +49,6 @@ function openNew() {
   height: calc(100vh - 190px);
   min-height: 520px;
   display: block;
-  background: #fff;
+  background: var(--bg-card);
 }
 </style>

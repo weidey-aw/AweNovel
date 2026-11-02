@@ -1,19 +1,4 @@
-/* ================= 管理后台主题（浅色管理风 + 品牌紫） ================= */
-
-:root {
-  --accent: #7c5cf0;
-  --grad-main: linear-gradient(120deg, #8b5cf6 0%, #ec4899 100%);
-  --sidebar-bg: #1b1b2b;
-  --sidebar-text: #a9a9c4;
-  --sidebar-active: #8b5cf6;
-  --el-color-primary: #7c5cf0;
-  --el-color-primary-light-3: #a08df5;
-  --el-color-primary-light-5: #bdb1f8;
-  --el-color-primary-light-7: #e3defc;
-  --el-color-primary-light-8: #ece8fd;
-  --el-color-primary-light-9: #f5f3fe;
-  --el-color-primary-dark-2: #6349c9;
-}
+/* ================= 管理后台基础样式（配色见 theme.css） ================= */
 
 * {
   box-sizing: border-box;
@@ -33,9 +18,12 @@ body {
     'Helvetica Neue',
     Arial,
     sans-serif;
-  background: #f3f4f9;
-  color: #2d2d3f;
+  background: var(--bg-body);
+  color: var(--text-main);
   -webkit-font-smoothing: antialiased;
+  transition:
+    background-color 0.25s ease,
+    color 0.2s ease;
 }
 
 a {
@@ -69,14 +57,14 @@ a {
 }
 
 .stat-card {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 20px 22px;
-  box-shadow: 0 2px 12px rgba(30, 30, 60, 0.06);
+  box-shadow: var(--shadow-card);
   display: flex;
   align-items: center;
   gap: 16px;
-  border: 1px solid #ececf5;
+  border: 1px solid var(--border-color);
 }
 
 .stat-icon {
@@ -93,20 +81,21 @@ a {
 .stat-card b {
   font-size: 24px;
   display: block;
+  color: var(--text-main);
 }
 
 .stat-card span {
   font-size: 13px;
-  color: #8a8aa3;
+  color: var(--text-dim);
 }
 
 /* 表格卡片 */
 .table-card {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 18px;
-  box-shadow: 0 2px 12px rgba(30, 30, 60, 0.06);
-  border: 1px solid #ececf5;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-color);
 }
 
 .table-card .pager {
@@ -135,10 +124,10 @@ a {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d3d3e6;
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #b9b9d4;
+  background: var(--scrollbar-thumb-hover);
 }

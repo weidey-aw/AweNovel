@@ -138,8 +138,8 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .tags-view {
-  background: #fff;
-  border-bottom: 1px solid #ececf5;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
   padding: 6px 12px;
   flex-shrink: 0;
 }
@@ -164,8 +164,8 @@ onBeforeUnmount(() => {
   padding: 0 10px;
   border-radius: 6px;
   border: 1px solid #e4e4f0;
-  background: #f8f8fc;
-  color: #5b5b73;
+  background: var(--bg-soft);
+  color: var(--text-sub);
   font-size: 12.5px;
   cursor: pointer;
   transition: all 0.15s;
@@ -173,15 +173,15 @@ onBeforeUnmount(() => {
 }
 
 .tag-item:hover {
-  color: #7c5cf0;
-  border-color: #cdc4f7;
+  color: var(--accent);
+  border-color: var(--accent-line);
 }
 
 .tag-item.active {
-  background: linear-gradient(120deg, #8b5cf6, #ec4899);
+  background: var(--grad-main);
   border-color: transparent;
   color: #fff;
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35);
+  box-shadow: 0 2px 8px var(--accent-soft);
 }
 
 .tag-close {
@@ -200,8 +200,8 @@ onBeforeUnmount(() => {
   margin: 0;
   padding: 5px 0;
   list-style: none;
-  background: #fff;
-  border: 1px solid #ececf5;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   box-shadow: 0 6px 20px rgba(30, 30, 60, 0.14);
   min-width: 132px;
@@ -213,12 +213,12 @@ onBeforeUnmount(() => {
   gap: 6px;
   padding: 8px 14px;
   font-size: 13px;
-  color: #4b4b63;
+  color: var(--text-sub);
   cursor: pointer;
 }
 
 .ctx-menu li:hover {
-  background: #f5f3fe;
-  color: #7c5cf0;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 </style>

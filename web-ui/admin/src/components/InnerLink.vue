@@ -30,6 +30,6 @@ const src = computed(() => {
   width: 100%;
   height: 100%;
   display: block;
-  background: #fff;
+  background: var(--bg-card);
 }
 </style>

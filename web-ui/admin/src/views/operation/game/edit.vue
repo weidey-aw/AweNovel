@@ -586,7 +586,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   border: 1px solid #eeeef7;
 }
@@ -626,7 +626,7 @@ onMounted(() => {
 }
 
 .col {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #eeeef7;
   border-radius: 12px;
   padding: 12px 14px 16px;
@@ -708,7 +708,7 @@ onMounted(() => {
 
 .pv-sub {
   margin: 0 0 8px;
-  color: #8a8aa3;
+  color: var(--text-dim);
   font-size: 13px;
 }
 
@@ -762,7 +762,7 @@ onMounted(() => {
 }
 
 .pv-staff b {
-  color: #8a8aa3;
+  color: var(--text-dim);
   font-weight: 500;
   margin-right: 6px;
 }
@@ -813,7 +813,7 @@ onMounted(() => {
 }
 
 .md-body :deep(code) {
-  background: #f5f3fe;
+  background: var(--accent-soft);
   color: #6b4fe0;
   padding: 1px 5px;
   border-radius: 4px;
@@ -962,7 +962,7 @@ onMounted(() => {
 
 .carousel-add:hover {
   border-color: #b9a8f5;
-  color: #7c5cf0;
+  color: var(--accent);
 }
 
 .crop-box {

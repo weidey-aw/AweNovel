@@ -1,0 +1,152 @@
+/* ============================================================
+ * 主题变量
+ *   light  白蓝主题（默认）
+ *   dark   暗夜色（原黑紫主题）
+ * 通过 <html data-theme="..."> 切换；Element Plus 暗色由 html.dark 激活。
+ * ============================================================ */
+
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --accent: #2563eb;
+  --accent-2: #38bdf8;
+  --grad-main: linear-gradient(120deg, #2563eb 0%, #38bdf8 100%);
+
+  --bg-body: #f2f7ff;
+  --bg-card: #ffffff;
+  --bg-soft: #eaf2fe;
+  --bg-elevated: #f8fbff;
+
+  --border-glow: rgba(37, 99, 235, 0.14);
+  --border-strong: rgba(37, 99, 235, 0.28);
+
+  --text-main: #14213d;
+  --text-sub: #4a5c7a;
+  --text-dim: #7f93b3;
+
+  --accent-soft: rgba(37, 99, 235, 0.08);
+  --accent-line: rgba(37, 99, 235, 0.24);
+  --accent-2-soft: rgba(56, 189, 248, 0.14);
+
+  --shadow-card: 0 6px 24px rgba(37, 99, 235, 0.08);
+  --shadow-panel: 0 20px 60px rgba(37, 99, 235, 0.16);
+  --shadow-fab: 0 10px 28px rgba(37, 99, 235, 0.32), 0 0 0 4px rgba(56, 189, 248, 0.16);
+  --shadow-hover: 0 14px 34px rgba(37, 99, 235, 0.18);
+
+  --hero-glow-1: rgba(37, 99, 235, 0.1);
+  --hero-glow-2: rgba(56, 189, 248, 0.12);
+  --hero-glow-strong-1: rgba(37, 99, 235, 0.18);
+  --hero-glow-strong-2: rgba(56, 189, 248, 0.18);
+  --stage-glow: rgba(56, 189, 248, 0.35);
+  --bubble-color: rgba(37, 99, 235, 0.35);
+
+  --scrollbar-thumb: #c7d9f5;
+  --scrollbar-thumb-hover: #a9c6ef;
+  --code-bg: #f4f8ff;
+  --code-border: #dbe8fb;
+
+  --nav-bg: rgba(255, 255, 255, 0.86);
+  --overlay-soft: rgba(37, 99, 235, 0.04);
+  --overlay-strong: rgba(20, 40, 90, 0.06);
+
+  --radius: 12px;
+
+  /* Element Plus（浅色）主色改为蓝色 */
+  --el-color-primary: #2563eb;
+  --el-color-primary-light-3: #5b8ef5;
+  --el-color-primary-light-5: #8fb4f9;
+  --el-color-primary-light-7: #c3d8fc;
+  --el-color-primary-light-8: #dbe7fd;
+  --el-color-primary-light-9: #eff5ff;
+  --el-color-primary-dark-2: #1d4fd0;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --accent: #a78bfa;
+  --accent-2: #f472b6;
+  --grad-main: linear-gradient(120deg, #8b5cf6 0%, #ec4899 100%);
+
+  --bg-body: #0e0e16;
+  --bg-card: #171726;
+  --bg-soft: #1e1e31;
+  --bg-elevated: #1b1b2b;
+
+  --border-glow: rgba(167, 139, 250, 0.18);
+  --border-strong: rgba(167, 139, 250, 0.35);
+
+  --text-main: #eaeaf6;
+  --text-sub: #9c9cbb;
+  --text-dim: #6d6d8c;
+
+  --accent-soft: rgba(139, 92, 246, 0.12);
+  --accent-line: rgba(167, 139, 250, 0.32);
+  --accent-2-soft: rgba(236, 72, 153, 0.12);
+
+  --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.35);
+  --shadow-panel: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --shadow-fab: 0 8px 26px rgba(236, 72, 153, 0.45), 0 0 0 4px rgba(139, 92, 246, 0.15);
+  --shadow-hover: 0 14px 34px rgba(139, 92, 246, 0.28);
+
+  --hero-glow-1: rgba(139, 92, 246, 0.14);
+  --hero-glow-2: rgba(236, 72, 153, 0.1);
+  --hero-glow-strong-1: rgba(139, 92, 246, 0.22);
+  --hero-glow-strong-2: rgba(236, 72, 153, 0.18);
+  --stage-glow: rgba(139, 92, 246, 0.35);
+  --bubble-color: rgba(167, 139, 250, 0.4);
+
+  --scrollbar-thumb: #33334f;
+  --scrollbar-thumb-hover: #4a4a6e;
+  --code-bg: #11111d;
+  --code-border: #26263e;
+
+  --nav-bg: rgba(14, 14, 22, 0.85);
+  --overlay-soft: rgba(255, 255, 255, 0.02);
+  --overlay-strong: rgba(0, 0, 0, 0.35);
+
+  --radius: 12px;
+
+  /* Element Plus 暗色变量覆写 */
+  --el-color-primary: #8b5cf6;
+  --el-color-primary-light-3: #a78bfa;
+  --el-color-primary-light-5: #bdb1fb;
+  --el-color-primary-light-7: #4c3a8f;
+  --el-color-primary-light-8: #3a2c70;
+  --el-color-primary-light-9: #251b4d;
+  --el-color-primary-dark-2: #7c4de0;
+  --el-bg-color: #14141f;
+  --el-bg-color-page: #0e0e16;
+  --el-bg-color-overlay: #1d1d2e;
+  --el-fill-color-blank: #171726;
+  --el-fill-color: #23233a;
+  --el-fill-color-light: #1f1f31;
+  --el-fill-color-lighter: #23233a;
+  --el-fill-color-extra-light: #1a1a2b;
+  --el-fill-color-dark: #2a2a44;
+  --el-fill-color-darker: #32324f;
+  --el-border-color: #2e2e48;
+  --el-border-color-light: #26263e;
+  --el-border-color-lighter: #212138;
+  --el-border-color-extra-light: #1d1d30;
+  --el-text-color-primary: #ececf7;
+  --el-text-color-regular: #c9c9de;
+  --el-text-color-secondary: #8e8eab;
+  --el-text-color-placeholder: #6a6a85;
+  --el-text-color-disabled: #55556e;
+  --el-mask-color: rgba(8, 8, 16, 0.72);
+  --el-box-shadow-light: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* 主题切换过渡（避免刺眼闪变） */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.2s ease,
+    box-shadow 0.25s ease !important;
+}

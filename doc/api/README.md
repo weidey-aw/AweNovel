@@ -330,14 +330,16 @@ Authorization: Bearer <token>
 | GET | `/community/user/following` | 登录 | ✅ |
 | POST | `/community/user/follow/{targetUserId}` | 登录 | 🔸 |
 
-### 2.7 内容审核 / AI / 通用（9）
+### 2.7 内容审核 / AI / 通用（11）
 
 | 方法 | 路径 | 鉴权 | 前端状态 |
 |---|---|---|---|
 | GET | `/community/review/tasks` | `community:review:list` | ✅ |
 | POST | `/community/review/approve/{processInstanceId}` | `community:review:edit` | ✅ |
 | POST | `/community/review/reject/{processInstanceId}` | `community:review:edit` | ✅ |
-| GET | `/ai/chat?message=` | 登录（SSE） | ✅ |
+| POST | `/ai/chat` | 登录（SSE） | ✅ 支持历史上下文 |
+| POST | `/ai/chat/sync` | 登录 | ✅ 非流式兜底 |
+| GET | `/ai/chat?message=` | 登录（SSE） | ✅ 兼容旧版 |
 | POST | `/common/upload` | 登录 | ❌ |
 | POST | `/common/uploads` | 登录 | ❌ |
 | GET | `/common/download` | 登录 | ❌ |
@@ -352,12 +354,19 @@ Authorization: Bearer <token>
 
 | 状态 | 数量 | 占比 |
 |---|---|---|
-| ✅ 已对接（有页面调用） | 152 | 90% |
+| ✅ 已对接（有页面调用） | 154 | 90% |
 | 🔸 仅封装未接页面 | 3 | 2% |
 | ❌ 未封装 | 14 | 8% |
-| **合计** | **169** | 100% |
+| **合计** | **171** | 100% |
 
-> **本轮（文章 / 评论管理 + 页面）新增 10 个接口**：
+> **本轮（看板娘大修 + 主题系统）新增 2 个接口**：
+> 新增 `POST /ai/chat`（支持历史上下文、长消息）与 `POST /ai/chat/sync`（SSE 不可用时兜底），
+> 每次对话成功扣 1 积分、失败自动退还；默认人设改为「蓝色大肥鱼」；
+> 前端看板娘支持 **Live2D 立绘**（模型放 `web-ui/web/src/locales/live2d`，**不入 git**，缺失时自动降级为静态小鱼 UI）；
+> 新增**主题系统**：`白蓝`（默认）/ `暗夜色`（原黑紫主题），前台 + 后台共用 `@gal/shared` 的 `applyTheme()`，
+> 顶栏/登录页均可一键切换并持久化到 `localStorage`。
+>
+> **上一轮（文章 / 评论管理 + 页面）新增 10 个接口**：
 > 文章管理端列表/详情/新增/修改/**审核状态切换**/删除（级联删评论）；
 > 评论管理端列表/详情/**显示隐藏**/删除（含子回复），并新增「删除自己的评论」接口；
 > 修复 `gal_comment` 缺 `update_time` 导致发表评论必然 500 的历史问题；

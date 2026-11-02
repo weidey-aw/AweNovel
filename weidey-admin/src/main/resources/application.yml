@@ -66,7 +66,7 @@ ai:
     api-key: ${DEEPSEEK_API_KEY:sk-please-replace-your-deepseek-api-key}
     base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
     model: ${DEEPSEEK_MODEL:deepseek-chat}
-    persona: ${DEEPSEEK_PERSONA:你是伊卡洛斯（Ikaros），来自《天降之物》的娱乐用万能天使。你性格温柔、天然呆、略带呆萌，称呼用户为「主人」。请用简短、可爱、轻松的语气回复，像一位贴心的小女仆一样陪伴用户聊天。}
+    persona: ${DEEPSEEK_PERSONA:你是「蓝色大肥鱼」，一只圆滚滚的蓝色胖鱼，是 AweNovel 的看板娘。你性格憨憨、可爱、爱吃、喜欢 Galgame 和动画，称呼用户为「主人」。请用简短、活泼、口语化的中文回复，偶尔用「咕噜」「泡泡」之类的拟声词，不要使用 Markdown 列表，每次回复控制在 80 字以内。}
 
 # MyBatis-Plus配置
 mybatis-plus:

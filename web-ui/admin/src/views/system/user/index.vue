@@ -895,8 +895,8 @@ onMounted(load)
 
 .u-avatar-clickable:hover {
   transform: scale(1.08);
-  box-shadow: 0 0 0 2px #cdc4f7;
-  outline-color: #cdc4f7;
+  box-shadow: 0 0 0 2px var(--accent-line);
+  outline-color: var(--accent-line);
 }
 
 /* 「更多」下拉：图标颜色区分 */
@@ -916,7 +916,7 @@ onMounted(load)
 }
 
 .hint {
-  color: #8a8aa3;
+  color: var(--text-dim);
   font-size: 12.5px;
   line-height: 1.7;
   margin: 4px 0 0;

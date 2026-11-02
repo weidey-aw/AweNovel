@@ -339,10 +339,17 @@ export const rejectReview = (processInstanceId: string) => http.post<AjaxResult>
 export const getSystemUserList = (params: PageParams & { userName?: string }) =>
   http.get<TableDataInfo<SystemUser>>('/system/user/list', { params })
 
-/* ================= AI 看板娘（SSE 流式） ================= */
+/* ================= AI 看板娘（SSE 流式 + 同步兜底） ================= */
+
+export interface ChatHistoryItem {
+  role: 'user' | 'assistant'
+  content: string
+}
 
 export interface StreamChatOptions {
   message: string
+  /** 历史上下文（可选，最多 12 条） */
+  history?: ChatHistoryItem[]
   /** 每收到一段文本就回调一次 */
   onChunk: (text: string) => void
   signal?: AbortSignal
@@ -366,48 +373,121 @@ function parsePayload(payload: string): string {
   return trimmed
 }
 
+/** 从错误响应里取出后端 msg */
+async function errorMessage(resp: Response): Promise<string> {
+  try {
+    const data = (await resp.clone().json()) as { msg?: string; message?: string }
+    if (data?.msg) return data.msg
+    if (data?.message) return data.message
+  } catch {
+    /* 非 JSON */
+  }
+  if (resp.status === 401) return '登录状态已失效，请重新登录'
+  return `AI 服务响应异常（${resp.status}）`
+}
+
 /**
- * AI 看板娘流式聊天：GET /ai/chat?message=xxx（text/event-stream，需登录，每次消耗 1 积分）。
- * EventSource 无法携带自定义 header，故用 fetch + ReadableStream 手动解析 SSE 的 data: 行。
+ * 非流式聊天（兜底方案）：POST /ai/chat/sync。
+ * SSE 被网关缓冲、浏览器不支持流式或连接中断时使用。
+ */
+export async function chatSync(message: string, history?: ChatHistoryItem[]): Promise<string> {
+  const resp = await http.post<{ code: number; msg?: string; data?: { reply?: string } }>(
+    '/ai/chat/sync',
+    { message, history },
+    { timeout: 120000 },
+  )
+  const reply = resp?.data?.reply
+  if (!reply) throw new Error(resp?.msg || 'AI 没有返回内容')
+  return reply
+}
+
+/**
+ * AI 看板娘聊天：优先 POST /ai/chat 走 SSE 流式；
+ * 若 15 秒内没有任何内容或连接失败，自动降级到 /ai/chat/sync（后端失败会退还积分）。
+ *
+ * 注意：EventSource 无法携带 Authorization / 请求体，故用 fetch + ReadableStream 手动解析 SSE。
  */
 export async function streamChat(options: StreamChatOptions): Promise<string> {
-  const { message, onChunk, signal } = options
+  const { message, history, onChunk, signal } = options
   const token = getToken()
-  const url = `/api/ai/chat?message=${encodeURIComponent(message)}`
-  const resp = await fetch(url, {
-    method: 'GET',
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    signal,
-  })
-  if (!resp.ok || !resp.body) {
-    throw new Error(`AI 服务响应异常（${resp.status}）`)
-  }
-  const reader = resp.body.getReader()
-  const decoder = new TextDecoder('utf-8')
-  let buffer = ''
   let full = ''
+  let received = false
 
-  const flush = (block: string) => {
-    for (const line of block.split('\n')) {
-      if (line.startsWith('data:')) {
+  const emit = (text: string) => {
+    if (!text) return
+    received = true
+    full += text
+    onChunk(text)
+  }
+
+  const runStream = async (): Promise<void> => {
+    const resp = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ message, history }),
+      signal,
+    })
+    if (!resp.ok || !resp.body) {
+      throw new Error(await errorMessage(resp))
+    }
+
+    const reader = resp.body.getReader()
+    const decoder = new TextDecoder('utf-8')
+    let buffer = ''
+
+    // 首包守卫：15 秒内没有任何数据就放弃流式，交给同步兜底
+    const firstChunk = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 15000))
+    const firstRead = reader.read().then((r) => ({ r }))
+    const winner = await Promise.race([firstRead, firstChunk])
+    if (winner === 'timeout') {
+      await reader.cancel().catch(() => undefined)
+      throw new Error('stream-timeout')
+    }
+
+    let next = winner.r
+    for (;;) {
+      if (next.done) break
+      buffer += decoder.decode(next.value, { stream: true })
+      const blocks = buffer.split('\n\n')
+      buffer = blocks.pop() ?? ''
+      for (const block of blocks) {
+        for (const line of block.split('\n')) {
+          if (!line.startsWith('data:')) continue
+          const payload = line.slice(5).trim()
+          if (!payload || payload === '[DONE]') continue
+          emit(parsePayload(payload))
+        }
+      }
+      next = await reader.read()
+    }
+    if (buffer.trim()) {
+      for (const line of buffer.split('\n')) {
+        if (!line.startsWith('data:')) continue
         const payload = line.slice(5).trim()
-        if (!payload || payload === '[DONE]') continue
-        const text = parsePayload(payload)
-        full += text
-        onChunk(text)
+        if (payload && payload !== '[DONE]') emit(parsePayload(payload))
       }
     }
   }
 
-  for (;;) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
-    const blocks = buffer.split('\n\n')
-    buffer = blocks.pop() ?? ''
-    for (const block of blocks) flush(block)
+  try {
+    await runStream()
+  } catch (err) {
+    if (signal?.aborted) throw err
+    // 已经有内容输出：保留已收到的部分，不再重复请求（避免二次扣积分）
+    if (received) return full
+    // 否则降级为非流式
+    const reply = await chatSync(message, history)
+    emit(reply)
+    return full
   }
-  if (buffer.trim()) flush(buffer)
+  if (!received) {
+    // 后端返回 200 但没有任何内容（异常场景）→ 兜底
+    const reply = await chatSync(message, history)
+    emit(reply)
+  }
   return full
 }
 

@@ -48,7 +48,7 @@ onMounted(() => {
 <style scoped>
 .tip {
   margin: 14px 2px 0;
-  color: #8a8aa3;
+  color: var(--text-dim);
   font-size: 12.5px;
 }
 </style>

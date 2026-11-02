@@ -340,7 +340,7 @@ sudo certbot --nginx -d awe-novel.example.com -d admin.awe-novel.example.com
 | `DEEPSEEK_API_KEY` | 否（AI 不可用） | 占位 | DeepSeek API Key |
 | `DEEPSEEK_BASE_URL` | 否 | `https://api.deepseek.com` | DeepSeek 接口地址 |
 | `DEEPSEEK_MODEL` | 否 | `deepseek-chat` | 模型名 |
-| `DEEPSEEK_PERSONA` | 否 | 伊卡洛斯人设 | 看板娘人设提示词 |
+| `DEEPSEEK_PERSONA` | 否 | 蓝色大肥鱼人设 | 看板娘人设提示词 |
 | `DRUID_USERNAME` / `DRUID_PASSWORD` | 否 | `admin` / `123456` | Druid 监控台账号（生产请修改） |
 | `REDIS_PASSWORD` | 否 | 空 | Redis 密码（如有） |
 | `SSL_KEY_STORE_PASSWORD` | 启用 HTTPS 时 | 空 | JKS 证书密码 |
@@ -396,3 +396,25 @@ Flowable 会在首次启动自动建表，需要数据库账号具有建表权�
 - **上传目录备份**：`/home/awenovel/uploadPath` 与数据库一起备份。
 - **升级流程**：`git pull` → 执行增量 SQL（如有）→ `mvn clean package -DskipTests` → 替换 jar → `sudo systemctl restart awenovel`。
 - **安全基线**：修改默认密码（`admin`、Druid）、更换 `TOKEN_SECRET`、定期轮换 `DEEPSEEK_API_KEY` 与 SMTP 授权码。
+
+---
+
+## 11. 看板娘立绘（Live2D）与主题
+
+### 11.1 Live2D 立绘
+
+- 模型目录：`web-ui/web/src/locales/live2d/`（`*.model3.json` / `*.moc3` / 纹理 / 动作 / 表情）。
+  该目录**已加入 `.gitignore`**，不会随仓库分发，需要自行放入模型（默认读取 `c_0120.model3.json`）。
+- Cubism Core 已随前端仓库提供：`web-ui/web/public/live2d-core/live2dcubismcore.min.js`。
+- 开发态：Vite 插件把 `/live2d/*` 映射到 `src/locales/live2d`；生产构建会自动复制到 `dist/live2d`，
+  部署时把 `dist` 整个上传即可（Nginx 按静态文件处理，无需额外代理）。
+- **无立绘降级**：模型缺失、Core 加载失败或 WebGL 不可用时，看板娘自动切换为内置的「蓝色大肥鱼」SVG 形象
+  （顶部状态显示「电波模式」），聊天功能不受影响。
+
+### 11.2 主题
+
+- 两套主题：`light`（白蓝，默认）/ `dark`（暗夜色，原黑紫主题）。
+- 前台与管理后台都从 `@gal/shared` 引入 `initTheme()` / `applyTheme()` / `toggleTheme()`，
+  通过 `<html data-theme="...">` 切换，并同步 `dark` 类以启用 Element Plus 暗色变量。
+- 选择持久化在 `localStorage.gal-theme`；顶栏（前台导航、后台 header、后台登录页右上角）均可一键切换。
+- 新增主题：在两个 app 的 `src/styles/theme.css` 中按 `:root[data-theme='xxx']` 增加一组变量即可。

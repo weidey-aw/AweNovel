@@ -160,7 +160,7 @@ function onInput(event: Event) {
   border: 1px solid #e4e4f0;
   border-radius: 10px;
   overflow: hidden;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .md-toolbar {
@@ -170,7 +170,7 @@ function onInput(event: Event) {
   gap: 4px;
   padding: 6px 8px;
   border-bottom: 1px solid #eeeef7;
-  background: #fafaff;
+  background: var(--bg-soft);
 }
 
 .md-group {
@@ -199,7 +199,7 @@ function onInput(event: Event) {
   font-size: 13px;
   line-height: 1.75;
   color: #2b2b3c;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .md-footer {

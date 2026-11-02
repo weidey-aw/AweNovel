@@ -337,7 +337,7 @@ onMounted(load)
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #8a8aa3;
+  color: var(--text-dim);
   font-size: 12.5px;
   margin-bottom: 14px;
 }

@@ -582,7 +582,7 @@ onMounted(() => {
 }
 
 .game-sub {
-  color: #8a8aa3;
+  color: var(--text-dim);
   font-size: 12.5px;
 }
 
@@ -615,7 +615,7 @@ onMounted(() => {
 }
 
 .cover-placeholder {
-  color: #8a8aa3;
+  color: var(--text-dim);
   font-size: 13px;
   text-align: center;
   line-height: 1.7;

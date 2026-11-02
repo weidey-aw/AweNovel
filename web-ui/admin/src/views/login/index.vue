@@ -2,12 +2,19 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { getCaptcha, login } from '@gal/shared'
+import { Moon, Sunny } from '@element-plus/icons-vue'
+import { getCaptcha, getStoredTheme, login, THEME_LABELS, toggleTheme, type ThemeName } from '@gal/shared'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+
+/** 主题：白蓝（默认） / 暗夜色 */
+const theme = ref<ThemeName>(getStoredTheme())
+function switchTheme() {
+  theme.value = toggleTheme()
+}
 
 const formRef = ref<FormInstance>()
 const loading = ref(false)
@@ -65,6 +72,15 @@ onMounted(loadCaptcha)
 
 <template>
   <div class="login-page">
+    <el-tooltip :content="`主题：${THEME_LABELS[theme]}（点击切换）`" placement="bottom">
+      <el-button class="theme-switch" circle text aria-label="切换主题" @click="switchTheme">
+        <el-icon :size="18">
+          <Sunny v-if="theme === 'dark'" />
+          <Moon v-else />
+        </el-icon>
+      </el-button>
+    </el-tooltip>
+
     <div class="login-card">
       <div class="login-head">
         <div class="login-logo">✦</div>
@@ -94,25 +110,33 @@ onMounted(loadCaptcha)
 
 <style scoped>
 .login-page {
+  position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(700px 360px at 80% 0%, rgba(139, 92, 246, 0.16), transparent 60%),
-    radial-gradient(600px 300px at 10% 100%, rgba(236, 72, 153, 0.12), transparent 60%),
-    #f3f4f9;
+    radial-gradient(700px 360px at 80% 0%, var(--accent-soft), transparent 60%),
+    radial-gradient(600px 300px at 10% 100%, var(--accent-2-soft), transparent 60%),
+    var(--bg-body);
   padding: 20px;
+  transition: background-color 0.25s ease;
+}
+
+.theme-switch {
+  position: absolute;
+  top: 18px;
+  right: 20px;
 }
 
 .login-card {
   width: 400px;
   max-width: 100%;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 16px;
   padding: 38px 36px 30px;
   box-shadow: 0 16px 48px rgba(30, 30, 60, 0.14);
-  border: 1px solid #ececf5;
+  border: 1px solid var(--border-color);
 }
 
 .login-head {
@@ -131,7 +155,7 @@ onMounted(loadCaptcha)
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 22px rgba(139, 92, 246, 0.4);
+  box-shadow: var(--shadow-menu-active);
 }
 
 .login-head h2 {
@@ -142,7 +166,7 @@ onMounted(loadCaptcha)
 .login-head p {
   margin: 0;
   font-size: 13px;
-  color: #8a8aa3;
+  color: var(--text-dim);
 }
 
 .code-row {

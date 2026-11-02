@@ -534,7 +534,7 @@ onMounted(load)
 }
 
 .menu-icon {
-  color: #7c5cf0;
+  color: var(--accent);
 }
 
 .ext-tag {
@@ -550,7 +550,7 @@ onMounted(load)
 }
 
 .perms code {
-  background: #f5f3fe;
+  background: var(--accent-soft);
   color: #6b4fe0;
   padding: 1px 6px;
   border-radius: 4px;
@@ -570,7 +570,7 @@ onMounted(load)
 
 .icon-preview {
   font-size: 18px;
-  color: #7c5cf0;
+  color: var(--accent);
 }
 
 .icon-option {

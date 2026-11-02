@@ -2,8 +2,8 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, User, SwitchButton, Bell, Setting } from '@element-plus/icons-vue'
-import { logout } from '@gal/shared'
+import { Search, User, SwitchButton, Bell, Setting, Moon, Sunny } from '@element-plus/icons-vue'
+import { getStoredTheme, logout, THEME_LABELS, toggleTheme, type ThemeName } from '@gal/shared'
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
@@ -12,6 +12,14 @@ const userStore = useUserStore()
 
 /** 管理端地址（生产可经 VITE_ADMIN_URL 配置） */
 const ADMIN_URL = (import.meta.env.VITE_ADMIN_URL as string | undefined) || 'http://localhost:5174'
+
+/** 主题：白蓝（默认） / 暗夜色 */
+const theme = ref<ThemeName>(getStoredTheme())
+
+function switchTheme() {
+  theme.value = toggleTheme()
+  ElMessage.success(`已切换为「${THEME_LABELS[theme.value]}」主题`)
+}
 
 const keyword = ref('')
 const menus = [
@@ -66,6 +74,15 @@ async function handleLogout() {
       </nav>
 
       <div class="nav-right">
+        <el-tooltip :content="`主题：${THEME_LABELS[theme]}（点击切换）`" placement="bottom">
+          <el-button class="theme-btn" text circle aria-label="切换主题" @click="switchTheme">
+            <el-icon :size="18">
+              <Sunny v-if="theme === 'dark'" />
+              <Moon v-else />
+            </el-icon>
+          </el-button>
+        </el-tooltip>
+
         <el-input
           v-model="keyword"
           class="nav-search"
@@ -117,7 +134,7 @@ async function handleLogout() {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(14, 14, 22, 0.85);
+  background: var(--nav-bg);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border-glow);
 }
@@ -174,13 +191,13 @@ async function handleLogout() {
 
 .menu-item:hover {
   color: var(--text-main);
-  background: rgba(139, 92, 246, 0.1);
+  background: var(--accent-soft);
 }
 
 .menu-item.active {
   color: #fff;
   background: var(--grad-main);
-  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+  box-shadow: 0 4px 14px var(--accent-line);
 }
 
 .nav-right {
@@ -213,7 +230,7 @@ async function handleLogout() {
 }
 
 .user-chip:hover {
-  background: rgba(139, 92, 246, 0.12);
+  background: var(--accent-soft);
 }
 
 .user-avatar {

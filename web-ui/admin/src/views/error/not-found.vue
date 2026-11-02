@@ -49,21 +49,21 @@ const missing = computed(() => route.meta?.missingComponent as string | undefine
 }
 
 .err-card p {
-  color: #5b5b73;
+  color: var(--text-sub);
   line-height: 1.8;
   margin: 0 0 10px;
 }
 
 .err-card code {
   background: #f3f0ff;
-  color: #7c5cf0;
+  color: var(--accent);
   padding: 1px 6px;
   border-radius: 4px;
   font-size: 12.5px;
 }
 
 .dim {
-  color: #8a8aa3;
+  color: var(--text-dim);
   font-size: 12.5px;
 }
 

@@ -194,7 +194,7 @@ onMounted(load)
 .article-card:hover {
   transform: translateY(-3px);
   border-color: rgba(167, 139, 250, 0.55);
-  box-shadow: 0 10px 28px rgba(139, 92, 246, 0.18);
+  box-shadow: var(--shadow-hover);
 }
 
 .ac-cover {
@@ -244,8 +244,8 @@ onMounted(load)
 
 .ac-cat {
   color: var(--accent);
-  background: rgba(139, 92, 246, 0.12);
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft);
   padding: 2px 10px;
   border-radius: 999px;
 }

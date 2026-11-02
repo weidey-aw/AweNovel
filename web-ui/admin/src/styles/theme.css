@@ -1,0 +1,140 @@
+/* ============================================================
+ * 管理后台主题变量
+ *   light  白蓝主题（默认）
+ *   dark   暗夜色
+ * ============================================================ */
+
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --accent: #2563eb;
+  --accent-2: #38bdf8;
+  --grad-main: linear-gradient(120deg, #2563eb 0%, #38bdf8 100%);
+
+  --bg-body: #f2f6fd;
+  --bg-card: #ffffff;
+  --bg-soft: #eef4fd;
+  --bg-elevated: #f8fbff;
+
+  --border-color: #e2ecfb;
+  --border-strong: #cfe0f8;
+
+  --text-main: #1c2b46;
+  --text-sub: #5a6c8a;
+  --text-dim: #8698b5;
+
+  --accent-soft: rgba(37, 99, 235, 0.08);
+  --accent-line: rgba(37, 99, 235, 0.24);
+  --accent-2-soft: rgba(56, 189, 248, 0.14);
+
+  --shadow-card: 0 2px 12px rgba(30, 60, 120, 0.06);
+  --shadow-menu-active: 0 4px 14px rgba(37, 99, 235, 0.28);
+
+  /* 侧边栏 */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e2ecfb;
+  --sidebar-text: #4a5c7a;
+  --sidebar-text-active: #1d4fd0;
+  --sidebar-hover-bg: rgba(37, 99, 235, 0.08);
+  --logo-color: #14213d;
+  --logo-sub: #7f93b3;
+
+  --header-bg: #ffffff;
+  --main-bg: #f2f6fd;
+
+  --scrollbar-thumb: #c7d9f5;
+  --scrollbar-thumb-hover: #a9c6ef;
+
+  /* Element Plus（浅色）主色蓝色 */
+  --el-color-primary: #2563eb;
+  --el-color-primary-light-3: #5b8ef5;
+  --el-color-primary-light-5: #8fb4f9;
+  --el-color-primary-light-7: #c3d8fc;
+  --el-color-primary-light-8: #dbe7fd;
+  --el-color-primary-light-9: #eff5ff;
+  --el-color-primary-dark-2: #1d4fd0;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --accent: #a78bfa;
+  --accent-2: #f472b6;
+  --grad-main: linear-gradient(120deg, #8b5cf6 0%, #ec4899 100%);
+
+  --bg-body: #0e0e16;
+  --bg-card: #171726;
+  --bg-soft: #1e1e31;
+  --bg-elevated: #1b1b2b;
+
+  --border-color: #26263e;
+  --border-strong: #32324f;
+
+  --text-main: #eaeaf6;
+  --text-sub: #9c9cbb;
+  --text-dim: #6d6d8c;
+
+  --accent-soft: rgba(139, 92, 246, 0.12);
+  --accent-line: rgba(167, 139, 250, 0.32);
+  --accent-2-soft: rgba(236, 72, 153, 0.12);
+
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.35);
+  --shadow-menu-active: 0 4px 14px rgba(139, 92, 246, 0.4);
+
+  /* 侧边栏 */
+  --sidebar-bg: linear-gradient(180deg, #1e1e30, #161624);
+  --sidebar-border: transparent;
+  --sidebar-text: #a9a9c4;
+  --sidebar-text-active: #ffffff;
+  --sidebar-hover-bg: rgba(139, 92, 246, 0.18);
+  --logo-color: #ffffff;
+  --logo-sub: #8a8aa8;
+
+  --header-bg: #171726;
+  --main-bg: #0e0e16;
+
+  --scrollbar-thumb: #33334f;
+  --scrollbar-thumb-hover: #4a4a6e;
+
+  /* Element Plus 暗色变量覆写 */
+  --el-color-primary: #8b5cf6;
+  --el-color-primary-light-3: #a78bfa;
+  --el-color-primary-light-5: #bdb1fb;
+  --el-color-primary-light-7: #4c3a8f;
+  --el-color-primary-light-8: #3a2c70;
+  --el-color-primary-light-9: #251b4d;
+  --el-color-primary-dark-2: #7c4de0;
+  --el-bg-color: #14141f;
+  --el-bg-color-page: #0e0e16;
+  --el-bg-color-overlay: #1d1d2e;
+  --el-fill-color-blank: #171726;
+  --el-fill-color: #23233a;
+  --el-fill-color-light: #1f1f31;
+  --el-fill-color-lighter: #23233a;
+  --el-fill-color-extra-light: #1a1a2b;
+  --el-fill-color-dark: #2a2a44;
+  --el-fill-color-darker: #32324f;
+  --el-border-color: #2e2e48;
+  --el-border-color-light: #26263e;
+  --el-border-color-lighter: #212138;
+  --el-border-color-extra-light: #1d1d30;
+  --el-text-color-primary: #ececf7;
+  --el-text-color-regular: #c9c9de;
+  --el-text-color-secondary: #8e8eab;
+  --el-text-color-placeholder: #6a6a85;
+  --el-text-color-disabled: #55556e;
+  --el-mask-color: rgba(8, 8, 16, 0.72);
+  --el-box-shadow-light: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.2s ease,
+    box-shadow 0.25s ease !important;
+}

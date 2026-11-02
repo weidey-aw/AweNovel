@@ -500,7 +500,7 @@ onMounted(load)
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  color: #8a8aa3;
+  color: var(--text-dim);
   font-size: 12.5px;
   margin-bottom: 10px;
 }
@@ -556,7 +556,7 @@ onMounted(load)
 }
 
 .md-body :deep(code) {
-  background: #f5f3fe;
+  background: var(--accent-soft);
   color: #6b4fe0;
   padding: 1px 5px;
   border-radius: 4px;

@@ -104,7 +104,7 @@ onMounted(async () => {
 
 .stat-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 22px rgba(30, 30, 60, 0.12);
+  box-shadow: var(--shadow-card);
 }
 
 .block-title {
@@ -119,17 +119,17 @@ onMounted(async () => {
 }
 
 .quick {
-  border: 1px solid #ececf5;
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   padding: 16px;
   cursor: pointer;
   transition: all 0.2s;
-  background: #fafaff;
+  background: var(--bg-soft);
 }
 
 .quick:hover {
-  border-color: #c9bdf8;
-  background: #f5f2fe;
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
 }
 
 .quick b {
@@ -139,7 +139,7 @@ onMounted(async () => {
 
 .quick span {
   font-size: 12.5px;
-  color: #8a8aa3;
+  color: var(--text-dim);
 }
 
 .chart-card {
@@ -161,14 +161,14 @@ onMounted(async () => {
 
 .bar-row span {
   width: 44px;
-  color: #6b6b85;
+  color: var(--text-sub);
 }
 
 .bar {
   flex: 1;
   height: 14px;
   border-radius: 7px;
-  background: #f0f0f8;
+  background: var(--bg-soft);
   overflow: hidden;
 }
 
@@ -181,12 +181,12 @@ onMounted(async () => {
 .bar-row em {
   font-style: normal;
   width: 40px;
-  color: #8a8aa3;
+  color: var(--text-dim);
 }
 
 .tip {
   margin-top: 16px;
   font-size: 12px;
-  color: #b0b0c5;
+  color: var(--text-dim);
 }
 </style>

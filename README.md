@@ -38,7 +38,8 @@ AweNovel/
 - **资源下载**：资源发布 → Flowable 审核 → 通过后按所需积分下载。
 - **用户积分体系**：B 站式 0-6 等级（经验驱动）、每日签到 +5 积分 +5 经验、下载/AI 聊天消耗积分、积分流水审计。
 - **内容审核**：Flowable 工作流（提交 → 审核 → 通过/拒绝）。
-- **看板娘 AI**：DeepSeek 流式聊天（SSE），每次消耗 1 积分。
+- **看板娘 AI**：**蓝色大肥鱼**（DeepSeek 流式聊天，支持多轮上下文），每次消耗 1 积分；支持 **Live2D 动态立绘**，无模型时自动降级为静态形象。
+- **主题切换**：`白蓝`（默认）/ `暗夜色`，前台与管理后台统一生效，顶栏一键切换并记忆。
 - **社区互动**：评论（楼中楼）、评分（1-10）、点赞/收藏/关注、站内消息。
 
 ## 快速开始
@@ -125,7 +126,7 @@ pnpm dev:admin    # 管理端 http://localhost:5174
 - 社区公开：`GET /community/game/list`、`GET /community/game/{id}`、`GET /community/article/*`、`GET /community/comment/list`、`GET /community/resource/list`
 - 社区登录：`POST /community/sign`、`POST /community/resource/download/{id}`、`GET /community/user/profile` 等
 - 审核（管理）：`GET /community/review/tasks`、`POST /community/review/approve/{pid}`、`POST /community/review/reject/{pid}`
-- 看板娘：`GET /ai/chat?message=xxx`（SSE）
+- 看板娘：`POST /ai/chat`（SSE，带历史上下文）、`POST /ai/chat/sync`（兜底）
 
 ## 部署与运维
 

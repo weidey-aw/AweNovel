@@ -805,7 +805,7 @@ onMounted(load)
 }
 
 .hint {
-  color: #8a8aa3;
+  color: var(--text-dim);
   font-size: 12.5px;
 }
 

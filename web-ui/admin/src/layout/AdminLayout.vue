@@ -2,8 +2,8 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { SwitchButton } from '@element-plus/icons-vue'
-import { logout } from '@gal/shared'
+import { Moon, Sunny, SwitchButton } from '@element-plus/icons-vue'
+import { getStoredTheme, logout, THEME_LABELS, toggleTheme, type ThemeName } from '@gal/shared'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissionStore } from '@/stores/permission'
 import { useTagsViewStore } from '@/stores/tagsView'
@@ -16,6 +16,16 @@ const router = useRouter()
 const auth = useAuthStore()
 const permission = usePermissionStore()
 const tagsView = useTagsViewStore()
+
+/** 主题：白蓝（默认） / 暗夜色 */
+const theme = ref<ThemeName>(getStoredTheme())
+const menuTextColor = computed(() => (theme.value === 'dark' ? '#a9a9c4' : '#4a5c7a'))
+const menuActiveTextColor = computed(() => (theme.value === 'dark' ? '#ffffff' : '#1d4fd0'))
+
+function switchTheme() {
+  theme.value = toggleTheme()
+  ElMessage.success(`已切换为「${THEME_LABELS[theme.value]}」主题`)
+}
 
 /** 侧边栏菜单：仪表盘 + 后端下发的模块菜单 */
 const menus = computed(() => permission.sidebarMenus)
@@ -68,14 +78,14 @@ async function handleLogout() {
         </div>
       </div>
       <el-scrollbar class="menu-scroll">
-        <el-menu
+          <el-menu
           :default-active="activeMenu"
           :default-openeds="defaultOpeneds"
           router
           unique-opened
           background-color="transparent"
-          text-color="#a9a9c4"
-          active-text-color="#ffffff"
+          :text-color="menuTextColor"
+          :active-text-color="menuActiveTextColor"
           class="side-menu"
         >
           <menu-item v-for="item in menus" :key="item.path" :item="item" />
@@ -88,6 +98,14 @@ async function handleLogout() {
       <el-header class="header">
         <div class="header-title">{{ currentTitle }}</div>
         <div class="header-right">
+          <el-tooltip :content="`主题：${THEME_LABELS[theme]}（点击切换）`" placement="bottom">
+            <el-button text circle aria-label="切换主题" @click="switchTheme">
+              <el-icon :size="18">
+                <Sunny v-if="theme === 'dark'" />
+                <Moon v-else />
+              </el-icon>
+            </el-button>
+          </el-tooltip>
           <el-dropdown trigger="click">
             <span class="user-chip">
               <el-avatar :size="30" :src="auth.userInfo?.avatar || undefined" class="user-avatar">
@@ -126,7 +144,8 @@ async function handleLogout() {
 }
 
 .aside {
-  background: linear-gradient(180deg, #1e1e30, #161624);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -137,7 +156,7 @@ async function handleLogout() {
   align-items: center;
   gap: 10px;
   padding: 20px 18px;
-  color: #fff;
+  color: var(--logo-color);
   flex-shrink: 0;
 }
 
@@ -160,7 +179,7 @@ async function handleLogout() {
   display: block;
   font-size: 11px;
   font-weight: 400;
-  color: #8a8aa8;
+  color: var(--logo-sub);
 }
 
 .menu-scroll {
@@ -181,15 +200,15 @@ async function handleLogout() {
 }
 
 .side-menu :deep(.el-menu-item.is-active) {
-  background: linear-gradient(120deg, #8b5cf6, #ec4899);
+  background: var(--grad-main);
   color: #fff !important;
-  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
+  box-shadow: var(--shadow-menu-active);
 }
 
 .side-menu :deep(.el-menu-item:hover),
 .side-menu :deep(.el-sub-menu__title:hover) {
-  background: rgba(139, 92, 246, 0.18);
-  color: #fff;
+  background: var(--sidebar-hover-bg);
+  color: var(--sidebar-text-active);
 }
 
 .side-menu :deep(.el-sub-menu .el-menu-item) {
@@ -198,8 +217,8 @@ async function handleLogout() {
 }
 
 .header {
-  background: #fff;
-  border-bottom: 1px solid #ececf5;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -209,11 +228,13 @@ async function handleLogout() {
 .header-title {
   font-size: 16px;
   font-weight: 700;
+  color: var(--text-main);
 }
 
 .header-right {
   display: flex;
   align-items: center;
+  gap: 4px;
 }
 
 .user-chip {
@@ -226,7 +247,7 @@ async function handleLogout() {
 }
 
 .user-chip:hover {
-  background: #f3f3fa;
+  background: var(--bg-soft);
 }
 
 .user-avatar {
@@ -240,7 +261,7 @@ async function handleLogout() {
 }
 
 .main {
-  background: #f3f4f9;
+  background: var(--main-bg);
   padding: 0;
   overflow-y: auto;
 }

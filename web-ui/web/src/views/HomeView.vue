@@ -49,7 +49,7 @@ onMounted(async () => {
           欢迎来到 <span class="grad-text">AweNovel</span>
         </h1>
         <p class="hero-sub">
-          收录游戏图鉴、攻略评测、资源分享，还有 AI 看板娘「伊卡洛斯」陪你聊天。
+          收录游戏图鉴、攻略评测、资源分享，还有 AI 看板娘「蓝色大肥鱼」陪你聊天。
           右下角的悬浮球随时可以呼唤她哦～
         </p>
         <div class="hero-actions">
@@ -71,7 +71,7 @@ onMounted(async () => {
           </div>
           <div class="stat">
             <b>✦</b>
-            <span>伊卡洛斯在线</span>
+            <span>大肥鱼在线</span>
           </div>
         </div>
       </div>
@@ -139,8 +139,8 @@ onMounted(async () => {
   position: relative;
   padding: 72px 20px 56px;
   background:
-    radial-gradient(600px 300px at 20% 0%, rgba(139, 92, 246, 0.22), transparent 60%),
-    radial-gradient(500px 260px at 85% 20%, rgba(236, 72, 153, 0.18), transparent 60%);
+    radial-gradient(600px 300px at 20% 0%, var(--hero-glow-strong-1), transparent 60%),
+    radial-gradient(500px 260px at 85% 20%, var(--hero-glow-strong-2), transparent 60%);
   border-bottom: 1px solid var(--border-glow);
 }
 
@@ -158,7 +158,7 @@ onMounted(async () => {
   border: 1px solid rgba(167, 139, 250, 0.4);
   padding: 5px 14px;
   border-radius: 999px;
-  background: rgba(139, 92, 246, 0.08);
+  background: var(--accent-soft);
 }
 
 .hero-title {
@@ -280,8 +280,8 @@ onMounted(async () => {
 
 .art-cat {
   color: var(--accent);
-  background: rgba(139, 92, 246, 0.12);
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft);
   padding: 2px 10px;
   border-radius: 999px;
 }

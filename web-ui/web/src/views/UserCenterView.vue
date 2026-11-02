@@ -585,7 +585,7 @@ onMounted(async () => {
 }
 
 .msg-item.unread {
-  border-color: rgba(139, 92, 246, 0.5);
+  border-color: var(--accent-line);
 }
 
 .msg-item:hover {

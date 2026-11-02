@@ -121,8 +121,8 @@ onMounted(load)
 
 .a-cat {
   color: var(--accent);
-  background: rgba(139, 92, 246, 0.12);
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft);
   padding: 2px 10px;
   border-radius: 999px;
 }
@@ -152,7 +152,7 @@ onMounted(load)
 
 .a-summary {
   color: var(--text-sub);
-  background: rgba(139, 92, 246, 0.06);
+  background: var(--accent-soft);
   border-left: 3px solid var(--accent);
   padding: 10px 14px;
   border-radius: 6px;
@@ -192,19 +192,19 @@ onMounted(load)
   margin: 12px 0;
   padding: 8px 14px;
   border-left: 3px solid var(--accent);
-  background: rgba(139, 92, 246, 0.06);
+  background: var(--accent-soft);
   border-radius: 6px;
 }
 
 .md-body :deep(code) {
-  background: rgba(139, 92, 246, 0.14);
+  background: var(--accent-soft);
   color: var(--accent);
   padding: 1px 6px;
   border-radius: 4px;
 }
 
 .md-body :deep(.md-code) {
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--overlay-strong);
   padding: 14px 16px;
   border-radius: 8px;
   overflow-x: auto;

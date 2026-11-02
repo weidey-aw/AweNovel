@@ -215,7 +215,7 @@ onMounted(load)
 
 .target-id {
   margin-left: 4px;
-  color: #8a8aa3;
+  color: var(--text-dim);
   font-size: 12px;
 }
 
