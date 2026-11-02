@@ -361,7 +361,7 @@ Authorization: Bearer <token>
 
 > **本轮（看板娘大修 + 主题系统）新增 2 个接口**：
 > 新增 `POST /ai/chat`（支持历史上下文、长消息）与 `POST /ai/chat/sync`（SSE 不可用时兜底），
-> 每次对话成功扣 1 积分、失败自动退还；默认人设改为「蓝色大肥鱼」；
+> 每次对话成功扣 1 积分、失败自动退还；默认人设为「DeepSeek 鲸鱼娘」；
 > 前端看板娘支持 **Live2D 立绘**（模型放 `web-ui/web/src/locales/live2d`，**不入 git**，缺失时自动降级为静态小鱼 UI）；
 > 新增**主题系统**：`白蓝`（默认）/ `暗夜色`（原黑紫主题），前台 + 后台共用 `@gal/shared` 的 `applyTheme()`，
 > 顶栏/登录页均可一键切换并持久化到 `localStorage`。

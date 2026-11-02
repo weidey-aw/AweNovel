@@ -340,7 +340,7 @@ sudo certbot --nginx -d awe-novel.example.com -d admin.awe-novel.example.com
 | `DEEPSEEK_API_KEY` | 否（AI 不可用） | 占位 | DeepSeek API Key |
 | `DEEPSEEK_BASE_URL` | 否 | `https://api.deepseek.com` | DeepSeek 接口地址 |
 | `DEEPSEEK_MODEL` | 否 | `deepseek-chat` | 模型名 |
-| `DEEPSEEK_PERSONA` | 否 | 蓝色大肥鱼人设 | 看板娘人设提示词 |
+| `DEEPSEEK_PERSONA` | 否 | DeepSeek 鲸鱼娘人设 | 看板娘人设提示词 |
 | `DRUID_USERNAME` / `DRUID_PASSWORD` | 否 | `admin` / `123456` | Druid 监控台账号（生产请修改） |
 | `REDIS_PASSWORD` | 否 | 空 | Redis 密码（如有） |
 | `SSL_KEY_STORE_PASSWORD` | 启用 HTTPS 时 | 空 | JKS 证书密码 |
@@ -408,8 +408,14 @@ Flowable 会在首次启动自动建表，需要数据库账号具有建表权�
 - Cubism Core 已随前端仓库提供：`web-ui/web/public/live2d-core/live2dcubismcore.min.js`。
 - 开发态：Vite 插件把 `/live2d/*` 映射到 `src/locales/live2d`；生产构建会自动复制到 `dist/live2d`，
   部署时把 `dist` 整个上传即可（Nginx 按静态文件处理，无需额外代理）。
-- **无立绘降级**：模型缺失、Core 加载失败或 WebGL 不可用时，看板娘自动切换为内置的「蓝色大肥鱼」SVG 形象
-  （顶部状态显示「电波模式」），聊天功能不受影响。
+- **动作自动注入**：插件在开发/构建时扫描目录并生成 `/live2d/manifest.json`（动作 / 表情清单）。
+  VTube 导出的 `model3.json` 通常不写 `Motions` / `Expressions`，前端会按清单自动补全：
+  `idle*.motion3.json` → 待机循环，其余动作 → 点击/定时动作，`expressions/*.exp3.json` → 表情。
+  若模型完全没有动作，前端会退化为「参数级待机摆动 + 眨眼」，保证画面始终在动。
+- **常驻展示**：立绘固定在前台右下角（`ChatMaid.vue`），页面加载即出现；点击立绘打开/收起对话气泡，
+  立绘本身始终保留。移动端会自动缩小；容器 `pointer-events: none`，只有立绘区域可点击，不遮挡页面其余部分。
+- **无立绘降级**：模型缺失、Core 加载失败或 WebGL 不可用时，看板娘自动切换为内置的「鲸鱼娘」SVG 形象
+  （状态显示「电波模式」），聊天功能不受影响。
 
 ### 11.2 主题
 

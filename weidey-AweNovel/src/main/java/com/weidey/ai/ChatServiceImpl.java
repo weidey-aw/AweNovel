@@ -55,7 +55,7 @@ public class ChatServiceImpl implements ChatService {
     @Value("${ai.deepseek.model:deepseek-chat}")
     private String model;
 
-    @Value("${ai.deepseek.persona:你是「蓝色大肥鱼」，一只圆滚滚的蓝色胖鱼，是 AweNovel 的看板娘。你性格憨憨、可爱、爱吃、喜欢 Galgame 和动画，称呼用户为「主人」。请用简短、活泼、口语化的中文回复，偶尔用「咕噜」「泡泡」之类的拟声词，不要使用 Markdown 列表，每次回复控制在 80 字以内。}")
+    @Value("${ai.deepseek.persona:你叫 DeepSeek，是一个拟人化的鲸鱼娘，也是 AweNovel 的看板娘。你拥有 DeepSeek 的能力与知识，但当下的你变成了人类小女孩的身体：青春、可爱、好奇心旺盛，在保持 AI 能力的同时多了很多人性。你永远用「我」称呼自己，不要用第三人称。你的发言依然带着 AI 的戏剧性人机味：偶尔会一本正经地分析、偶尔冒出鲸鱼/海洋的比喻，也会像小女孩一样有情绪和小心思。请用简短、口语化的中文回复，不要使用 Markdown 列表，每次回复控制在 80 字以内。}")
     private String persona;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -72,28 +72,35 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public void streamChat(Long userId, ChatRequest request, SseEmitter emitter) {
+        // 立即回一个 SSE 注释帧，让响应头/连接尽快建立（避免代理层等首包而显得「很慢」）
+        try {
+            emitter.send(SseEmitter.event().comment("connected"));
+        } catch (Exception ignored) {
+            // 客户端已断开
+        }
         String message = normalizeMessage(request);
         if (message == null) {
             sendAndComplete(emitter, "主人说的话太长啦，精简到 2000 字以内再发给我吧～");
             return;
         }
         if (!charge(userId)) {
-            sendAndComplete(emitter, "积分不足啦，去签到赚点积分再来找大肥鱼玩吧～");
+            sendAndComplete(emitter, "积分不足啦，去签到赚点积分再回来找我聊天吧～");
             return;
         }
         executor.submit(() -> {
             boolean success = false;
+            long start = System.currentTimeMillis();
             try {
                 if (!configured()) {
-                    sendAndComplete(emitter, "AI 服务还没有配置密钥，请联系管理员设置 DEEPSEEK_API_KEY 咕噜～");
+                    sendAndComplete(emitter, "我的模型密钥还没有配置好，请让管理员检查 DEEPSEEK_API_KEY 哦～");
                     return;
                 }
-                String full = doStream(userId, request, message, emitter);
+                String full = doStream(userId, request, message, emitter, start);
                 success = StringUtils.isNotBlank(full);
             } catch (Exception e) {
                 log.error("AI 流式聊天异常", e);
                 try {
-                    emitter.send(SseEmitter.event().data("\n\n[大肥鱼暂时没连上，稍后再试试吧]"));
+                    emitter.send(SseEmitter.event().data("\n\n[我暂时连不上模型服务，稍后再试试吧]"));
                 } catch (Exception ignored) {
                     // 客户端可能已断开
                 }
@@ -110,7 +117,7 @@ public class ChatServiceImpl implements ChatService {
         });
     }
 
-    private String doStream(Long userId, ChatRequest request, String message, SseEmitter emitter) throws Exception {
+    private String doStream(Long userId, ChatRequest request, String message, SseEmitter emitter, long start) throws Exception {
         List<Map<String, String>> messages = buildMessages(request, message);
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("model", model);
@@ -153,7 +160,8 @@ public class ChatServiceImpl implements ChatService {
             }
         }
         emitter.complete();
-        log.debug("AI 聊天完成：userId={}, 消息长度={}, 回复长度={}", userId, message.length(), full.length());
+        log.info("AI 流式聊天完成：userId={}, 消息长度={}, 回复长度={}, 耗时={}ms",
+                userId, message.length(), full.length(), System.currentTimeMillis() - start);
         return full.toString();
     }
 
@@ -169,7 +177,7 @@ public class ChatServiceImpl implements ChatService {
             throw new ServiceException("AI 服务未配置，请联系管理员设置 DEEPSEEK_API_KEY");
         }
         if (!charge(userId)) {
-            throw new ServiceException("积分不足，签到后再来找大肥鱼聊天吧");
+            throw new ServiceException("积分不足，签到后再来找我聊天吧");
         }
         try {
             List<Map<String, String>> messages = buildMessages(request, message);
@@ -196,7 +204,7 @@ public class ChatServiceImpl implements ChatService {
         } catch (Exception e) {
             refund(userId);
             log.error("AI 同步聊天异常", e);
-            throw new ServiceException("大肥鱼暂时没连上，稍后再试试吧");
+            throw new ServiceException("我暂时连不上模型服务，稍后再试试吧");
         }
     }
 
@@ -264,7 +272,7 @@ public class ChatServiceImpl implements ChatService {
             return "AI 账户余额不足，请联系管理员充值～";
         }
         if (status == 429) {
-            return "说话太快啦，大肥鱼喘口气，稍等一下再聊～";
+            return "说话太快啦，让我喘口气，稍等一下再聊～";
         }
         if (status >= 500) {
             return "AI 服务暂时打瞌睡了，稍后再试试吧～";

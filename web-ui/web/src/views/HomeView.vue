@@ -49,7 +49,7 @@ onMounted(async () => {
           欢迎来到 <span class="grad-text">AweNovel</span>
         </h1>
         <p class="hero-sub">
-          收录游戏图鉴、攻略评测、资源分享，还有 AI 看板娘「蓝色大肥鱼」陪你聊天。
+          收录游戏图鉴、攻略评测、资源分享，还有 DeepSeek 鲸鱼娘常驻陪你逛站。
           右下角的悬浮球随时可以呼唤她哦～
         </p>
         <div class="hero-actions">
@@ -71,7 +71,7 @@ onMounted(async () => {
           </div>
           <div class="stat">
             <b>✦</b>
-            <span>大肥鱼在线</span>
+            <span>鲸鱼娘在线</span>
           </div>
         </div>
       </div>

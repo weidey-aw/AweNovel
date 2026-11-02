@@ -4,7 +4,8 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-const TARGET = 'http://localhost:9090'
+/** 后端地址：可用环境变量 VITE_API_TARGET 覆盖（便于本地/联调切换端口） */
+const TARGET = process.env.VITE_API_TARGET || 'http://localhost:9090'
 
 /**
  * 代理约定：
@@ -36,9 +37,30 @@ const MIME: Record<string, string> = {
   '.mp3': 'audio/mpeg',
 }
 
+/** 递归扫描模型目录，生成动作 / 表情清单（路径相对模型根目录，统一用 / 分隔） */
+function scanLive2D(dir: string, base = ''): { motions: string[]; expressions: string[] } {
+  const result = { motions: [] as string[], expressions: [] as string[] }
+  if (!fs.existsSync(dir)) return result
+  for (const name of fs.readdirSync(dir)) {
+    const abs = path.join(dir, name)
+    const rel = base ? `${base}/${name}` : name
+    if (fs.statSync(abs).isDirectory()) {
+      const sub = scanLive2D(abs, rel)
+      result.motions.push(...sub.motions)
+      result.expressions.push(...sub.expressions)
+    } else if (name.endsWith('.motion3.json')) {
+      result.motions.push(rel)
+    } else if (name.endsWith('.exp3.json')) {
+      result.expressions.push(rel)
+    }
+  }
+  return result
+}
+
 /**
  * 开发时把 /live2d/* 指向 src/locales/live2d，
  * 构建时把该目录复制到 dist/live2d（目录不存在则跳过）。
+ * 同时提供 /live2d/manifest.json，前端据此注入待机动作与表情（模型自带的 model3.json 常常没写）。
  */
 function live2dAssets(): Plugin {
   return {
@@ -47,6 +69,12 @@ function live2dAssets(): Plugin {
       server.middlewares.use('/live2d', (req, res, next) => {
         if (!fs.existsSync(LIVE2D_DIR)) return next()
         const urlPath = decodeURIComponent((req.url || '/').split('?')[0])
+        if (urlPath === '/manifest.json') {
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.setHeader('Cache-Control', 'no-cache')
+          res.end(JSON.stringify(scanLive2D(LIVE2D_DIR)))
+          return
+        }
         const filePath = path.join(LIVE2D_DIR, urlPath)
         if (!filePath.startsWith(LIVE2D_DIR)) return next()
         if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return next()
@@ -60,6 +88,7 @@ function live2dAssets(): Plugin {
       const outDir = path.join(fileURLToPath(new URL('.', import.meta.url)), 'dist', 'live2d')
       fs.rmSync(outDir, { recursive: true, force: true })
       fs.cpSync(LIVE2D_DIR, outDir, { recursive: true })
+      fs.writeFileSync(path.join(outDir, 'manifest.json'), JSON.stringify(scanLive2D(LIVE2D_DIR)), 'utf8')
       console.log(`[live2d] 已复制模型资源到 ${outDir}`)
     },
   }

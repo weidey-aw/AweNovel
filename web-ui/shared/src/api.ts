@@ -403,7 +403,7 @@ export async function chatSync(message: string, history?: ChatHistoryItem[]): Pr
 
 /**
  * AI 看板娘聊天：优先 POST /ai/chat 走 SSE 流式；
- * 若 15 秒内没有任何内容或连接失败，自动降级到 /ai/chat/sync（后端失败会退还积分）。
+ * 若 45 秒内没有任何内容或连接失败，自动降级到 /ai/chat/sync（后端失败会退还积分）。
  *
  * 注意：EventSource 无法携带 Authorization / 请求体，故用 fetch + ReadableStream 手动解析 SSE。
  */
@@ -438,8 +438,8 @@ export async function streamChat(options: StreamChatOptions): Promise<string> {
     const decoder = new TextDecoder('utf-8')
     let buffer = ''
 
-    // 首包守卫：15 秒内没有任何数据就放弃流式，交给同步兜底
-    const firstChunk = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 15000))
+    // 首包守卫：45 秒内没有任何数据就放弃流式，交给同步兜底（避免模型慢启动被误判为失败）
+    const firstChunk = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 45000))
     const firstRead = reader.read().then((r) => ({ r }))
     const winner = await Promise.race([firstRead, firstChunk])
     if (winner === 'timeout') {

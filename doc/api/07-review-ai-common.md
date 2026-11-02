@@ -109,7 +109,7 @@
 
 ---
 
-## 2. AI 看板娘（蓝色大肥鱼）
+## 2. AI 看板娘（DeepSeek 鲸鱼娘）
 
 > 推荐使用 `POST /ai/chat`（支持历史上下文与长消息）；SSE 被代理缓冲/不可用时，前端自动降级到
 > `POST /ai/chat/sync`。旧的 `GET /ai/chat?message=` 保留兼容。
@@ -143,11 +143,15 @@ data:主人
 
 前端用 `fetch + ReadableStream` 手动解析（`EventSource` 无法携带 Authorization 与请求体），
 仓库中 `web-ui/shared/src/api.ts` 的 `streamChat()` 已实现，并内置：
-首包 15 秒守卫 → 超时/失败自动降级 `chatSync()` → 未收到任何内容重试一次。
+首包 45 秒守卫 → 超时/失败自动降级 `chatSync()` → 未收到任何内容重试一次。
+
+> **性能**：服务端在流开始前先发送一个 SSE 注释帧（`connected`）并设置
+> `X-Accel-Buffering: no` / `Cache-Control: no-cache`，避免 Nginx 等代理缓冲导致「迟迟不出字」；
+> 实测首包约 0.1s、首个 token 约 0.5s（正常网络）。
 
 ### 2.3 非流式兜底
 
-`POST /ai/chat/sync` · 登录 · 返回 `{"code":200,"data":{"reply":"..."}}`
+`POST /ai/chat/sync` · 登录 · 返回 `{"code":200,"data":{"reply":"...","elapsedMs":1234}}`
 
 ### 2.4 错误与计费
 
@@ -158,9 +162,13 @@ data:主人
 | DeepSeek 401 / 429 / 5xx | 返回友好提示（密钥无效 / 说话太快 / 服务打瞌睡） |
 | 请求失败 | **自动退还本轮 1 积分**（`change_type = ai_chat_refund`） |
 
+> **修复记录**：SSE 结束时曾抛 `AccessDeniedException`（Spring Security 默认对 ASYNC 分派重新鉴权，
+> 而 `OncePerRequestFilter` 在 ASYNC 分派时不会执行 JWT 过滤器）。已在 `SecurityConfig` 中放开
+> `DispatcherType.ASYNC` / `ERROR` 的鉴权，流可以正常结束。
+
 - 每次成功对话 **消耗 1 积分**（`change_type = 'ai_chat'`）。
 - 超时：SSE 180 秒，DeepSeek 请求 120 秒。
-- 人设默认「蓝色大肥鱼」，可由 `ai.deepseek.persona` 覆盖；模型 `deepseek-chat`、地址 `base-url` 均可配置。
+- 人设默认「DeepSeek 鲸鱼娘」（拟人化娘化版，第一人称），可由 `ai.deepseek.persona` 覆盖；模型 `deepseek-chat`、地址 `base-url` 均可配置。
 - 并发线程池固定 8 个线程。
 
 ---

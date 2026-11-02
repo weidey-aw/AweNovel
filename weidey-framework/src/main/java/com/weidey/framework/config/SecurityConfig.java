@@ -1,6 +1,7 @@
 package com.weidey.framework.config;
 
 import com.weidey.framework.security.matcher.SelectPathRequestMatcher;
+import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -113,6 +114,10 @@ public class SecurityConfig
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 注解标记允许匿名访问的url
                 .authorizeHttpRequests((requests) -> {
+                    // 异步分派（SSE / SseEmitter 完成回调）不再重复鉴权：
+                    // OncePerRequestFilter 默认跳过 ASYNC 分派，JWT 过滤器不会执行，
+                    // 若不放开这里，流式接口在结束时会被判定为未认证并抛 AccessDeniedException。
+                    requests.dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll();
                     // 允许匿名访问的URL列表
                     permitAllUrl.getUrls().forEach(url -> requests.requestMatchers(url).permitAll());
                     // 对于登录、注册、验证码等允许匿名访问的路径

@@ -71,7 +71,7 @@ onMounted(loadCaptcha)
       <div class="auth-head">
         <div class="auth-logo">✦ AweNovel</div>
         <h2>欢迎回来</h2>
-        <p class="text-dim">登录后即可评分、评论、签到与召唤大肥鱼</p>
+        <p class="text-dim">登录后即可评分、评论、签到，还能和鲸鱼娘聊天</p>
       </div>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" size="large" @keyup.enter="submit">
