@@ -4,10 +4,10 @@
  * - 工具栏：标题 / 加粗 / 斜体 / 引用 / 列表 / 代码 / 图片上传 / 视频上传
  * - 图片与视频通过 /common/upload 上传，返回相对路径后插入 Markdown
  */
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Picture, VideoCamera } from '@element-plus/icons-vue'
-import { uploadFile, mdImage, mdVideo } from '@gal/shared'
+import { Picture, VideoCamera, View, Hide } from '@element-plus/icons-vue'
+import { uploadFile, mdImage, mdVideo, mdCodeBlock, renderMarkdown, CODE_LANGUAGES } from '@gal/shared'
 
 const props = withDefaults(
   defineProps<{
@@ -27,6 +27,20 @@ const taRef = ref<HTMLTextAreaElement>()
 const imgInputRef = ref<HTMLInputElement>()
 const videoInputRef = ref<HTMLInputElement>()
 const uploading = ref(false)
+
+/** 代码块语言 & 预览开关 */
+const codeLang = ref('javascript')
+const showPreview = ref(false)
+const previewHtml = computed(() => renderMarkdown(props.modelValue))
+
+/** 插入代码块（带语言标记，渲染时高亮） */
+function insertCodeBlock() {
+  insert(mdCodeBlock(codeLang.value))
+}
+
+function togglePreview() {
+  showPreview.value = !showPreview.value
+}
 
 function update(value: string) {
   emit('update:modelValue', value)
@@ -132,25 +146,39 @@ function onInput(event: Event) {
         <el-button size="small" text title="有序列表" @click="linePrefix('1. ')">1.</el-button>
         <el-button size="small" text title="分割线" @click="insert('\n---\n')">—</el-button>
       </div>
+      <div class="md-group">
+        <el-select v-model="codeLang" size="small" class="md-lang" title="代码块语言">
+          <el-option v-for="l in CODE_LANGUAGES" :key="l.value" :label="l.label" :value="l.value" />
+        </el-select>
+        <el-button size="small" text title="插入代码块（自动高亮）" @click="insertCodeBlock">{ }</el-button>
+      </div>
       <span class="md-spacer" />
       <div class="md-group">
+        <el-button size="small" :icon="showPreview ? Hide : View" @click="togglePreview">
+          {{ showPreview ? '关闭预览' : '预览' }}
+        </el-button>
         <el-button size="small" :icon="Picture" @click="imgInputRef?.click()">图片</el-button>
         <el-button size="small" :icon="VideoCamera" @click="videoInputRef?.click()">视频</el-button>
       </div>
       <input ref="imgInputRef" type="file" accept="image/*" hidden @change="onFileChange('image', $event)" />
       <input ref="videoInputRef" type="file" accept="video/*" hidden @change="onFileChange('video', $event)" />
     </div>
-    <textarea
-      ref="taRef"
-      class="md-textarea"
-      :value="modelValue"
-      :placeholder="placeholder"
-      :style="{ height: `${height}px` }"
-      @input="onInput"
-    />
+    <div class="md-panes" :class="{ split: showPreview }">
+      <textarea
+        ref="taRef"
+        class="md-textarea"
+        :value="modelValue"
+        :placeholder="placeholder"
+        :style="{ height: `${height}px` }"
+        @input="onInput"
+      />
+      <div v-if="showPreview" class="md-preview" :style="{ height: `${height}px` }">
+        <div class="md-preview-body" v-html="previewHtml || '<p class=\'text-dim\'>暂无内容</p>'" />
+      </div>
+    </div>
     <div class="md-footer">
       <span>{{ (modelValue || '').length }} 字符</span>
-      <span>支持 Markdown · 图片/视频自动上传</span>
+      <span>支持 Markdown · 代码块自动高亮 · 图片/视频自动上传</span>
     </div>
   </div>
 </template>
@@ -187,6 +215,77 @@ function onInput(event: Event) {
 
 .md-spacer {
   flex: 1;
+}
+
+.md-lang {
+  width: 116px;
+}
+
+.md-lang :deep(.el-input__wrapper) {
+  padding: 0 8px;
+}
+
+.md-panes {
+  display: block;
+}
+
+.md-panes.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.md-preview {
+  overflow-y: auto;
+  padding: 14px 16px;
+  border-left: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+
+.md-preview-body {
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: var(--text-main);
+  word-break: break-word;
+}
+
+.md-preview-body :deep(h1),
+.md-preview-body :deep(h2),
+.md-preview-body :deep(h3) {
+  margin: 14px 0 8px;
+}
+
+.md-preview-body :deep(img) {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.md-preview-body :deep(blockquote) {
+  margin: 10px 0;
+  padding: 6px 12px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--text-sub);
+}
+
+.md-preview-body :deep(code) {
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.md-preview-body :deep(.md-code) {
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  padding: 12px 14px;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.md-preview-body :deep(.text-dim) {
+  color: var(--text-dim);
 }
 
 .md-textarea {

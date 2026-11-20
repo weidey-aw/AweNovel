@@ -12,12 +12,20 @@ import com.weidey.community.domain.Message;
 public interface MessageService extends IService<Message> {
 
     /**
-     * 发送消息
+     * 发送消息（无业务关联）
      */
     void send(Long userId, Long senderId, String type, String content);
 
     /**
-     * 分页查询用户消息
+     * 发送消息（带业务关联，便于前端跳转）
+     *
+     * @param bizType 业务类型：game / article / resource / feedback
+     * @param bizId   业务ID
+     */
+    void send(Long userId, Long senderId, String type, String bizType, Long bizId, String content);
+
+    /**
+     * 分页查询用户消息（补全发送人昵称/头像）
      */
     IPage<Message> pageMessages(IPage<Message> page, Long userId);
 

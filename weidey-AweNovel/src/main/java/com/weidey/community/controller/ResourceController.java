@@ -6,7 +6,9 @@ import com.weidey.common.core.page.TableDataInfo;
 import com.weidey.common.utils.StringUtils;
 import com.weidey.community.domain.OfficialResource;
 import com.weidey.community.domain.Resource;
+import com.weidey.community.domain.ResourceFeedback;
 import com.weidey.community.service.OfficialResourceService;
+import com.weidey.community.service.ResourceFeedbackService;
 import com.weidey.community.service.ResourceService;
 import com.weidey.system.service.ISysDictTypeService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -43,13 +45,16 @@ public class ResourceController extends BaseController {
 
     private final ResourceService resourceService;
     private final OfficialResourceService officialResourceService;
+    private final ResourceFeedbackService resourceFeedbackService;
     private final ISysDictTypeService dictTypeService;
 
     public ResourceController(ResourceService resourceService,
                               OfficialResourceService officialResourceService,
+                              ResourceFeedbackService resourceFeedbackService,
                               ISysDictTypeService dictTypeService) {
         this.resourceService = resourceService;
         this.officialResourceService = officialResourceService;
+        this.resourceFeedbackService = resourceFeedbackService;
         this.dictTypeService = dictTypeService;
     }
 
@@ -83,10 +88,45 @@ public class ResourceController extends BaseController {
         return success(resourceService.download(resourceId, getUserId()));
     }
 
-    /** 失效举报 */
+    /** 失效举报（旧接口，保留兼容；新前端使用 /feedback） */
     @PostMapping("/report/{resourceId}")
     public AjaxResult report(@PathVariable Long resourceId) {
         resourceService.report(resourceId);
+        return success();
+    }
+
+    /** 提交资源反馈（1资源失效 2无法运行 3缺少补丁 4其他），并给上传者发站内消息 */
+    @PostMapping("/{resourceId}/feedback")
+    public AjaxResult submitFeedback(@PathVariable Long resourceId, @RequestBody ResourceFeedback feedback) {
+        return success(resourceFeedbackService.submit(getUserId(), resourceId, feedback.getType(), feedback.getContent()));
+    }
+
+    /** 某资源的反馈列表（仅资源上传者可查看） */
+    @GetMapping("/feedback/list")
+    public TableDataInfo feedbackList(@RequestParam Long resourceId) {
+        Resource resource = resourceService.getById(resourceId);
+        if (resource == null || !getUserId().equals(resource.getUserId())) {
+            return emptyTable();
+        }
+        return getDataTable(resourceFeedbackService.pageByResource(startPage(), resourceId, getUserId()));
+    }
+
+    /** 我收到的资源反馈（作为上传者） */
+    @GetMapping("/feedback/received")
+    public TableDataInfo receivedFeedback() {
+        return getDataTable(resourceFeedbackService.pageReceived(startPage(), getUserId()));
+    }
+
+    /** 我收到的未读反馈数 */
+    @GetMapping("/feedback/unread")
+    public AjaxResult unreadFeedback() {
+        return success(resourceFeedbackService.countUnread(getUserId()));
+    }
+
+    /** 反馈标记已读 */
+    @PostMapping("/feedback/read/{feedbackId}")
+    public AjaxResult markFeedbackRead(@PathVariable Long feedbackId) {
+        resourceFeedbackService.markRead(getUserId(), feedbackId);
         return success();
     }
 
@@ -95,6 +135,16 @@ public class ResourceController extends BaseController {
     public AjaxResult publish(@RequestBody Resource resource) {
         resource.setUserId(getUserId());
         return success(resourceService.publish(resource));
+    }
+
+    /** 空分页结果 */
+    private TableDataInfo emptyTable() {
+        TableDataInfo table = new TableDataInfo();
+        table.setCode(200);
+        table.setMsg("查询成功");
+        table.setRows(java.util.Collections.emptyList());
+        table.setTotal(0);
+        return table;
     }
 
     /* ==================== 管理端 ==================== */

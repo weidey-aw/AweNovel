@@ -2,7 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-const TARGET = 'http://localhost:9090'
+const TARGET = process.env.VITE_API_TARGET || 'http://localhost:9090'
 
 /**
  * 代理约定：

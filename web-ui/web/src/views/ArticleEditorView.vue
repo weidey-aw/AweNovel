@@ -3,7 +3,14 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Picture, View } from '@element-plus/icons-vue'
-import { publishArticle, renderMarkdown, resolveAssetUrl, uploadFile } from '@gal/shared'
+import {
+  CODE_LANGUAGES,
+  mdCodeBlock,
+  publishArticle,
+  renderMarkdown,
+  resolveAssetUrl,
+  uploadFile,
+} from '@gal/shared'
 import type { Article } from '@gal/shared'
 import { useUserStore } from '@/stores/user'
 
@@ -27,6 +34,49 @@ const submitting = ref(false)
 const uploading = ref(false)
 const showPreview = ref(false)
 const coverInputRef = ref<HTMLInputElement>()
+const contentRef = ref<{ textarea?: HTMLTextAreaElement }>()
+const codeLang = ref('javascript')
+
+/** 在正文光标处插入文本 */
+function insertText(text: string) {
+  const ta = contentRef.value?.textarea
+  const current = form.value.content ?? ''
+  if (!ta) {
+    form.value.content = current + text
+    return
+  }
+  const start = ta.selectionStart ?? current.length
+  const end = ta.selectionEnd ?? current.length
+  form.value.content = current.slice(0, start) + text + current.slice(end)
+  requestAnimationFrame(() => {
+    ta.focus()
+    const pos = start + text.length
+    ta.setSelectionRange(pos, pos)
+  })
+}
+
+/** 包裹选中文本（加粗/斜体/行内代码） */
+function wrapText(prefix: string, suffix = prefix, fallback = '文字') {
+  const ta = contentRef.value?.textarea
+  const current = form.value.content ?? ''
+  if (!ta) {
+    form.value.content = current + prefix + fallback + suffix
+    return
+  }
+  const start = ta.selectionStart ?? 0
+  const end = ta.selectionEnd ?? 0
+  const selected = current.slice(start, end) || fallback
+  form.value.content = current.slice(0, start) + prefix + selected + suffix + current.slice(end)
+  requestAnimationFrame(() => {
+    ta.focus()
+    ta.setSelectionRange(start + prefix.length, start + prefix.length + selected.length)
+  })
+}
+
+/** 插入代码块（带语言标记，预览自动高亮） */
+function insertCodeBlock() {
+  insertText(mdCodeBlock(codeLang.value))
+}
 
 const previewHtml = computed(() => renderMarkdown(form.value.content))
 
@@ -130,11 +180,25 @@ async function submit() {
         </el-form-item>
 
         <el-form-item label="正文（支持 Markdown）">
+          <div class="editor-toolbar">
+            <el-button size="small" text @click="insertText('## ')">H2</el-button>
+            <el-button size="small" text @click="wrapText('**', '**', '加粗文字')">B</el-button>
+            <el-button size="small" text @click="wrapText('*', '*', '斜体文字')"><i>I</i></el-button>
+            <el-button size="small" text @click="wrapText('`', '`', 'code')">&lt;/&gt;</el-button>
+            <el-button size="small" text @click="insertText('\n- ')">• 列表</el-button>
+            <el-button size="small" text @click="insertText('\n> ')">❝ 引用</el-button>
+            <el-button size="small" text @click="insertText('\n---\n')">—</el-button>
+            <el-select v-model="codeLang" size="small" class="code-lang">
+              <el-option v-for="l in CODE_LANGUAGES" :key="l.value" :label="l.label" :value="l.value" />
+            </el-select>
+            <el-button size="small" text @click="insertCodeBlock">{ } 代码块</el-button>
+          </div>
           <el-input
+            ref="contentRef"
             v-model="form.content"
             type="textarea"
             :rows="16"
-            placeholder="支持 Markdown：# 标题、**加粗**、- 列表、![图片](url)、```代码```"
+            placeholder="支持 Markdown：# 标题、**加粗**、- 列表、![图片](url)、```代码块```（自动高亮）"
           />
         </el-form-item>
       </el-form>
@@ -161,6 +225,24 @@ async function submit() {
 <style scoped>
 .back-btn {
   margin-bottom: 10px;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-glow);
+  border-radius: 10px;
+  background: var(--bg-soft);
+}
+
+.code-lang {
+  width: 120px;
+  margin: 0 4px;
 }
 
 .editor-card {

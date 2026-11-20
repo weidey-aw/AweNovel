@@ -11,6 +11,7 @@ import {
   markMessageRead,
   signDaily,
   resolveAssetUrl,
+  toggleFavorite,
   updatePassword,
   updateProfile,
   uploadAvatar,
@@ -158,6 +159,20 @@ async function loadLogs() {
 const messages = ref<Message[]>([])
 const messagesLoading = ref(false)
 
+/** 后端 isRead 为 '0'/'1'，兼容历史 boolean */
+function isUnread(m: Message) {
+  return m.isRead === '0' || m.isRead === false || m.isRead === undefined
+}
+
+const MESSAGE_TYPE_LABEL: Record<string, string> = {
+  feedback: '资源反馈',
+  audit: '审核通知',
+  comment: '评论回复',
+  like: '点赞',
+  system: '系统消息',
+}
+const messageTypeLabel = (type?: string) => (type ? MESSAGE_TYPE_LABEL[type] ?? type : '系统消息')
+
 async function loadMessages() {
   messagesLoading.value = true
   try {
@@ -171,10 +186,10 @@ async function loadMessages() {
 }
 
 async function readMessage(m: Message) {
-  if (m.isRead) return
+  if (!isUnread(m) || m.isRead === '1') return
   try {
     await markMessageRead(m.messageId)
-    m.isRead = true
+    m.isRead = '1'
     userStore.unread = Math.max(0, userStore.unread - 1)
   } catch {
     /* 忽略 */
@@ -184,16 +199,31 @@ async function readMessage(m: Message) {
 /* 收藏 */
 const favorites = ref<Favorite[]>([])
 const favLoading = ref(false)
+const favType = ref<'' | 'G' | 'A'>('')
 
 async function loadFavorites() {
   favLoading.value = true
   try {
-    const res = await getFavorites({ pageNum: 1, pageSize: 20 })
+    const res = await getFavorites({
+      pageNum: 1,
+      pageSize: 50,
+      targetType: favType.value || undefined,
+    })
     favorites.value = res.rows ?? []
   } catch {
     favorites.value = []
   } finally {
     favLoading.value = false
+  }
+}
+
+async function removeFavorite(f: Favorite) {
+  try {
+    await toggleFavorite((f.targetType as 'G' | 'A' | 'R') ?? 'G', f.targetId ?? 0)
+    favorites.value = favorites.value.filter((item) => item.id !== f.id)
+    ElMessage.success('已取消收藏')
+  } catch (err: unknown) {
+    ElMessage.error(err instanceof Error ? err.message : '操作失败')
   }
 }
 
@@ -342,42 +372,57 @@ onMounted(async () => {
               v-for="m in messages"
               :key="m.messageId"
               class="msg-item"
-              :class="{ unread: !m.isRead }"
+              :class="{ unread: isUnread(m) }"
               @click="readMessage(m)"
             >
-              <span v-if="!m.isRead" class="msg-dot" />
+              <span v-if="isUnread(m)" class="msg-dot" />
+              <el-avatar :size="32" :src="m.senderAvatar ? resolveAssetUrl(m.senderAvatar) : undefined" class="msg-avatar">
+                {{ (m.senderName || '系').slice(0, 1) }}
+              </el-avatar>
               <div class="msg-main">
+                <div class="msg-head">
+                  <span class="msg-sender">{{ m.senderName || '系统消息' }}</span>
+                  <el-tag size="small" effect="plain" class="msg-tag">{{ messageTypeLabel(m.type) }}</el-tag>
+                  <el-tag v-if="isUnread(m)" size="small" type="danger" effect="plain">未读</el-tag>
+                  <el-tag v-else size="small" type="info" effect="plain">已读</el-tag>
+                </div>
                 <div class="msg-content">{{ m.content }}</div>
                 <div class="msg-time text-dim">{{ m.createTime || '' }}</div>
               </div>
-              <el-button v-if="!m.isRead" size="small" text @click.stop="readMessage(m)">标为已读</el-button>
+              <el-button v-if="isUnread(m)" size="small" text @click.stop="readMessage(m)">标为已读</el-button>
             </div>
           </div>
           <el-empty v-else description="暂无消息" />
         </el-tab-pane>
 
         <el-tab-pane label="我的收藏" name="favorites">
+          <div class="fav-toolbar">
+            <el-radio-group v-model="favType" size="small" @change="loadFavorites">
+              <el-radio-button value="">全部</el-radio-button>
+              <el-radio-button value="G">游戏</el-radio-button>
+              <el-radio-button value="A">文章</el-radio-button>
+            </el-radio-group>
+            <span class="text-dim fav-count">共 {{ favorites.length }} 条</span>
+          </div>
           <el-skeleton v-if="favLoading" :rows="4" animated />
           <div v-else-if="favorites.length" class="fav-list">
-            <router-link
-              v-for="f in favorites"
-              :key="f.favoriteId ?? f.targetId"
-              :to="f.gameId ? `/game/${f.gameId}` : f.targetId ? `/game/${f.targetId}` : '/'"
-              class="fav-item"
-            >
-              <div class="fav-cover">
-                <img
-                  v-if="f.game?.cover && resolveAssetUrl(f.game.cover)"
-                  :src="resolveAssetUrl(f.game.cover)"
-                  :alt="f.game?.title"
-                />
-                <span v-else>🎮</span>
-              </div>
-              <div class="fav-info">
-                <div class="fav-title">{{ f.game?.titleCn || f.game?.title || `资源 #${f.targetId ?? f.gameId ?? ''}` }}</div>
-                <div class="fav-time text-dim">收藏于 {{ f.createTime || '未知' }}</div>
-              </div>
-            </router-link>
+            <div v-for="f in favorites" :key="f.id ?? f.targetId" class="fav-item">
+              <router-link :to="f.url || '/'" class="fav-link">
+                <div class="fav-cover">
+                  <img v-if="f.cover" :src="resolveAssetUrl(f.cover)" :alt="f.title" />
+                  <span v-else>{{ f.targetType === 'A' ? '📄' : '🎮' }}</span>
+                </div>
+                <div class="fav-info">
+                  <div class="fav-title">
+                    <el-tag size="small" effect="plain" class="fav-type">{{ f.typeLabel || '收藏' }}</el-tag>
+                    {{ f.title || `#${f.targetId ?? ''}` }}
+                  </div>
+                  <div class="fav-sub text-dim">{{ f.subtitle || '' }}</div>
+                  <div class="fav-time text-dim">收藏于 {{ f.createTime || '未知' }}</div>
+                </div>
+              </router-link>
+              <el-button size="small" text type="danger" @click.stop="removeFavorite(f)">取消收藏</el-button>
+            </div>
           </div>
           <el-empty v-else description="还没有收藏" />
         </el-tab-pane>
@@ -578,7 +623,7 @@ onMounted(async () => {
   gap: 12px;
   padding: 14px 16px;
   background: var(--bg-soft);
-  border: 1px solid rgba(46, 46, 72, 0.6);
+  border: 1px solid var(--border-glow);
   border-radius: 10px;
   cursor: pointer;
   transition: border-color 0.2s;
@@ -628,7 +673,7 @@ onMounted(async () => {
   align-items: center;
   padding: 12px;
   background: var(--bg-soft);
-  border: 1px solid rgba(46, 46, 72, 0.6);
+  border: 1px solid var(--border-glow);
   border-radius: 10px;
   transition: border-color 0.2s;
 }
@@ -642,7 +687,7 @@ onMounted(async () => {
   height: 84px;
   border-radius: 8px;
   overflow: hidden;
-  background: linear-gradient(160deg, #23233a, #14141f);
+  background: var(--bg-elevated);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -665,13 +710,66 @@ onMounted(async () => {
   margin-top: 6px;
 }
 
+.msg-avatar {
+  flex-shrink: 0;
+  background: var(--grad-main);
+  color: #fff;
+  font-size: 12px;
+}
+
+.msg-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.msg-sender {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-main);
+}
+
+.msg-tag {
+  transform: scale(0.92);
+}
+
+.fav-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.fav-count {
+  font-size: 12px;
+}
+
+.fav-link {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.fav-sub {
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+
+.fav-type {
+  margin-right: 6px;
+}
+
 .follow-item {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 12px 14px;
   background: var(--bg-soft);
-  border: 1px solid rgba(46, 46, 72, 0.6);
+  border: 1px solid var(--border-glow);
   border-radius: 10px;
 }
 
@@ -696,7 +794,7 @@ onMounted(async () => {
   gap: 4px;
   align-items: flex-start;
   padding-left: 16px;
-  border-left: 1px solid rgba(46, 46, 72, 0.6);
+  border-left: 1px solid var(--border-glow);
 }
 
 .edit-avatar {

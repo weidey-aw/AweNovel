@@ -46,6 +46,20 @@
   --scrollbar-thumb: #c7d9f5;
   --scrollbar-thumb-hover: #a9c6ef;
 
+  /* 代码块 / 高亮（浅色） */
+  --code-bg: #f6f9ff;
+  --code-border: #e2ecfb;
+  --hl-fg: #1f2d4d;
+  --hl-comment: #94a3b8;
+  --hl-keyword: #7c3aed;
+  --hl-string: #047857;
+  --hl-number: #b45309;
+  --hl-function: #1d4ed8;
+  --hl-title: #0e7490;
+  --hl-attr: #c2410c;
+  --hl-built-in: #9333ea;
+  --hl-type: #0369a1;
+
   /* Element Plus（浅色）主色蓝色 */
   --el-color-primary: #2563eb;
   --el-color-primary-light-3: #5b8ef5;
@@ -96,6 +110,20 @@
 
   --scrollbar-thumb: #33334f;
   --scrollbar-thumb-hover: #4a4a6e;
+
+  /* 代码块 / 高亮（暗色） */
+  --code-bg: #11111d;
+  --code-border: #26263e;
+  --hl-fg: #e5e7f5;
+  --hl-comment: #6b7280;
+  --hl-keyword: #c4b5fd;
+  --hl-string: #86efac;
+  --hl-number: #fbbf24;
+  --hl-function: #93c5fd;
+  --hl-title: #7dd3fc;
+  --hl-attr: #fdba74;
+  --hl-built-in: #f0abfc;
+  --hl-type: #67e8f9;
 
   /* Element Plus 暗色变量覆写 */
   --el-color-primary: #8b5cf6;

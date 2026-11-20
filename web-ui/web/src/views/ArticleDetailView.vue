@@ -2,18 +2,24 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, ChatDotRound, View } from '@element-plus/icons-vue'
-import { getArticleDetail, renderMarkdown, resolveAssetUrl } from '@gal/shared'
+import { ArrowLeft, ChatDotRound, Star, StarFilled, View } from '@element-plus/icons-vue'
+import { getArticleDetail, getFavoriteStatus, renderMarkdown, resolveAssetUrl, toggleFavorite } from '@gal/shared'
 import type { Article } from '@gal/shared'
+import { useUserStore } from '@/stores/user'
 import CommentSection from '@/components/CommentSection.vue'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
 const articleId = computed(() => Number(route.params.id))
 const article = ref<Article | null>(null)
 const loading = ref(true)
 const comments = ref(0)
+
+/** 收藏 */
+const favorited = ref(false)
+const favLoading = ref(false)
 
 /** 分类中文名 */
 const CATEGORY_LABEL: Record<string, string> = {
@@ -42,7 +48,40 @@ async function load() {
   }
 }
 
-onMounted(load)
+async function loadFavorite() {
+  if (!userStore.isLoggedIn) {
+    favorited.value = false
+    return
+  }
+  try {
+    const res = await getFavoriteStatus('A', articleId.value)
+    favorited.value = Boolean(res.data?.favorited)
+  } catch {
+    favorited.value = false
+  }
+}
+
+async function toggleFav() {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('登录后才能收藏文章哦')
+    return
+  }
+  favLoading.value = true
+  try {
+    const res = await toggleFavorite('A', articleId.value)
+    favorited.value = Boolean(res.data?.favorited)
+    ElMessage.success(favorited.value ? '已加入收藏' : '已取消收藏')
+  } catch (err: unknown) {
+    ElMessage.error(err instanceof Error ? err.message : '操作失败')
+  } finally {
+    favLoading.value = false
+  }
+}
+
+onMounted(() => {
+  load()
+  loadFavorite()
+})
 </script>
 
 <template>
@@ -66,6 +105,17 @@ onMounted(load)
           <span class="a-stats">
             <el-icon><View /></el-icon>{{ article.viewCount || 0 }}
             <el-icon class="ml"><ChatDotRound /></el-icon>{{ comments }}
+            <el-button
+              class="fav-btn"
+              :class="{ active: favorited }"
+              :loading="favLoading"
+              :icon="favorited ? StarFilled : Star"
+              size="small"
+              text
+              @click="toggleFav"
+            >
+              {{ favorited ? '已收藏' : '收藏' }}
+            </el-button>
           </span>
         </div>
         <div v-if="article.cover" class="a-cover">
@@ -132,6 +182,15 @@ onMounted(load)
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.fav-btn {
+  margin-left: 10px;
+  color: var(--text-sub);
+}
+
+.fav-btn.active {
+  color: #f59e0b;
 }
 
 .a-stats .ml {

@@ -2,9 +2,11 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, CopyDocument, Download, Link, Warning } from '@element-plus/icons-vue'
+import { ArrowLeft, CopyDocument, Download, Link, Star, StarFilled, Warning } from '@element-plus/icons-vue'
 import {
   downloadResource,
+  FEEDBACK_TYPES,
+  getFavoriteStatus,
   getGameDetail,
   getMyRating,
   getOfficialResources,
@@ -12,8 +14,9 @@ import {
   getResourceTypes,
   rateGame,
   renderMarkdown,
-  reportResource,
   resolveAssetUrl,
+  submitResourceFeedback,
+  toggleFavorite,
 } from '@gal/shared'
 import type { DictItem, Game, OfficialResource, Resource, ResourceSource } from '@gal/shared'
 import { useUserStore } from '@/stores/user'
@@ -39,6 +42,19 @@ const downloadTarget = ref<Resource | null>(null)
 const downloadSources = ref<ResourceSource[]>([])
 const downloadVisible = ref(false)
 
+/** 收藏 */
+const favorited = ref(false)
+const favLoading = ref(false)
+
+/** 资源反馈 */
+const feedback = ref({
+  visible: false,
+  resource: null as Resource | null,
+  type: 1,
+  content: '',
+  submitting: false,
+})
+
 /** 游戏截图（carousel 字段为 JSON 数组字符串；0 或 3-7 张） */
 const screenshotList = computed<string[]>(() => {
   const raw = game.value?.carousel
@@ -52,14 +68,26 @@ const screenshotList = computed<string[]>(() => {
   }
 })
 
-/** 每 3 张一屏（左右箭头翻页，不自动滚动） */
-const screenshotSlides = computed<string[][]>(() => {
-  const slides: string[][] = []
-  for (let i = 0; i < screenshotList.value.length; i += 3) {
-    slides.push(screenshotList.value.slice(i, i + 3))
-  }
-  return slides
+/**
+ * 截图轮播：始终一屏 3 张。
+ * 采用「滑动窗口 + 循环」的方式（窗口起点每次移动 1 张），
+ * 避免 4 张图时第二屏只显示 1 张的问题。
+ */
+const shotStart = ref(0)
+const visibleShots = computed<string[]>(() => {
+  const list = screenshotList.value
+  if (!list.length) return []
+  const count = Math.min(3, list.length)
+  return Array.from({ length: count }, (_, i) => list[(shotStart.value + i) % list.length])
 })
+const shotHasNav = computed(() => screenshotList.value.length > 3)
+const shotIndexAt = (i: number) => (shotStart.value + i) % screenshotList.value.length
+
+function shiftShots(delta: number) {
+  const total = screenshotList.value.length
+  if (total <= 3) return
+  shotStart.value = (shotStart.value + delta + total) % total
+}
 
 /** 封面图 */
 const coverSrc = computed(() => resolveAssetUrl(game.value?.cover))
@@ -115,6 +143,76 @@ async function copyText(text?: string) {
   }
 }
 
+/* ==================== 收藏 ==================== */
+
+async function loadFavorite() {
+  if (!userStore.isLoggedIn) {
+    favorited.value = false
+    return
+  }
+  try {
+    const res = await getFavoriteStatus('G', gameId.value)
+    favorited.value = Boolean(res.data?.favorited)
+  } catch {
+    favorited.value = false
+  }
+}
+
+async function toggleFav() {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('登录后才能收藏游戏哦')
+    return
+  }
+  favLoading.value = true
+  try {
+    const res = await toggleFavorite('G', gameId.value)
+    favorited.value = Boolean(res.data?.favorited)
+    ElMessage.success(favorited.value ? '已加入收藏' : '已取消收藏')
+  } catch (err: unknown) {
+    ElMessage.error(err instanceof Error ? err.message : '操作失败')
+  } finally {
+    favLoading.value = false
+  }
+}
+
+/* ==================== 资源反馈 ==================== */
+
+function openFeedback(resource: Resource) {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('登录后才能反馈资源问题哦')
+    return
+  }
+  feedback.value = {
+    visible: true,
+    resource,
+    type: 1,
+    content: '',
+    submitting: false,
+  }
+}
+
+async function submitFeedback() {
+  const target = feedback.value.resource
+  if (!target) return
+  if (!feedback.value.content.trim()) {
+    ElMessage.warning('请填写反馈内容，方便上传者定位问题')
+    return
+  }
+  feedback.value.submitting = true
+  try {
+    await submitResourceFeedback(target.resourceId, {
+      type: feedback.value.type,
+      content: feedback.value.content.trim(),
+    })
+    ElMessage.success('反馈已发送给上传者，可在「用户中心-消息」查看回复')
+    feedback.value.visible = false
+  } catch (err: unknown) {
+    ElMessage.error(err instanceof Error ? err.message : '反馈失败')
+  } finally {
+    feedback.value.submitting = false
+  }
+}
+
 async function loadMyRating() {
   if (!userStore.isLoggedIn) return
   try {
@@ -164,16 +262,6 @@ async function doDownload(r: Resource) {
   }
 }
 
-async function doReport(r: Resource) {
-  try {
-    await ElMessageBox.confirm('确认举报该资源已失效？', '失效举报', { type: 'warning' })
-    await reportResource(r.resourceId)
-    ElMessage.success('举报成功，感谢反馈')
-  } catch {
-    /* 取消 */
-  }
-}
-
 function openUrl(url: string) {
   window.open(url, '_blank')
 }
@@ -187,6 +275,7 @@ onMounted(() => {
   load()
   loadResources()
   loadMyRating()
+  loadFavorite()
 })
 </script>
 
@@ -214,7 +303,18 @@ onMounted(() => {
         </div>
 
         <div class="detail-right">
-          <h1 class="detail-title">{{ game.titleCn || game.title }}</h1>
+          <div class="detail-title-row">
+            <h1 class="detail-title">{{ game.titleCn || game.title }}</h1>
+            <el-button
+              class="fav-btn"
+              :class="{ active: favorited }"
+              :loading="favLoading"
+              :icon="favorited ? StarFilled : Star"
+              @click="toggleFav"
+            >
+              {{ favorited ? '已收藏' : '收藏' }}
+            </el-button>
+          </div>
           <div v-if="game.titleCn && game.titleCn !== game.title" class="detail-sub">{{ game.title }}</div>
 
           <div class="detail-meta">
@@ -274,32 +374,48 @@ onMounted(() => {
           <p v-else class="text-dim">暂无简介</p>
         </div>
 
-        <!-- 游戏截图：无图则整块隐藏；一屏 3 张，左右箭头切换，不自动滚动 -->
-        <template v-if="screenshotSlides.length">
+        <!-- 游戏截图：无图则整块隐藏；始终一屏 3 张，左右箭头滑动窗口（4 张也不会只剩 1 张） -->
+        <template v-if="screenshotList.length">
           <div class="section-title">游戏截图</div>
           <div class="panel-card shot-panel">
-            <el-carousel
-              height="210px"
-              :autoplay="false"
-              :loop="screenshotSlides.length > 1"
-              arrow="always"
-              indicator-position="none"
-            >
-              <el-carousel-item v-for="(slide, slideIndex) in screenshotSlides" :key="slideIndex">
-                <div class="shot-row">
-                  <el-image
-                    v-for="(img, imgIndex) in slide"
-                    :key="`${img}-${imgIndex}`"
-                    :src="img"
-                    fit="cover"
-                    class="shot-img"
-                    :preview-src-list="screenshotList"
-                    :initial-index="slideIndex * 3 + imgIndex"
-                    preview-teleported
-                  />
-                </div>
-              </el-carousel-item>
-            </el-carousel>
+            <div class="shot-carousel">
+              <button
+                v-if="shotHasNav"
+                class="shot-nav prev"
+                aria-label="上一组截图"
+                @click="shiftShots(-1)"
+              >
+                ‹
+              </button>
+              <div class="shot-row">
+                <el-image
+                  v-for="(img, imgIndex) in visibleShots"
+                  :key="`${img}-${imgIndex}`"
+                  :src="img"
+                  fit="cover"
+                  class="shot-img"
+                  :preview-src-list="screenshotList"
+                  :initial-index="shotIndexAt(imgIndex)"
+                  preview-teleported
+                />
+              </div>
+              <button
+                v-if="shotHasNav"
+                class="shot-nav next"
+                aria-label="下一组截图"
+                @click="shiftShots(1)"
+              >
+                ›
+              </button>
+              <div v-if="shotHasNav" class="shot-dots">
+                <i
+                  v-for="(_, idx) in screenshotList"
+                  :key="idx"
+                  :class="{ active: idx === shotStart }"
+                  @click="shotStart = idx"
+                />
+              </div>
+            </div>
           </div>
         </template>
 
@@ -379,7 +495,7 @@ onMounted(() => {
             </div>
             <div class="res-actions">
               <el-button size="small" type="primary" :icon="Download" @click="doDownload(r)">下载</el-button>
-              <el-button size="small" text :icon="Warning" @click="doReport(r)">举报</el-button>
+              <el-button size="small" text :icon="Warning" @click="openFeedback(r)">反馈</el-button>
             </div>
           </div>
         </div>
@@ -433,8 +549,40 @@ onMounted(() => {
         </div>
       </div>
 
-      <p class="dl-tip text-dim">积分已扣除，请尽快保存资源。若链接失效可点击「举报」告知我们。</p>
+      <p class="dl-tip text-dim">积分已扣除，请尽快保存资源。若链接失效或无法运行，可点击「反馈」告知上传者。</p>
     </div>
+  </el-dialog>
+
+  <!-- 资源反馈弹窗 -->
+  <el-dialog v-model="feedback.visible" title="资源反馈" width="480px">
+    <div v-if="feedback.resource" class="fb-dialog">
+      <div class="fb-target">
+        <span class="fb-target-label">反馈资源</span>
+        <span class="fb-target-title">{{ feedback.resource.title }}</span>
+      </div>
+      <div class="fb-field">
+        <span class="fb-label">反馈类型</span>
+        <el-radio-group v-model="feedback.type" class="fb-types">
+          <el-radio v-for="t in FEEDBACK_TYPES" :key="t.value" :value="t.value">{{ t.label }}</el-radio>
+        </el-radio-group>
+      </div>
+      <div class="fb-field">
+        <span class="fb-label">反馈内容</span>
+        <el-input
+          v-model="feedback.content"
+          type="textarea"
+          :rows="4"
+          maxlength="500"
+          show-word-limit
+          placeholder="请描述具体问题，例如下载链接打不开、解压报错、缺少汉化补丁等"
+        />
+      </div>
+      <p class="fb-tip text-dim">反馈会以站内消息发送给资源上传者，你可以在「用户中心 - 消息」查看处理进度。</p>
+    </div>
+    <template #footer>
+      <el-button @click="feedback.visible = false">取消</el-button>
+      <el-button type="primary" :loading="feedback.submitting" @click="submitFeedback">提交反馈</el-button>
+    </template>
   </el-dialog>
 </template>
 
@@ -586,6 +734,146 @@ onMounted(() => {
   height: 100%;
   display: block;
   cursor: zoom-in;
+}
+
+.shot-carousel {
+  position: relative;
+  height: 210px;
+}
+
+.shot-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border-glow);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-card);
+  transition: all 0.2s;
+}
+
+.shot-nav:hover {
+  color: #fff;
+  background: var(--grad-main);
+  border-color: transparent;
+}
+
+.shot-nav.prev {
+  left: -6px;
+}
+
+.shot-nav.next {
+  right: -6px;
+}
+
+.shot-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.shot-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-glow);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shot-dots i.active {
+  width: 16px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+.detail-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.detail-title-row .detail-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.fav-btn {
+  flex-shrink: 0;
+  border-color: var(--border-glow);
+  color: var(--text-sub);
+}
+
+.fav-btn.active {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.fb-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fb-target {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-glow);
+  font-size: 13px;
+}
+
+.fb-target-label {
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.fb-target-title {
+  color: var(--text-main);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fb-label {
+  font-size: 13px;
+  color: var(--text-sub);
+}
+
+.fb-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+
+.fb-tip {
+  font-size: 12px;
+  margin: 0;
 }
 
 .shot-panel {

@@ -23,6 +23,7 @@ import type {
   Rating,
   RegisterParams,
   Resource,
+  ResourceFeedback,
   ResourceSource,
   ReviewTask,
   RoleMenuTreeData,
@@ -316,8 +317,40 @@ export const getUnreadCount = () => http.get<AjaxResult<number> | number>('/comm
 /** 标记消息已读（登录） */
 export const markMessageRead = (messageId: number) => http.post<AjaxResult>(`/community/user/message/read/${messageId}`)
 
-/** 我的收藏（登录） */
-export const getFavorites = (params: PageParams) => http.get<TableDataInfo<Favorite>>('/community/user/favorites', { params })
+/** 我的收藏（登录，可按目标类型过滤：G游戏 / A文章 / R资源） */
+export const getFavorites = (params: PageParams & { targetType?: string }) =>
+  http.get<TableDataInfo<Favorite>>('/community/user/favorites', { params })
+
+/** 收藏 / 取消收藏（切换），返回 { favorited } */
+export const toggleFavorite = (targetType: 'G' | 'A' | 'R', targetId: number) =>
+  http.post<AjaxResult<{ favorited: boolean }>>(`/community/user/favorite/${targetType}/${targetId}`)
+
+/** 查询收藏状态 */
+export const getFavoriteStatus = (targetType: 'G' | 'A' | 'R', targetId: number) =>
+  http.get<AjaxResult<{ favorited: boolean }>>('/community/user/favorite/status', {
+    params: { targetType, targetId },
+  })
+
+/* ---------- 资源反馈 ---------- */
+
+/** 提交资源反馈（1资源失效 2无法运行 3缺少补丁 4其他），会给上传者发站内消息 */
+export const submitResourceFeedback = (resourceId: number, data: { type: number; content: string }) =>
+  http.post<AjaxResult<ResourceFeedback>>(`/community/resource/${resourceId}/feedback`, data)
+
+/** 我收到的资源反馈（作为上传者） */
+export const getReceivedFeedbacks = (params: PageParams) =>
+  http.get<TableDataInfo<ResourceFeedback>>('/community/resource/feedback/received', { params })
+
+/** 某资源的反馈列表（仅上传者） */
+export const getResourceFeedbacks = (params: PageParams & { resourceId: number }) =>
+  http.get<TableDataInfo<ResourceFeedback>>('/community/resource/feedback/list', { params })
+
+/** 未读反馈数 */
+export const getUnreadFeedbackCount = () => http.get<AjaxResult<number>>('/community/resource/feedback/unread')
+
+/** 反馈标记已读 */
+export const markFeedbackRead = (feedbackId: number) =>
+  http.post<AjaxResult>(`/community/resource/feedback/read/${feedbackId}`)
 
 /** 我的关注（登录） */
 export const getFollowing = (params: PageParams) => http.get<TableDataInfo<FollowItem>>('/community/user/following', { params })

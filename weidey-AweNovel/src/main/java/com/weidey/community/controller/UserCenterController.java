@@ -3,9 +3,7 @@ package com.weidey.community.controller;
 import com.weidey.common.core.controller.BaseController;
 import com.weidey.common.core.domain.AjaxResult;
 import com.weidey.common.core.page.TableDataInfo;
-import com.weidey.community.domain.Message;
 import com.weidey.community.domain.UserFavorite;
-import com.weidey.community.domain.UserFollow;
 import com.weidey.community.domain.UserProfile;
 import com.weidey.community.service.FavoriteService;
 import com.weidey.community.service.FollowService;
@@ -15,7 +13,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * 用户中心接口
@@ -52,7 +54,7 @@ public class UserCenterController extends BaseController {
         return getDataTable(userProfileService.pagePointLogs(startPage(), getUserId()));
     }
 
-    /** 我的消息 */
+    /** 我的消息（含发送人、业务来源） */
     @GetMapping("/messages")
     public TableDataInfo messages() {
         return getDataTable(messageService.pageMessages(startPage(), getUserId()));
@@ -71,10 +73,32 @@ public class UserCenterController extends BaseController {
         return success();
     }
 
-    /** 我的收藏 */
+    /** 我的收藏（可按类型过滤：G游戏 / A文章 / R资源） */
     @GetMapping("/favorites")
-    public TableDataInfo favorites() {
-        return getDataTable(favoriteService.pageFavorites(startPage(), getUserId()));
+    public TableDataInfo favorites(@RequestParam(required = false) String targetType) {
+        return getDataTable(favoriteService.pageFavorites(startPage(), getUserId(), targetType));
+    }
+
+    /** 收藏 / 取消收藏（切换），返回最新状态 */
+    @PostMapping("/favorite/{targetType}/{targetId}")
+    public AjaxResult toggleFavorite(@PathVariable String targetType, @PathVariable Long targetId) {
+        if (!"G".equals(targetType) && !"A".equals(targetType) && !"R".equals(targetType)) {
+            return error("收藏类型不合法");
+        }
+        boolean favorited = favoriteService.toggle(getUserId(), targetType, targetId);
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("favorited", favorited);
+        data.put("targetType", targetType);
+        data.put("targetId", targetId);
+        return success(data);
+    }
+
+    /** 收藏状态 */
+    @GetMapping("/favorite/status")
+    public AjaxResult favoriteStatus(@RequestParam String targetType, @RequestParam Long targetId) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("favorited", favoriteService.isFavorited(getUserId(), targetType, targetId));
+        return success(data);
     }
 
     /** 我的关注 */

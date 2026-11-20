@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Close, Promotion } from '@element-plus/icons-vue'
+import { ChatDotRound, Close, Promotion } from '@element-plus/icons-vue'
 import { streamChat } from '@gal/shared'
 import type { ChatHistoryItem } from '@gal/shared'
 import { useUserStore } from '@/stores/user'
@@ -138,10 +138,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <!-- 常驻看板娘：DeepSeek 鲸鱼娘 -->
+  <!-- 常驻看板娘：DeepSeek 鲸鱼娘（纯展示，不拦截页面点击；聊天按钮独立） -->
   <div class="maid" aria-label="DeepSeek 鲸鱼娘">
     <!-- 立绘 / 静态形象（常驻，不隐藏） -->
-    <div class="mascot" :class="`mascot-${live2dState}`" @click="toggle">
+    <div class="mascot" :class="`mascot-${live2dState}`">
       <div v-show="live2dState === 'ready'" ref="stageRef" class="stage-canvas" />
       <svg v-if="live2dState !== 'ready'" class="whale" viewBox="0 0 200 170" aria-hidden="true">
         <defs>
@@ -184,6 +184,12 @@ onBeforeUnmount(() => {
       </span>
       <span v-if="unread && !open" class="unread">{{ unread > 9 ? '9+' : unread }}</span>
     </div>
+
+    <!-- 聊天入口（小按钮，避免立绘遮挡页面操作） -->
+    <button class="maid-chat-btn" :class="{ open }" :aria-label="open ? '收起对话' : '和鲸鱼娘聊天'" @click="toggle">
+      <el-icon :size="18"><ChatDotRound /></el-icon>
+      <span v-if="!open" class="maid-chat-tip">找我聊聊</span>
+    </button>
 
     <!-- 聊天气泡面板（点立绘开关，立绘始终常驻） -->
     <transition name="maid-pop">
@@ -265,9 +271,9 @@ onBeforeUnmount(() => {
   position: relative;
   width: 250px;
   height: 312px;
-  pointer-events: auto;
-  cursor: pointer;
-  transition: transform 0.25s;
+  /* 立绘纯展示：不拦截页面点击（聊天入口是右侧小按钮） */
+  pointer-events: none;
+  cursor: default;
   filter: drop-shadow(0 12px 24px rgba(37, 99, 235, 0.18));
 }
 
@@ -287,7 +293,59 @@ onBeforeUnmount(() => {
 }
 
 .mascot:hover {
-  transform: translateY(-4px);
+  transform: none;
+}
+
+/* ---------- 聊天入口小按钮 ---------- */
+.maid-chat-btn {
+  position: absolute;
+  right: 8px;
+  top: 10px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  pointer-events: auto;
+  background: var(--grad-main);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-fab);
+  transition:
+    transform 0.2s,
+    background 0.2s;
+}
+
+.maid-chat-btn:hover {
+  transform: scale(1.08);
+}
+
+.maid-chat-btn.open {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-glow);
+}
+
+.maid-chat-tip {
+  position: absolute;
+  right: 54px;
+  white-space: nowrap;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  color: var(--text-main);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  box-shadow: var(--shadow-card);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.maid-chat-btn:hover .maid-chat-tip {
+  opacity: 1;
 }
 
 .stage-canvas {
@@ -352,8 +410,8 @@ onBeforeUnmount(() => {
 
 .unread {
   position: absolute;
-  top: 28px;
-  right: 44px;
+  top: 0;
+  right: 2px;
   min-width: 20px;
   height: 20px;
   padding: 0 5px;
@@ -654,6 +712,13 @@ onBeforeUnmount(() => {
   .name-tag {
     font-size: 11px;
     padding: 4px 10px;
+  }
+
+  .maid-chat-btn {
+    right: 4px;
+    top: 4px;
+    width: 40px;
+    height: 40px;
   }
 }
 

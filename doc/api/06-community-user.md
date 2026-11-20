@@ -1,6 +1,6 @@
 # 06 · 用户中心接口（签到 / 积分 / 消息 / 社交）
 
-> 共 10 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
+> 共 12 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
 > ⚠️ 本模块**全部需要登录**。表结构见 [`../../sql/awe_novel.sql`](../../sql/awe_novel.sql)。
 
 | # | 方法 | 路径 | 前端状态 |
@@ -15,6 +15,8 @@
 | 8 | GET | `/community/user/favorites` | ✅ |
 | 9 | GET | `/community/user/following` | ✅ |
 | 10 | POST | `/community/user/follow/{targetUserId}` | 🔸 已封装未接页面 |
+| 11 | POST | `/community/user/favorite/{targetType}/{targetId}` | ✅ 收藏/取消（切换） |
+| 12 | GET | `/community/user/favorite/status` | ✅ 收藏状态 |
 
 ---
 
@@ -188,8 +190,9 @@
 {
   "code": 200, "msg": "查询成功", "total": 1,
   "rows": [
-    { "messageId": 1, "userId": 2, "senderId": null, "type": "system",
-      "content": "欢迎加入 AweNovel", "isRead": "0", "createTime": "2024-01-01 00:00:00" }
+    { "messageId": 1, "userId": 2, "senderId": 3, "senderName": "小明", "senderAvatar": "/profile/avatar/x.webp",
+      "type": "feedback", "bizType": "resource", "bizId": 12,
+      "content": "【资源失效】《CLANNAD》汉化硬盘版\n链接打不开了", "isRead": "0", "createTime": "2024-01-01 00:00:00" }
   ]
 }
 ```
@@ -197,11 +200,13 @@
 | 字段 | 说明 |
 |---|---|
 | `senderId` | 发送者ID，系统消息为 `null` |
-| `type` | 消息类型：`comment` 评论 / `like` 点赞 / `audit` 审核 / `system` 系统 |
-| `isRead` | **字符串** `'0'` 未读 / `'1'` 已读（⚠️ 前端 `types.ts` 定义为 boolean，需改） |
+| `senderName` / `senderAvatar` | 发送者昵称 / 头像（系统消息为空，前端直接展示「消息发起人」） |
+| `type` | 消息类型：`comment` 评论 / `like` 点赞 / `audit` 审核 / `system` 系统 / **`feedback` 资源反馈** |
+| `bizType` / `bizId` | 业务来源（如 `resource` + 资源ID），前端可据此跳转 |
+| `isRead` | **字符串** `'0'` 未读 / `'1'` 已读（前端 `Message.isRead` 已兼容 string） |
 
-> ⚠️ 消息表已建、Service 已实现，但**没有任何业务代码会触发发送消息**（评论/审核/点赞都不发通知）。
-> 因此除初始化数据外，用户的收件箱一般为空。建议后端在「评论回复、审核结果、关注」等场景补 `MessageService.send`。
+> 目前**资源反馈**会写入站内消息（`type = feedback`）发给资源上传者；
+> 其余场景（评论回复、审核结果、关注）仍待补 `MessageService.send`。
 
 ### 5.2 未读消息数
 
@@ -235,34 +240,53 @@
 
 | 参数 | 类型 | 必填 | 说明 |
 |---|---|---|---|
+| `targetType` | string | 否 | `G` 游戏 / `A` 文章 / `R` 资源，不传为全部 |
 | `pageNum` / `pageSize` | int | 否 | 分页 |
 
-**响应**：`TableDataInfo<UserFavorite>`（按 `id` 倒序）
+**响应**：`TableDataInfo<UserFavorite>`（按 `id` 倒序，已补全展示字段）
 
 ```json
 {
   "code": 200, "msg": "查询成功", "total": 2,
   "rows": [
-    { "id": 2, "userId": 2, "targetType": "G", "targetId": 1, "createTime": "2024-01-03 12:00:00" }
+    {
+      "id": 2, "userId": 2, "targetType": "G", "targetId": 30,
+      "title": "9-nine-九次九日九重色", "subtitle": "9-nine-ここのつここのかここのいろ",
+      "cover": "/profile/upload/xxx.webp", "url": "/game/30", "typeLabel": "游戏",
+      "createTime": "2024-01-03 12:00:00"
+    },
+    {
+      "id": 3, "userId": 2, "targetType": "A", "targetId": 3,
+      "title": "特莉波卡", "subtitle": "评测", "cover": "", "url": "/article/3", "typeLabel": "文章",
+      "createTime": "2024-01-04 09:00:00"
+    }
   ]
 }
 ```
 
 | 字段 | 说明 |
 |---|---|
+| `id` | 收藏记录主键（注意不是 `favoriteId`） |
 | `targetType` | `G`游戏 / `A`文章 / `R`资源 |
 | `targetId` | 目标ID |
-
-> ⚠️ **返回的是收藏关联原始行，不含游戏/文章对象**。前端要展示收藏列表，需要按 `targetType + targetId` **逐个再请求详情接口**（N+1 问题），建议后端补联表返回（见 [README §5](README.md#5-后端接口缺口前端无法实现需后端补齐)）。
-> ⚠️ 前端 `types.ts` 中 `Favorite` 的 `favoriteId` / `gameId` / `game` 字段后端**都不返回**，实际主键字段名为 **`id`**。
+| `title` / `cover` / `subtitle` | **非表字段**，后端联表补全的展示信息 |
+| `url` / `typeLabel` | **非表字段**，前端跳转地址与类型文案 |
 
 ### 6.2 收藏 / 取消收藏
 
-❌ **后端未提供接口**（`FavoriteService.favorite / unfavorite / isFavorited` 已实现，但没有 Controller）。
-前端目前**无法实现收藏/取消收藏功能**，需后端新增接口后才能对接。
+`POST /community/user/favorite/{targetType}/{targetId}` · 登录
+
+- 切换语义：已收藏则取消，未收藏则新增；返回 `{"favorited": true/false}`。
+
+### 6.3 收藏状态
+
+`GET /community/user/favorite/status?targetType=G&targetId=30` · 登录
+
+**响应**：`{"code":200,"data":{"favorited":true}}`
+
+> 前台游戏详情、文章详情页均接入：按钮显示「收藏 / 已收藏」，用户中心「我的收藏」可按类型筛选并取消收藏。
 
 ---
-
 ## 7. 关注
 
 ### 7.1 我的关注列表

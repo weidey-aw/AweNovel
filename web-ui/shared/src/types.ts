@@ -266,20 +266,61 @@ export interface PointLog {
 
 export interface Message {
   messageId: number
+  /** comment/like/audit/system/feedback */
   type?: string
+  /** 业务类型：game/article/resource/feedback */
+  bizType?: string
+  bizId?: number
   content: string
-  isRead?: boolean
+  /** 后端返回 '0'/'1'，前端可能转成 boolean */
+  isRead?: string | boolean
+  senderId?: number
+  senderName?: string
+  senderAvatar?: string
   createTime?: string
 }
 
 export interface Favorite {
+  id?: number
   favoriteId?: number
+  /** G 游戏 / A 文章 / R 资源 */
   targetType?: string
   targetId?: number
+  title?: string
+  cover?: string
+  subtitle?: string
+  url?: string
+  typeLabel?: string
   gameId?: number
   game?: Game
   createTime?: string
 }
+
+/** 资源反馈（1资源失效 2无法运行 3缺少补丁 4其他） */
+export interface ResourceFeedback {
+  feedbackId?: number
+  resourceId: number
+  userId?: number
+  type: number
+  typeLabel?: string
+  content: string
+  /** 0未读 1已读 */
+  status?: string
+  userName?: string
+  userAvatar?: string
+  resourceTitle?: string
+  gameId?: number
+  gameTitle?: string
+  createTime?: string
+}
+
+/** 反馈类型枚举（与后端 ResourceFeedback.typeLabel 保持一致） */
+export const FEEDBACK_TYPES = [
+  { value: 1, label: '资源失效' },
+  { value: 2, label: '无法运行' },
+  { value: 3, label: '缺少补丁' },
+  { value: 4, label: '其他反馈' },
+] as const
 
 export interface FollowItem {
   followId?: number

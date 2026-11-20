@@ -1,6 +1,6 @@
 # 05 · 内容接口（文章 / 资源 / 评论 / 评分）
 
-> 共 32 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
+> 共 37 个接口。响应结构、鉴权、分页约定见 [README.md](README.md#1-通用约定)。
 > 表结构见 [`../../sql/awe_novel.sql`](../../sql/awe_novel.sql)（`gal_article` / `gal_resource` / `gal_resource_source` / `gal_official_resource` / `gal_comment` / `gal_rating`）。
 
 | # | 方法 | 路径 | 鉴权 | 前端状态 |
@@ -37,6 +37,11 @@
 | 30 | DELETE | `/community/comment/admin/{commentIds}` | `community:comment:remove` | ✅ 含子回复 |
 | 31 | GET | `/community/rating/{gameId}` | **登录** | ✅ |
 | 32 | POST | `/community/rating` | 登录 | ✅ |
+| 33 | POST | `/community/resource/{resourceId}/feedback` | 登录 | ✅ 资源反馈（发给上传者） |
+| 34 | GET | `/community/resource/feedback/list` | 登录（上传者） | ✅ 某资源的反馈 |
+| 35 | GET | `/community/resource/feedback/received` | 登录 | ✅ 我收到的反馈 |
+| 36 | GET | `/community/resource/feedback/unread` | 登录 | ✅ 未读反馈数 |
+| 37 | POST | `/community/resource/feedback/read/{feedbackId}` | 登录（上传者） | ✅ 标记已读 |
 
 > 资源相关权限需执行 [`sql/upgrade_resource_v2.sql`](../../sql/upgrade_resource_v2.sql)（建表 + 字典 + 按钮权限）；
 > 文章/评论权限与评论表 `update_time` 修复见 [`sql/upgrade_article_comment.sql`](../../sql/upgrade_article_comment.sql)。
@@ -313,6 +318,39 @@
 | PUT | `/community/resource/official` | `community:resource:edit` | 修改（需 `officialId`） |
 | DELETE | `/community/resource/official/{ids}` | `community:resource:edit` | 批量删除 |
 
+### 2.11 资源反馈
+
+`POST /community/resource/{resourceId}/feedback` · 登录
+
+```json
+{ "type": 1, "content": "百度网盘链接已失效，麻烦补一下" }
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `type` | int | 是 | `1` 资源失效 / `2` 无法运行 / `3` 缺少补丁 / `4` 其他反馈 |
+| `content` | string | 是 | 反馈内容，最长 500 字 |
+
+**行为**
+
+- 写入 `gal_resource_feedback`（`status = '0'` 未读）；
+- `type = 1` 时资源 `report_count + 1`；
+- 给**资源上传者**发送站内消息（`type = 'feedback'`、`bizType = 'resource'`、`bizId = resourceId`），
+  内容形如：`【资源失效】《游戏名》资源标题 + 反馈内容`；
+- 不能给自己的资源反馈；积分不增减。
+
+**上传者侧接口**
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/community/resource/feedback/received` | 我收到的反馈分页（含反馈人昵称/头像、资源、游戏名、类型文案） |
+| GET | `/community/resource/feedback/list?resourceId=` | 某资源的反馈（仅资源上传者，否则返回空列表） |
+| GET | `/community/resource/feedback/unread` | 未读反馈数 |
+| POST | `/community/resource/feedback/read/{feedbackId}` | 标记已读（仅上传者） |
+
+> 旧的 `POST /community/resource/report/{resourceId}` 保留兼容（仅累加 `report_count`），新前端已改为反馈。
+
+---
 ## 3. 评论 `/community/comment`
 
 ### 3.1 数据模型 `Comment`（表 `gal_comment`）

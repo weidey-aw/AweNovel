@@ -274,7 +274,7 @@ Authorization: Bearer <token>
 > 游戏列表排序：`sortBy=hot|download|rating|publish|release` + `isAsc`；多标签 `tagIds=1,2`。
 > 详见 [04-community-game.md](04-community-game.md)。
 
-### 2.5 内容：文章 / 资源 / 评论 / 评分（32）
+### 2.5 内容：文章 / 资源 / 评论 / 评分（37）
 
 | 方法 | 路径 | 鉴权 | 前端状态 |
 |---|---|---|---|
@@ -292,7 +292,12 @@ Authorization: Bearer <token>
 | GET | `/community/resource/official/list` | **匿名** | ✅ 正版资源 |
 | POST | `/community/resource` | 登录 | 🔸 |
 | POST | `/community/resource/download/{resourceId}` | 登录 | ✅ 返回多来源 |
-| POST | `/community/resource/report/{resourceId}` | 登录 | ✅ |
+| POST | `/community/resource/report/{resourceId}` | 登录 | ✅ 旧接口（仅累加举报数） |
+| POST | `/community/resource/{resourceId}/feedback` | 登录 | ✅ 资源反馈（4 类型 + 内容） |
+| GET | `/community/resource/feedback/received` | 登录 | ✅ 我收到的反馈 |
+| GET | `/community/resource/feedback/list` | 登录（上传者） | ✅ 某资源反馈 |
+| GET | `/community/resource/feedback/unread` | 登录 | ✅ 未读反馈数 |
+| POST | `/community/resource/feedback/read/{feedbackId}` | 登录（上传者） | ✅ 标记已读 |
 | GET | `/community/resource/admin/list` | `community:resource:list` | ✅ 管理端筛选 |
 | GET | `/community/resource/admin/{resourceId}` | `community:resource:list` | ✅ 含来源 |
 | POST | `/community/resource/admin` | `community:resource:add` | ✅ 新增 |
@@ -315,7 +320,7 @@ Authorization: Bearer <token>
 > 另新增 `gal_official_resource`（正版资源，按游戏配置、不关联用户），详见 [05-community-content.md](05-community-content.md)。
 > 文章/评论管理权限与评论表 `update_time` 修复见 [`sql/upgrade_article_comment.sql`](../../sql/upgrade_article_comment.sql)。
 
-### 2.6 用户中心（10）
+### 2.6 用户中心（12）
 
 | 方法 | 路径 | 鉴权 | 前端状态 |
 |---|---|---|---|
@@ -323,10 +328,12 @@ Authorization: Bearer <token>
 | GET | `/community/sign` | 登录 | ❌（**后端为空实现**，见 §5） |
 | GET | `/community/user/profile` | 登录 | ✅ |
 | GET | `/community/user/points` | 登录 | ✅ |
-| GET | `/community/user/messages` | 登录 | ✅ |
+| GET | `/community/user/messages` | 登录 | ✅ 含发送人/业务来源 |
 | GET | `/community/user/messages/unread` | 登录 | ✅ |
 | POST | `/community/user/message/read/{messageId}` | 登录 | ✅ |
-| GET | `/community/user/favorites` | 登录 | ✅ |
+| GET | `/community/user/favorites` | 登录 | ✅ 可按类型筛选，联表补全标题 |
+| POST | `/community/user/favorite/{targetType}/{targetId}` | 登录 | ✅ 收藏/取消切换 |
+| GET | `/community/user/favorite/status` | 登录 | ✅ 收藏状态 |
 | GET | `/community/user/following` | 登录 | ✅ |
 | POST | `/community/user/follow/{targetUserId}` | 登录 | 🔸 |
 
@@ -354,12 +361,20 @@ Authorization: Bearer <token>
 
 | 状态 | 数量 | 占比 |
 |---|---|---|
-| ✅ 已对接（有页面调用） | 154 | 90% |
+| ✅ 已对接（有页面调用） | 161 | 90% |
 | 🔸 仅封装未接页面 | 3 | 2% |
 | ❌ 未封装 | 14 | 8% |
-| **合计** | **171** | 100% |
+| **合计** | **178** | 100% |
 
-> **本轮（看板娘大修 + 主题系统）新增 2 个接口**：
+> **本轮（编辑器增强 + 收藏 + 资源反馈）新增 7 个接口**：
+> 资源反馈提交/上传者列表/收到列表/未读数/标记已读（5 个），收藏切换与收藏状态（2 个）；
+> 新增 `gal_resource_feedback` 表，`gal_message` 增加 `biz_type`/`biz_id` 与会话发送人昵称头像；
+> 前台游戏与文章详情支持收藏，用户中心「我的收藏」可按类型筛选并取消；
+> 游戏截图轮播改为「3 张滑动窗口」，4 张时不再出现只显示 1 张的问题；
+> Markdown 渲染接入 **highlight.js**（代码块语法高亮），管理端编辑器新增代码块插入与实时预览。
+>
+> **上一轮（看板娘 + 主题）**：
+> **（看板娘大修 + 主题系统）新增 2 个接口**：
 > 新增 `POST /ai/chat`（支持历史上下文、长消息）与 `POST /ai/chat/sync`（SSE 不可用时兜底），
 > 每次对话成功扣 1 积分、失败自动退还；默认人设为「DeepSeek 鲸鱼娘」；
 > 前端看板娘支持 **Live2D 立绘**（模型放 `web-ui/web/src/locales/live2d`，**不入 git**，缺失时自动降级为静态小鱼 UI）；
