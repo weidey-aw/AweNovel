@@ -21,7 +21,7 @@ AweNovel/
 ├── weidey-AweNovel/        # 社区业务模块（Galgame 内容/用户/积分/AI/审核）
 ├── web-ui/                 # 前端（pnpm monorepo：web 用户端 + admin 管理端 + shared 共享包）
 ├── sql/                    # 数据库初始化脚本（awe_novel.sql 完整初始化）
-├── doc/                    # 部署与运维文档（DEPLOYMENT.md 部署教程）
+├── doc/                    # 开发文档（本地维护，不入仓库）
 └── pom.xml                 # 后端 Maven 父工程（com.weidey:AweNovel）
 ```
 
@@ -47,7 +47,32 @@ AweNovel/
 
 ## 快速开始
 
-详细部署步骤见 [`doc/DEPLOYMENT.md`](doc/DEPLOYMENT.md)，此处为本地开发速览。
+详细部署步骤见本地 `doc/DEPLOYMENT.md`（开发文档不入仓库），此处为本地开发速览。
+
+### Windows 一键测试包（推荐体验方式）
+
+```powershell
+# 在仓库根目录执行：构建前端 → 打进 jar → 生成一键启动包与 zip
+.\scripts\build-test-package.ps1
+```
+
+产物在 `build\test-package\AweNovel-test\`（以及 `build\AweNovel-test-<时间>.zip`）：
+
+```
+AweNovel-test\
+├── AweNovel.jar          # 后端 + 前台页面（/） + 管理后台（/admin/）
+├── start.bat             # 一键启动（校验 Java/MySQL/Redis，自动打开浏览器）
+├── stop.bat              # 停止
+├── init-db.bat           # 首次使用：初始化数据库
+├── config\               # application-test.yml / db.bat（本机凭据，勿公开）
+├── sql\init.sql          # 数据库初始化脚本
+├── upload\ logs\         # 上传文件与日志
+└── README.txt            # 使用说明
+```
+
+启动后：前台 <http://localhost:8088/>，后台 <http://localhost:8088/admin/>（`admin` / `admin123`）。
+
+> 运行时需要本机已启动 **MySQL 与 Redis**；首次使用先执行 `init-db.bat`。
 
 ### 环境要求
 
@@ -112,16 +137,8 @@ pnpm dev:admin    # 管理端 http://localhost:5174
 
 ## 接口文档
 
-完整后端接口文档（**138 个接口**，按模块分册，含前端对接状态与优先级建议）：
-
-- 总览与前端对接状态：[`doc/api/README.md`](doc/api/README.md)
-- 认证与账号：[`doc/api/01-auth.md`](doc/api/01-auth.md)
-- 系统管理：[`doc/api/02-system.md`](doc/api/02-system.md)
-- 系统监控：[`doc/api/03-monitor.md`](doc/api/03-monitor.md)
-- 游戏库：[`doc/api/04-community-game.md`](doc/api/04-community-game.md)
-- 内容（文章/资源/评论/评分）：[`doc/api/05-community-content.md`](doc/api/05-community-content.md)
-- 用户中心：[`doc/api/06-community-user.md`](doc/api/06-community-user.md)
-- 审核 / AI / 通用：[`doc/api/07-review-ai-common.md`](doc/api/07-review-ai-common.md)
+完整后端接口文档按模块维护在本地 `doc/api/`（含前端对接状态与优先级建议）。
+为保持仓库干净，**开发文档已加入 `.gitignore`，不随仓库分发**；需要时在本地查看即可。
 
 ## 主要接口速览
 
@@ -133,7 +150,8 @@ pnpm dev:admin    # 管理端 http://localhost:5174
 
 ## 部署与运维
 
-- 部署教程：[`doc/DEPLOYMENT.md`](doc/DEPLOYMENT.md)
+- 部署教程：本地 `doc/DEPLOYMENT.md`（开发文档不入仓库）
+- 一键测试包（Windows）：见 [`scripts/build-test-package.ps1`](scripts/build-test-package.ps1) 与 `build/test-package/AweNovel-test/`
 - 数据库初始化：[`sql/awe_novel.sql`](sql/awe_novel.sql)
 - 旧库迁移：[`sql/migrate_to_awe_novel.sql`](sql/migrate_to_awe_novel.sql)
 

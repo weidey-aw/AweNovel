@@ -55,3 +55,10 @@ application-local.yml
 *.tmp
 *.bak
 *.swp
+
+# ===== 开发文档（本地维护，不上传仓库） =====
+doc/
+
+# ===== 本地打包产物 =====
+build/
+weidey-admin/src/main/resources/static/

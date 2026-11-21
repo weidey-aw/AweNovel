@@ -133,7 +133,24 @@ public class SecurityConfig
                             "/community/comment/list",
                             "/register/code"
                     ).permitAll();
-                    requests.requestMatchers(HttpMethod.GET, "/", "/*.html", "/**.html", "/**.css", "/**.js", "/profile/**").permitAll();
+                    // 静态资源（测试包由 Spring Boot 直接托管 web/admin 前端）
+                    requests.requestMatchers(HttpMethod.GET,
+                            "/", "/*.html", "/**.html", "/**.css", "/**.js", "/**.mjs",
+                            "/**.json", "/**.svg", "/**.png", "/**.jpg", "/**.jpeg", "/**.webp",
+                            "/**.gif", "/**.ico", "/**.woff", "/**.woff2", "/**.ttf",
+                            "/assets/**", "/admin", "/admin/**",
+                            "/live2d/**", "/live2d-core/**", "/favicon.svg", "/favicon.ico",
+                            "/profile/**"
+                    ).permitAll();
+                    // 静态资源探测（Live2D 加载器会用 HEAD 检查模型是否存在）
+                    requests.requestMatchers(HttpMethod.HEAD,
+                            "/", "/*.html", "/**.html", "/**.css", "/**.js", "/**.mjs",
+                            "/**.json", "/**.svg", "/**.png", "/**.jpg", "/**.jpeg", "/**.webp",
+                            "/**.gif", "/**.ico", "/**.woff", "/**.woff2", "/**.ttf",
+                            "/assets/**", "/admin", "/admin/**",
+                            "/live2d/**", "/live2d-core/**", "/favicon.svg", "/favicon.ico",
+                            "/profile/**"
+                    ).permitAll();
                     // Swagger UI 和 API 文档相关的路径
                     requests.requestMatchers("/v3/**", "/error","/swagger-ui/**", "/swagger-resources/**", "/webjars/**", "/*/api-docs", "/*/api-docs/**", "/druid/**").permitAll();
                     // 除上面外的所有请求全部需要鉴权认证

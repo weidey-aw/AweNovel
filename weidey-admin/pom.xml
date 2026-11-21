@@ -51,6 +51,35 @@
 
     <build>
         <plugins>
+            <!-- 静态资源打包（测试包会把前端 dist 复制到 resources/static）：
+                 二进制文件不做文本过滤，否则 Maven 会按 UTF-8 读取 .moc3/.png 等导致构建失败 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <configuration>
+                    <nonFilteredFileExtensions>
+                        <nonFilteredFileExtension>moc3</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>png</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>jpg</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>jpeg</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>gif</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>webp</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>ico</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>svg</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>woff</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>woff2</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>ttf</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>eot</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>mp3</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>mp4</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>webm</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>wav</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>zip</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>jar</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>jks</nonFilteredFileExtension>
+                    </nonFilteredFileExtensions>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

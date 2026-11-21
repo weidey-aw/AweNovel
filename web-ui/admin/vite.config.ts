@@ -24,6 +24,8 @@ const proxy = {
 }
 
 export default defineConfig({
+  // 打包测试包时由环境变量指定子路径（默认 /）
+  base: process.env.ADMIN_BASE || '/',
   plugins: [vue()],
   resolve: {
     alias: {

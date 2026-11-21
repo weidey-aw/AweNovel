@@ -11,7 +11,9 @@ const router = useRouter()
 const userStore = useUserStore()
 
 /** 管理端地址（生产可经 VITE_ADMIN_URL 配置） */
-const ADMIN_URL = (import.meta.env.VITE_ADMIN_URL as string | undefined) || 'http://localhost:5174'
+const ADMIN_URL =
+  (import.meta.env.VITE_ADMIN_URL as string | undefined) ||
+  (import.meta.env.DEV ? 'http://localhost:5174' : '/admin/')
 
 /** 主题：白蓝（默认） / 暗夜色 */
 const theme = ref<ThemeName>(getStoredTheme())

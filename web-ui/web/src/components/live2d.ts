@@ -77,8 +77,11 @@ async function fetchJson<T>(url: string): Promise<T | null> {
 /** 探测模型是否存在（缺失时不发起 Live2D 渲染） */
 export async function modelExists(url: string): Promise<boolean> {
   try {
-    const resp = await fetch(url, { method: 'HEAD' })
-    return resp.ok
+    const head = await fetch(url, { method: 'HEAD' })
+    if (head.ok) return true
+    // 部分部署环境不会放行 HEAD，退回 GET 探测
+    const get = await fetch(url, { method: 'GET', cache: 'no-cache' })
+    return get.ok
   } catch {
     return false
   }
