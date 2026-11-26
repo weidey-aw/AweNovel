@@ -62,3 +62,4 @@ doc/
 # ===== 本地打包产物 =====
 build/
 weidey-admin/src/main/resources/static/
+docs/dev
